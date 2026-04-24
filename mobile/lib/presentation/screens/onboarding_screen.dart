@@ -1,10 +1,12 @@
-/// Onboarding screen — first-run experience with three paths:
-/// (A) Cloud Chat, (B) Local AI, (C) Hybrid
+/// Onboarding screen — first-run experience.
+/// Three setup modes: Cloud Chat (Ollama/OpenAI/Anthropic), Local AI (download GGUF), Hybrid
+/// Includes model import from URL and Ollama quick-connect.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tekton_app/domain/llm/llm.dart';
 import 'package:tekton_app/domain/config/config.dart';
+import 'package:tekton_app/domain/install/install.dart';
 import 'package:tekton_app/presentation/providers/app_providers.dart';
 import 'chat_screen.dart';
 
@@ -18,17 +20,27 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _step = 0;
   String _selectedMode = 'cloud';
-  final _apiEndpointController = TextEditingController(text: 'https://api.openai.com');
+
+  // Cloud config
+  final _apiEndpointController = TextEditingController(text: 'http://192.168.1.100:11434');
   final _apiKeyController = TextEditingController();
-  final _modelNameController = TextEditingController(text: 'gpt-4o');
+  final _modelNameController = TextEditingController(text: 'gemma3:latest');
+  String _selectedProvider = 'ollama';
   bool _testSuccess = false;
   bool _testing = false;
+
+  // Local model import
+  final _ggufUrlController = TextEditingController();
+  final _customModelNameController = TextEditingController();
+  String? _importError;
 
   @override
   void dispose() {
     _apiEndpointController.dispose();
     _apiKeyController.dispose();
     _modelNameController.dispose();
+    _ggufUrlController.dispose();
+    _customModelNameController.dispose();
     super.dispose();
   }
 
@@ -53,6 +65,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  // ==================== STEP 0: Welcome ====================
   Widget _buildWelcomeStep(ThemeData theme) {
     return Column(
       key: const ValueKey('welcome'),
@@ -70,7 +83,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
         ), textAlign: TextAlign.center),
         const SizedBox(height: 48),
-        Text('Connect to cloud AI services, run models\nlocally on your device, or use both.\nYour data stays private.', style: theme.textTheme.bodyMedium?.copyWith(
+        Text('Run AI models on your device, connect to\nOllama on your workstation, or use cloud APIs.\nYour data stays private.', style: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           height: 1.6,
         ), textAlign: TextAlign.center),
@@ -84,6 +97,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  // ==================== STEP 1: Mode Selection ====================
   Widget _buildModeStep(ThemeData theme) {
     return Column(
       key: const ValueKey('mode'),
@@ -93,25 +107,33 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         Text('How do you want to use Tekton?', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 32),
         _ModeCard(
-          icon: Icons.cloud,
-          title: 'Cloud Chat',
-          subtitle: 'Connect to OpenAI, Anthropic, Ollama, or any OpenAI-compatible API',
-          selected: _selectedMode == 'cloud',
-          onTap: () => setState(() => _selectedMode = 'cloud'),
+          icon: Icons.router,
+          title: 'Connect to Ollama',
+          subtitle: 'Connect to Ollama running on your workstation or server. Fast, uses your GPU.',
+          selected: _selectedMode == 'cloud' && _selectedProvider == 'ollama',
+          onTap: () => setState(() { _selectedMode = 'cloud'; _selectedProvider = 'ollama'; }),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        _ModeCard(
+          icon: Icons.cloud,
+          title: 'Cloud API',
+          subtitle: 'OpenAI, Anthropic, or any OpenAI-compatible API. Requires API key.',
+          selected: _selectedMode == 'cloud' && _selectedProvider != 'ollama',
+          onTap: () => setState(() { _selectedMode = 'cloud'; _selectedProvider = 'openai'; }),
+        ),
+        const SizedBox(height: 12),
         _ModeCard(
           icon: Icons.phone_android,
-          title: 'Local AI',
-          subtitle: 'Run Gemma models directly on your device. Private, fast, works offline.',
+          title: 'On-Device AI',
+          subtitle: 'Download and run GGUF models locally. Private, works offline.',
           selected: _selectedMode == 'local',
           onTap: () => setState(() => _selectedMode = 'local'),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _ModeCard(
           icon: Icons.settings_ethernet,
-          title: 'Hybrid',
-          subtitle: 'Use both cloud and local AI. Best of both worlds.',
+          title: 'Everything',
+          subtitle: 'Use all of the above. Switch between them anytime.',
           selected: _selectedMode == 'hybrid',
           onTap: () => setState(() => _selectedMode = 'hybrid'),
         ),
@@ -130,101 +152,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  // ==================== STEP 2: Configuration ====================
   Widget _buildConfigStep(ThemeData theme) {
-    final showCloud = _selectedMode == 'cloud' || _selectedMode == 'hybrid';
+    final showOllama = _selectedMode == 'cloud' && _selectedProvider == 'ollama' || _selectedMode == 'hybrid';
+    final showCloud = _selectedMode == 'cloud' && _selectedProvider != 'ollama' || _selectedMode == 'hybrid';
     final showLocal = _selectedMode == 'local' || _selectedMode == 'hybrid';
 
     return SingleChildScrollView(
       key: const ValueKey('config'),
+      padding: const EdgeInsets.only(bottom: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 24),
           Text('Configure your setup', style: theme.textTheme.headlineSmall),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          if (showCloud) ...[
-            Text('Cloud Backend', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: 'openai',
-              decoration: const InputDecoration(labelText: 'Provider', border: OutlineInputBorder()),
-              items: const [
-                DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
-                DropdownMenuItem(value: 'anthropic', child: Text('Anthropic')),
-                DropdownMenuItem(value: 'ollama', child: Text('Ollama')),
-                DropdownMenuItem(value: 'custom', child: Text('Custom')),
-              ],
-              onChanged: (v) {},
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _apiEndpointController,
-              decoration: const InputDecoration(
-                labelText: 'API Endpoint',
-                border: OutlineInputBorder(),
-                hintText: 'https://api.openai.com',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _apiKeyController,
-              decoration: const InputDecoration(
-                labelText: 'API Key',
-                border: OutlineInputBorder(),
-                hintText: 'sk-...',
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _modelNameController,
-              decoration: const InputDecoration(
-                labelText: 'Default Model',
-                border: OutlineInputBorder(),
-                hintText: 'gpt-4o',
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: _testConnection,
-              child: _testing
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_testSuccess ? '✓ Connected' : 'Test Connection'),
-            ),
-            if (_testSuccess)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text('✓ Connection successful!', style: TextStyle(color: Colors.green.shade700)),
-              ),
-            const SizedBox(height: 32),
-          ],
+          // Ollama quick-connect
+          if (showOllama) ..._buildOllamaSection(theme),
 
-          if (showLocal) ...[
-            Text('Local Engine', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('On-Device AI', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 8),
-                    const Text('The inference engine and models will be downloaded after setup. '
-                        'You can choose which models to install from the Model Catalog.'),
-                    const SizedBox(height: 8),
-                    Text('Recommended models:', style: theme.textTheme.bodySmall),
-                    const SizedBox(height: 4),
-                    const Text('• Gemma 4 E2B (~3.2GB) — All phones'),
-                    const Text('• Gemma 4 E4B (~5GB) — Flagship phones'),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
+          // Cloud API config
+          if (showCloud) ..._buildCloudSection(theme),
 
+          // Local model import
+          if (showLocal) ..._buildLocalSection(theme),
+
+          const SizedBox(height: 24),
           Row(
             children: [
               TextButton(onPressed: () => setState(() => _step = 1), child: const Text('Back')),
@@ -240,55 +193,311 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  Future<void> _testConnection() async {
-    setState(() { _testing = true; _testSuccess = false; });
+  List<Widget> _buildOllamaSection(ThemeData theme) {
+    return [
+      Card(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.router, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('Ollama Connection', style: theme.textTheme.titleMedium),
+              ]),
+              const SizedBox(height: 12),
+              Text('Connect to Ollama running on your workstation. Make sure Ollama is running and accessible on your network.',
+                style: theme.textTheme.bodySmall),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _apiEndpointController,
+                keyboardType: TextInputType.url,
+                decoration: const InputDecoration(
+                  labelText: 'Ollama Server URL',
+                  border: OutlineInputBorder(),
+                  hintText: 'http://192.168.1.100:11434',
+                  prefixIcon: Icon(Icons.link),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Tip: Run "ollama serve" on your workstation, then enter its IP address.',
+                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+              const SizedBox(height: 12),
+              Row(children: [
+                FilledButton.tonal(
+                  onPressed: _testing ? null : _testOllamaConnection,
+                  child: _testing
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(_testSuccess ? 'Connected!' : 'Test Connection'),
+                ),
+                if (_testSuccess) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  Text('Connected', style: TextStyle(color: Colors.green.shade700)),
+                ],
+              ]),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 24),
+    ];
+  }
 
+  List<Widget> _buildCloudSection(ThemeData theme) {
+    return [
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.cloud, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('Cloud API', style: theme.textTheme.titleMedium),
+              ]),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedProvider == 'ollama' ? 'openai' : _selectedProvider,
+                decoration: const InputDecoration(labelText: 'Provider', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
+                  DropdownMenuItem(value: 'anthropic', child: Text('Anthropic')),
+                  DropdownMenuItem(value: 'custom', child: Text('Custom OpenAI-compatible')),
+                ],
+                onChanged: (v) => setState(() => _selectedProvider = v ?? 'openai'),
+              ),
+              const SizedBox(height: 16),
+              if (_selectedProvider != 'ollama') ...[
+                TextField(
+                  controller: _apiEndpointController,
+                  keyboardType: TextInputType.url,
+                  decoration: InputDecoration(
+                    labelText: 'API Endpoint',
+                    border: const OutlineInputBorder(),
+                    hintText: _selectedProvider == 'openai'
+                      ? 'https://api.openai.com'
+                      : 'https://api.anthropic.com',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _apiKeyController,
+                  decoration: const InputDecoration(
+                    labelText: 'API Key',
+                    border: OutlineInputBorder(),
+                    hintText: 'sk-...',
+                    prefixIcon: Icon(Icons.key),
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _modelNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Default Model',
+                    border: OutlineInputBorder(),
+                    hintText: 'gpt-4o',
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 24),
+    ];
+  }
+
+  List<Widget> _buildLocalSection(ThemeData theme) {
+    // Built-in models the user can pick from
+    final quickModels = [
+      ('Gemma 4 2B (Q4_K_M)', 'https://huggingface.co/google/gemma-4-2b-it-GGUF/resolve/main/gemma-4-2b-it-Q4_K_M.gguf', '2B params, ~1.5GB, runs on any phone'),
+      ('Gemma 4 4B (Q4_K_M)', 'https://huggingface.co/google/gemma-4-4b-it-GGUF/resolve/main/gemma-4-4b-it-Q4_K_M.gguf', '4B params, ~3GB, best for flagship phones'),
+      ('Phi-3.5 Mini 3.8B (Q4_K_M)', 'https://huggingface.co/microsoft/Phi-3.5-mini-instruct-GGUF/resolve/main/phi-3.5-mini-instruct-Q4_K_M.gguf', '3.8B params, great for code and reasoning'),
+      ('Dolphin 2.9 2B (Q4_K_M)', 'https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-2b-GGUF/resolve/main/dolphin-2.9-llama3-2b-Q4_K_M.gguf', '2B params, uncensored'),
+    ];
+
+    return [
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.phone_android, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('Local Models', style: theme.textTheme.titleMedium),
+              ]),
+              const SizedBox(height: 12),
+              Text('Download a model to run on your device, or paste a GGUF URL from HuggingFace.',
+                style: theme.textTheme.bodySmall),
+
+              // Quick-pick models
+              const SizedBox(height: 16),
+              Text('Quick Pick', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              ...quickModels.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: ListTile(
+                  dense: true,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  ),
+                  leading: const Icon(Icons.download, size: 20),
+                  title: Text(m.$1, style: theme.textTheme.bodyMedium),
+                  subtitle: Text(m.$3, style: theme.textTheme.labelSmall),
+                  trailing: TextButton(
+                    onPressed: () => _importQuickModel(m.$1, m.$2),
+                    child: const Text('Add'),
+                  ),
+                ),
+              )),
+
+              // Custom URL import
+              const SizedBox(height: 16),
+              Text('Or paste a GGUF URL', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _ggufUrlController,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  labelText: 'GGUF File URL',
+                  border: const OutlineInputBorder(),
+                  hintText: 'https://huggingface.co/.../model-Q4_K_M.gguf',
+                  prefixIcon: const Icon(Icons.link),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.content_paste),
+                    onPressed: () {
+                      // TODO: clipboard paste
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _customModelNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Model Name (optional)',
+                  border: OutlineInputBorder(),
+                  hintText: 'My Custom Model',
+                ),
+              ),
+              if (_importError != null) ...[
+                const SizedBox(height: 8),
+                Text(_importError!, style: TextStyle(color: theme.colorScheme.error, fontSize: 12)),
+              ],
+              const SizedBox(height: 8),
+              FilledButton.tonal(
+                onPressed: _importCustomModel,
+                child: const Text('Import Model'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 24),
+    ];
+  }
+
+  // ==================== Actions ====================
+
+  Future<void> _testOllamaConnection() async {
+    setState(() { _testing = true; _testSuccess = false; });
     try {
+      final url = _apiEndpointController.text.trim();
       final config = BackendConfig(
         id: 'test',
         name: 'Test',
-        provider: ApiProvider.openai,
-        baseUrl: _apiEndpointController.text,
-        apiKey: _apiKeyController.text,
+        provider: ApiProvider.ollama,
+        baseUrl: url,
         defaultModel: _modelNameController.text,
       );
-
-      final backends = BackendManager.instance;
-      final success = await backends.testConnection(config);
-
-      if (mounted) {
-        setState(() { _testing = false; _testSuccess = success; });
-      }
+      final success = await BackendManager.instance.testConnection(config);
+      if (mounted) setState(() { _testing = false; _testSuccess = success; });
     } catch (e) {
-      if (mounted) {
-        setState(() { _testing = false; _testSuccess = false; });
-      }
+      if (mounted) setState(() { _testing = false; _testSuccess = false; });
     }
   }
 
+  void _importQuickModel(String name, String url) {
+    final id = 'builtin-${name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-')}';
+    final model = ModelEntry(
+      id: id,
+      name: name,
+      description: 'Downloaded from HuggingFace',
+      url: url,
+      sizeBytes: 0,
+      ramRequiredMB: 0,
+      quantization: 'Q4_K_M',
+      contextLength: 8192,
+      capabilities: ['chat'],
+      recommendedTier: DeviceTier.flagship,
+    );
+    ModelCatalog.instance.addModel(model);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Added: $name. Download from Model Catalog later.')),
+    );
+  }
+
+  void _importCustomModel() {
+    final url = _ggufUrlController.text.trim();
+    if (url.isEmpty || !url.startsWith('http')) {
+      setState(() => _importError = 'Please enter a valid URL starting with http');
+      return;
+    }
+    if (!url.toLowerCase().endsWith('.gguf') && !url.contains('/resolve/')) {
+      setState(() => _importError = 'URL should point to a .gguf file');
+      return;
+    }
+    final name = _customModelNameController.text.trim().isNotEmpty
+      ? _customModelNameController.text.trim()
+      : url.split('/').last.replaceAll('.gguf', '').replaceAll('-Q4_K_M', '');
+    final id = 'custom-${DateTime.now().millisecondsSinceEpoch}';
+    final model = ModelEntry(
+      id: id,
+      name: name,
+      description: 'Custom imported model',
+      url: url,
+      sizeBytes: 0,
+      ramRequiredMB: 0,
+      quantization: 'Q4_K_M',
+      contextLength: 8192,
+      capabilities: ['chat'],
+      recommendedTier: DeviceTier.flagship,
+    );
+    ModelCatalog.instance.addModel(model);
+    setState(() { _importError = null; });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Added: $name')),
+    );
+  }
+
   void _completeOnboarding() {
-    // Register the backend
+    // Register backends based on selection
     if (_selectedMode != 'local') {
-      final provider = switch (_apiEndpointController.text) {
-        _ when _apiEndpointController.text.contains('anthropic') => ApiProvider.anthropic,
-        _ when _apiEndpointController.text.contains('ollama') => ApiProvider.ollama,
-        _ => ApiProvider.openai,
-      };
+      final provider = _selectedProvider == 'ollama' ? ApiProvider.ollama
+        : _selectedProvider == 'anthropic' ? ApiProvider.anthropic
+        : ApiProvider.openai;
 
       BackendManager.instance.registerBackend(BackendConfig(
-        id: 'default-cloud',
-        name: 'Cloud (${_modelNameController.text})',
+        id: 'default-${_selectedProvider}',
+        name: _selectedProvider == 'ollama' ? 'Ollama' : 'Cloud (${_modelNameController.text})',
         provider: provider,
-        baseUrl: _apiEndpointController.text,
-        apiKey: _apiKeyController.text,
-        defaultModel: _modelNameController.text,
+        baseUrl: _apiEndpointController.text.trim(),
+        apiKey: _apiKeyController.text.trim(),
+        defaultModel: _modelNameController.text.trim(),
         isDefault: true,
       ));
     }
 
     // Complete onboarding
     ref.read(onboardingCompleteProvider.notifier).state = true;
-
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const ChatScreen()),
     );
@@ -325,11 +534,11 @@ class _ModeCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(icon, size: 36, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-              const SizedBox(width: 20),
+              Icon(icon, size: 32, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +546,7 @@ class _ModeCard extends StatelessWidget {
                     Text(title, style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                     )),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     )),

@@ -93,20 +93,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
       drawer: _buildDrawer(theme, conversations),
-      body: Column(
-        children: [
-          // Messages list
-          Expanded(
-            child: messages.isEmpty
-                ? _buildWelcomeChat(theme)
-                : _buildMessageList(theme, messages),
-          ),
-          // Pending attachments
-          if (_pendingAttachments.isNotEmpty)
-            _buildAttachmentBar(theme),
-          // Input area
-          _buildInputArea(theme),
-        ],
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Messages list
+            Expanded(
+              child: messages.isEmpty
+                  ? _buildWelcomeChat(theme)
+                  : _buildMessageList(theme, messages),
+            ),
+            // Pending attachments
+            if (_pendingAttachments.isNotEmpty)
+              _buildAttachmentBar(theme),
+            // Input area
+            _buildInputArea(theme),
+          ],
+        ),
       ),
     );
   }
