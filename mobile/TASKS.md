@@ -1,61 +1,69 @@
 # Tekton Mobile — Feature Gap & Task List
 
-## Feature Comparison vs Uncensored-Local-AI-Multiplatform
+## Completed Tasks
 
-| Feature | Us | Them | Status |
-|---------|:--:|:----:|--------|
-| Dark mode (system + manual toggle) | ✅* | ✅ | ✅ Have it (system follows OS), but **no manual toggle in Settings** |
-| Chat with local model | ✅ | ✅ | Done |
-| Streaming responses | ✅ | ✅ | Done |
-| Chat history (persistent, Hive) | ✅ | ✅ | Done |
-| Download GGUF models from built-in catalog | ✅ | ✅ | Done (BuiltInModels catalog) |
-| **Custom model import (URL + file picker)** | ❌ | ✅ | **MISSING — add URL input + file browser** |
-| **Delete/unload models** | ❌ | ✅ | **MISSING** (ModelCatalog.deleteModel exists but no UI) |
-| **Model filter (all / downloaded / uncensored / custom)** | ❌ | ✅ | **MISSING** |
-| **Live tokens/sec + loading progress** | ❌ | ✅ | **MISSING** |
-| Local OpenAI-compatible API server | ✅ | ✅ | Done (port 4891, shelf) |
-| **API server toggle in Settings UI** | ❌ | ✅ | **MISSING** (server code exists, no on/off UI) |
-| **API endpoint test page** | ❌ | ✅ | **MISSING** |
-| **Listen on 0.0.0.0 vs localhost toggle** | ❌ | ✅ | **MISSING** (currently hardcoded 0.0.0.0 — **security risk!**) |
-| **Custom API port** | ❌ | ✅ | **MISSING** (hardcoded 4891) |
-| **Global system prompt (jailbreak per model)** | Partial | ✅ | We have per-agent systemPrompt, but **no global per-model system prompt** |
-| **Inference params UI (temp, top_p, top_k, context, threads)** | Partial | ✅ | InferenceParams in AgentConfig exists, but **no UI sliders** |
-| Multi-agent routing | ✅ | ❌ | We have this, they don't |
-| Memory system (Ebbinghaus) | ✅ | 🔄 | They have "planned", we have it |
-| Progressive install (chat → engine → model → agents) | ✅ | ❌ | Unique to us |
-| Forge integration (product engineering) | ❌ | ❌ | Neither has it |
-| Tool system (8 tools) | ✅ | ❌ | Unique to us |
-| Secure tunnel (WireGuard/Tailscale) | ✅ | ❌ | Unique to us (code exists, no UI) |
+- [x] ~~Dark mode manual toggle~~ — Done (Settings > Appearance > Dark/Light/System)
+- [x] ~~Server on/off toggle in Settings~~ — Done
+- [x] ~~Server port configuration~~ — Done
+- [x] ~~Server bind address toggle (localhost vs 0.0.0.0)~~ — Done (defaults to localhost)
+- [x] ~~Custom model import (GGUF URL)~~ — Done (Add Model button in catalog)
+- [x] ~~Model filter tabs (All/Downloaded/Custom)~~ — Done
+- [x] ~~Model delete with confirmation~~ — Done
+- [x] ~~Per-model system prompt~~ — Done (edit backend > system prompt)
+- [x] ~~Inference params UI~~ — Done (temperature, top_p, top_k, context, threads)
+- [x] ~~Remove all emojis~~ — Done (Material Icons + text tags)
+- [x] ~~New app icon~~ — Done (dark bg, teal T)
+- [x] ~~Crash fix: removed TektonServerService from manifest~~ — Done
+- [x] ~~Crash fix: Hive init is now crash-safe with recovery~~ — Done
+- [x] ~~Network security config fixed~~ — Done
 
-## Task List (Priority Order)
+## Pending Tasks
 
-### 🔴 Critical (Security + Core Parity)
+### High Priority
+- [ ] **1. Tokens/sec display** — Show inference speed during streaming. File: `chat_screen.dart`, `local_inference.dart`
+- [ ] **2. Model download progress bar** — Real-time download % with cancel. File: `install_manager.dart`, model catalog screen
+- [ ] **3. API endpoint test page** — Button to test /v1/models and /v1/chat/completions. File: new `api_test_screen.dart`
+- [ ] **4. 3D Print File Generator** — User describes a part or shares a part number, AI generates STL/OBJ for 3D printing. File: new `domain/printing/` directory, new screen
 
-- [ ] **1. Server bind address toggle** — Change default to `InternetAddress.loopback` (127.0.0.1). Add `0.0.0.0` as opt-in. File: `lib/domain/server/tekton_server.dart`
-- [ ] **2. Server on/off toggle in Settings** — Add switch + status indicator. File: `lib/presentation/screens/settings_screen.dart`
-- [ ] **3. Custom model import** — Add "Add Model" button to model catalog. Accept: GGUF URL, local file picker. File: `lib/domain/install/model_catalog.dart`, `lib/presentation/screens/model_catalog_screen.dart`
-- [ ] **4. Model delete / unload UI** — Swipe-to-delete on downloaded models, load/unload toggle. File: `lib/presentation/screens/model_catalog_screen.dart`
+### Nice to Have
+- [ ] **5. Export/import conversations** — JSON export/import for chat history
+- [ ] **6. Logs screen** — Real-time log viewer. File: new `logs_screen.dart`
+- [ ] **7. Forge screen** — Browse Forge projects, see status, kick off new ones from mobile
+- [ ] **8. Secure tunnel UI** — WireGuard/Tailscale configuration screen
 
-### 🟡 Important (Feature Parity)
+## 3D Printing Feature Design
 
-- [ ] **5. Dark mode manual toggle** — Settings → Appearance → Light / Dark / System. File: `lib/presentation/screens/settings_screen.dart`, `lib/app.dart`
-- [ ] **6. Model filter tabs** — All / Downloaded / Custom tabs on model catalog. File: `lib/presentation/screens/model_catalog_screen.dart`
-- [ ] **7. Per-model system prompt** — Each model gets its own default system prompt override. File: `lib/domain/llm/llm_backend.dart`, settings screen
-- [ ] **8. Inference params UI** — Temperature, top_p, top_k, context length, thread count sliders. File: `lib/presentation/screens/agent_config_screen.dart`
-- [ ] **9. Live tokens/sec + loading progress** — Show inference speed during streaming. File: `lib/presentation/screens/chat_screen.dart`, `lib/domain/llm/local_inference.dart`
-- [ ] **10. Custom API port** — Editable port field in Settings → Server. File: `lib/domain/server/tekton_server.dart`, settings screen
+### User Flow
+1. User opens "3D Print" tab in app
+2. Options:
+   - **Text to CAD**: Describe a part ("bracket that fits a 2x4 and holds a 1/2 pipe") → AI generates OpenSCAD code → renders STL
+   - **Part Number Lookup**: Enter a part number ("IKEA 101761") → AI searches for dimensions → generates CAD model
+   - **Photo to CAD**: Take photo of a part → AI estimates dimensions → generates model
+3. Preview the 3D model in-app (simple wireframe viewer)
+4. Export as STL, OBJ, or 3MF for printing
+5. Share directly to slicer apps (PrusaSlicer, Cura, etc.)
 
-### 🟢 Nice to Have (Competitive Edge)
+### Architecture
+```
+domain/printing/
+├── cad_generator.dart      # OpenSCAD code generation via LLM
+├── stl_exporter.dart        # Convert OpenSCAD output to STL binary
+├── part_catalog.dart        # Known part dimensions database
+├── model_previewer.dart    # Simple 3D wireframe renderer (OpenGL/Metal)
+└── print_coordinator.dart  # Orchestrate generation → preview → export
+```
 
-- [ ] **11. API endpoint test page** — Button to test `/v1/models` and `/v1/chat/completions`. File: new `lib/presentation/screens/api_test_screen.dart`
-- [ ] **12. Forge screen** — Browse Forge projects, see status, kick off new ones from mobile. Files: new `lib/presentation/screens/forge_screen.dart`, `lib/domain/forge/`
-- [ ] **13. Model download progress bar** — Real-time download % with cancel. File: `lib/domain/install/install_manager.dart`, model catalog screen
-- [ ] **14. Export/import conversations** — JSON export/import for chat history. File: `lib/domain/chat/chat_storage.dart`
-- [ ] **15. Logs screen** — Real-time log viewer (like their logs_screen.dart). File: new `lib/presentation/screens/logs_screen.dart`
+### Implementation Notes
+- OpenSCAD is the easiest intermediate format (text-based, LLM can generate it)
+- STL export from OpenSCAD data structures is straightforward (triangulated mesh)
+- For preview: use `flutter_opengl` or `three_dart_jsm` for in-app 3D viewing
+- Part catalog: start with common fasteners, brackets, and mechanical parts
+- Photo to CAD: use local vision model (Gemma 4 multimodal) or remote API
+- The same local LLM infrastructure (llama.cpp) drives the CAD generation
 
-## APK Location
+## APK Build Location
 
 ```
-C:\Users\Massi\pi-agent\tekton\mobile\build\app\outputs\flutter-apk\app-debug.apk
+C:\Users\Massi\pi-agent\tekton\mobile\build\app\outputs\flutter-apk\app-arm64-v8a-release.apk  (21MB)
+C:\Users\Massi\pi-agent\tekton\mobile\build\app\outputs\flutter-apk\app-release.apk             (21MB)
 ```
-151MB (debug, includes all ABIs + debug symbols). Release build would be ~40-50MB.
