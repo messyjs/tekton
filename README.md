@@ -1,6 +1,6 @@
 # ⚡ Tekton
 
-Standalone terminal coding agent combining Pi SDK, Hermes learning loop, OpenMythos adaptive computation, Caveman compression, and context hygiene.
+Standalone terminal coding agent **and mobile AI platform** combining Pi SDK, Hermes learning loop, OpenMythos adaptive computation, Caveman compression, and context hygiene.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -79,9 +79,23 @@ npx tekton          # Start interactive session
 | Groq | llama3, mixtral, gemma | API |
 | Together | 100+ open source models | API |
 
+## Mobile App
+
+Tekton also includes a Flutter-based mobile app (`mobile/`) providing:
+
+- **Multi-backend chat** — OpenAI, Anthropic, Ollama, custom endpoints
+- **On-device inference** — llama.cpp FFI for Gemma models
+- **Progressive install** — Chat-only → Engine → Models → Agents
+- **Multi-agent orchestration** — Director (auto-route) + User (manual) modes
+- **Tool system** — Filesystem, web search, calculator, doc analysis, code exec
+- **Memory** — Persistent cross-conversation memory with forgetting curve
+- **Server mode** — Act as an OpenAI-compatible API for other devices
+
+See [mobile/README.md](mobile/README.md) for details.
+
 ## Architecture
 
-8 packages in a monorepo:
+8 packages in a monorepo + Flutter mobile app:
 
 ```
 tekton/
@@ -93,7 +107,8 @@ tekton/
 ├── packages/voice/          # Voice I/O: STT/TTS/recording
 ├── packages/dashboard/       # Web UI: 11 pages (incl. Documents), REST API
 ├── packages/ml-ops/          # Training: QLoRA, ternary, GRPO
-└── packages/docling-service/ # Document parsing sidecar (Python)
+├── packages/docling-service/ # Document parsing sidecar (Python)
+└── mobile/                   # Flutter app: Android + Desktop AI platform
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full architecture details.
