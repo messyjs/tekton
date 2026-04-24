@@ -1,0 +1,40 @@
+{
+  "criteria": [
+    {
+      "name": "feasibility",
+      "description": "Can this be built with available tools and reasonable effort?",
+      "weight": 1.0,
+      "rubric": "1-3: requires technology that doesn't exist or extreme effort. 4-6: buildable but significant unknowns. 7-9: clearly buildable with known tech. 10: trivial to build."
+    },
+    {
+      "name": "clarity",
+      "description": "Is the brief unambiguous? Could a developer start working from this?",
+      "weight": 1.0,
+      "rubric": "1-3: vague, contradictory, or missing key details. 4-6: mostly clear but some ambiguity. 7-9: clear and actionable. 10: crystal clear, no questions."
+    },
+    {
+      "name": "completeness",
+      "description": "Are user stories, technical approach, and risks adequately covered?",
+      "weight": 1.0,
+      "rubric": "1-3: major gaps. 4-6: covers basics but missing edge cases. 7-9: thorough. 10: comprehensive."
+    },
+    {
+      "name": "originality",
+      "description": "Is this worth building? Does it solve a real problem?",
+      "weight": 0.5,
+      "rubric": "1-3: no clear value. 4-6: incremental value. 7-9: clear value. 10: compelling."
+    },
+    {
+      "name": "scopeAppropriate",
+      "description": "Is the scope achievable in a reasonable number of agent sessions?",
+      "weight": 1.0,
+      "rubric": "1-3: would take hundreds of sessions. 4-6: large but possible. 7-9: well-scoped. 10: minimal scope, quick build."
+    }
+  ],
+  "thresholds": {
+    "approveMinAverage": 7,
+    "approveMinIndividual": 4,
+    "rejectMaxAverage": 3
+  },
+  "maxRevisions": 3
+}

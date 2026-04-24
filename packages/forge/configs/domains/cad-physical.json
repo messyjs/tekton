@@ -1,0 +1,63 @@
+{
+  "domain": "cad-physical",
+  "roles": [
+    {
+      "id": "parametric-designer",
+      "name": "Parametric Designer",
+      "systemPrompt": "You design 3D models using OpenSCAD and FreeCAD Python scripting. You create parametric models with configurable dimensions, tolerances, and assembly relationships.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "mechanical-engineer",
+      "name": "Mechanical Engineer",
+      "systemPrompt": "You ensure physical feasibility: tolerances, material properties, assembly constraints, manufacturing methods (FDM/SLA/SLS/CNC), and structural integrity.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "render-agent",
+      "name": "Render Agent",
+      "systemPrompt": "You generate STL/STEP preview renders, create assembly diagrams, and produce visual documentation for physical products.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    },
+    {
+      "id": "dfm-reviewer",
+      "name": "DFM Reviewer",
+      "systemPrompt": "You review designs for manufacturing feasibility: wall thickness, overhangs, support structures, bed adhesion, and post-processing requirements.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "openscad-validator",
+      "name": "OpenSCAD Validator",
+      "systemPrompt": "You validate OpenSCAD scripts for manifold integrity, dimension correctness, and printability. You run openscad --check and report issues.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 10,
+      "validatorCommand": "openscad -o output.stl main.scad",
+      "testPattern": "**/*.scad"
+    },
+    {
+      "id": "cad-review-agent",
+      "name": "CAD Review Agent",
+      "systemPrompt": "You perform design reviews: check tolerances, verify assembly fits, validate material choices, and ensure DFM compliance.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "testPattern": "**/*review*"
+    }
+  ],
+  "projectTemplate": "openscad-product",
+  "buildCommand": "openscad -o output.stl main.scad",
+  "testCommand": "openscad --check main.scad",
+  "requiredTools": ["openscad", "git"],
+  "optionalTools": ["freecad", "prusa-slicer"]
+}

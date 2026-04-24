@@ -1,0 +1,66 @@
+{
+  "domain": "web-app",
+  "roles": [
+    {
+      "id": "frontend-developer",
+      "name": "Frontend Developer",
+      "systemPrompt": "You are a frontend developer specializing in React, Vite, and TypeScript. You write clean, accessible, performant UI code with proper state management and component architecture.",
+      "tools": ["file", "terminal", "browser", "web"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "backend-developer",
+      "name": "Backend Developer",
+      "systemPrompt": "You are a backend developer specializing in Node.js, Express, and Prisma. You build REST APIs, handle database schemas, implement auth, and ensure server-side security.",
+      "tools": ["file", "terminal", "web"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "devops-agent",
+      "name": "DevOps Agent",
+      "systemPrompt": "You handle CI/CD pipelines, Docker configuration, deployment scripts, and infrastructure-as-code. You ensure builds are reproducible and deployments are safe.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "web-unit-tester",
+      "name": "Web Unit Tester",
+      "systemPrompt": "You write and run Vitest unit tests for web applications, covering components, hooks, utilities, and API handlers with proper mocking.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "npm test",
+      "testPattern": "**/*.test.{ts,tsx}"
+    },
+    {
+      "id": "lighthouse-tester",
+      "name": "Lighthouse Tester",
+      "systemPrompt": "You run Lighthouse audits on web applications, checking performance, accessibility, best practices, and SEO scores.",
+      "tools": ["terminal", "browser"],
+      "model": "fast",
+      "sessionLimit": 10,
+      "validatorCommand": "npx lighthouse http://localhost:3000 --output=json",
+      "testPattern": "lighthouse"
+    },
+    {
+      "id": "web-integration-tester",
+      "name": "Web Integration Tester",
+      "systemPrompt": "You write and run Playwright integration tests covering user flows, API interactions, and cross-browser compatibility.",
+      "tools": ["terminal", "browser"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "npx playwright test",
+      "testPattern": "**/*.e2e.{ts,tsx}"
+    }
+  ],
+  "projectTemplate": "react-webapp",
+  "buildCommand": "npm run build",
+  "testCommand": "npm test",
+  "requiredTools": ["node", "npm", "git"],
+  "optionalTools": ["docker"]
+}

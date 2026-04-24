@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.js.map
+*.d.ts.map
+.DS_Store
+*.db
+*.sqlite
+.env
+~/.tekton/
+packages/docling-service/__pycache__/
+packages/docling-service/*.egg-info/
+packages/docling-service/.venv/
+coverage/
+.vitest/
+*.log
+tmp/
+temp/

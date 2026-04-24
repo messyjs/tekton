@@ -1,0 +1,197 @@
+{
+  "providers": {
+    "ollama": {
+      "id": "ollama",
+      "name": "Ollama (Local)",
+      "baseUrl": "http://localhost:11434",
+      "priority": 0,
+      "models": ["gemma3:27b", "gemma3:12b", "qwen3:8b", "deepseek-r1:14b", "llama3.3:70b", "codellama:13b"],
+      "apiMode": "chat_completions",
+      "local": true
+    },
+    "lmstudio": {
+      "id": "lmstudio",
+      "name": "LM Studio (Local)",
+      "baseUrl": "http://localhost:1234/v1",
+      "priority": 0,
+      "models": ["*"],
+      "apiMode": "chat_completions",
+      "local": true
+    },
+    "anthropic": {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "priority": 3,
+      "models": ["claude-opus-4-6", "claude-opus-4-5", "claude-sonnet-4", "claude-3.5-sonnet", "claude-3-haiku"],
+      "apiMode": "anthropic_messages",
+      "costPer1KInput": 0.003,
+      "costPer1KOutput": 0.015
+    },
+    "openai": {
+      "id": "openai",
+      "name": "OpenAI",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "priority": 2,
+      "models": ["gpt-5.4", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o3-pro", "o4-mini", "gpt-4o", "gpt-4o-mini"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.005,
+      "costPer1KOutput": 0.015
+    },
+    "google": {
+      "id": "google",
+      "name": "Google AI",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+      "apiKeyEnv": "GOOGLE_API_KEY",
+      "priority": 4,
+      "models": ["gemma-4-27b", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.00125,
+      "costPer1KOutput": 0.005
+    },
+    "zhipu": {
+      "id": "zhipu",
+      "name": "GLM (ZhipuAI)",
+      "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+      "apiKeyEnv": "GLM_API_KEY",
+      "priority": 1,
+      "models": ["glm-5.1", "glm-z1-9b", "glm-4-flash"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.001,
+      "costPer1KOutput": 0.001
+    },
+    "deepseek": {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "priority": 5,
+      "models": ["deepseek-r1", "deepseek-chat", "deepseek-coder"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.0014,
+      "costPer1KOutput": 0.0028
+    },
+    "groq": {
+      "id": "groq",
+      "name": "Groq",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "apiKeyEnv": "GROQ_API_KEY",
+      "priority": 6,
+      "models": ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.00059,
+      "costPer1KOutput": 0.00079
+    },
+    "mistral": {
+      "id": "mistral",
+      "name": "Mistral AI",
+      "baseUrl": "https://api.mistral.ai/v1",
+      "apiKeyEnv": "MISTRAL_API_KEY",
+      "priority": 7,
+      "models": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest", "codestral-latest"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.002,
+      "costPer1KOutput": 0.006
+    },
+    "xai": {
+      "id": "xai",
+      "name": "xAI",
+      "baseUrl": "https://api.x.ai/v1",
+      "apiKeyEnv": "XAI_API_KEY",
+      "priority": 8,
+      "models": ["grok-3", "grok-3-mini"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.003,
+      "costPer1KOutput": 0.015
+    },
+    "cerebras": {
+      "id": "cerebras",
+      "name": "Cerebras",
+      "baseUrl": "https://api.cerebras.ai/v1",
+      "apiKeyEnv": "CEREBRAS_API_KEY",
+      "priority": 9,
+      "models": ["llama-3.3-70b", "llama-3.1-8b"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.00085,
+      "costPer1KOutput": 0.0017
+    },
+    "together": {
+      "id": "together",
+      "name": "Together AI",
+      "baseUrl": "https://api.together.xyz/v1",
+      "apiKeyEnv": "TOGETHER_API_KEY",
+      "priority": 10,
+      "models": ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "meta-llama/Llama-3.1-405B-Instruct-Turbo", "Qwen/Qwen2.5-72B-Instruct-Turbo", "deepseek-ai/DeepSeek-R1"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.00088,
+      "costPer1KOutput": 0.00264
+    },
+    "fireworks": {
+      "id": "fireworks",
+      "name": "Fireworks AI",
+      "baseUrl": "https://api.fireworks.ai/inference/v1",
+      "apiKeyEnv": "FIREWORKS_API_KEY",
+      "priority": 11,
+      "models": ["accounts/fireworks/models/llama-v3p3-70b-instruct", "accounts/fireworks/models/qwen2p5-72b-instruct", "accounts/fireworks/models/deepseek-r1"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.0009,
+      "costPer1KOutput": 0.0009
+    },
+    "openrouter": {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "priority": 12,
+      "models": ["*"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.002,
+      "costPer1KOutput": 0.006
+    },
+    "nous": {
+      "id": "nous",
+      "name": "Nous Research",
+      "baseUrl": "https://api.nousresearch.com/v1",
+      "apiKeyEnv": "NOUS_API_KEY",
+      "priority": 13,
+      "models": ["hermes-3-llama-3.1-405b", "hermes-3-llama-3.1-70b"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.003,
+      "costPer1KOutput": 0.015
+    },
+    "perplexity": {
+      "id": "perplexity",
+      "name": "Perplexity AI",
+      "baseUrl": "https://api.perplexity.ai",
+      "apiKeyEnv": "PERPLEXITY_API_KEY",
+      "priority": 14,
+      "models": ["sonar-pro", "sonar"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.001,
+      "costPer1KOutput": 0.001
+    },
+    "cohere": {
+      "id": "cohere",
+      "name": "Cohere",
+      "baseUrl": "https://api.cohere.ai/v2",
+      "apiKeyEnv": "COHERE_API_KEY",
+      "priority": 15,
+      "models": ["command-r-plus", "command-r"],
+      "apiMode": "chat_completions",
+      "costPer1KInput": 0.0025,
+      "costPer1KOutput": 0.01
+    }
+  },
+  "modelAliases": {
+    "fast": "${models.fast.model}",
+    "deep": "${models.deep.model}",
+    "local": "ollama/gemma3:12b",
+    "cheap": "zhipu/glm-4-flash",
+    "smart": "anthropic/claude-sonnet-4",
+    "reasoning": "openai/o3-pro",
+    "code": "deepseek/deepseek-coder",
+    "speed": "groq/llama-3.3-70b-versatile"
+  }
+}

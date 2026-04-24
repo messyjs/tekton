@@ -1,0 +1,49 @@
+{
+  "gateway": {
+    "platforms": {
+      "telegram": {
+        "enabled": false,
+        "allowed_users": [],
+        "bot_token_env": "TELEGRAM_BOT_TOKEN"
+      },
+      "discord": {
+        "enabled": false,
+        "allowed_users": [],
+        "require_mention": true,
+        "bot_token_env": "DISCORD_BOT_TOKEN"
+      },
+      "slack": {
+        "enabled": false,
+        "bot_token_env": "SLACK_BOT_TOKEN",
+        "app_token_env": "SLACK_APP_TOKEN"
+      },
+      "whatsapp": {
+        "enabled": false
+      },
+      "signal": {
+        "enabled": false
+      },
+      "matrix": {
+        "enabled": false
+      },
+      "email": {
+        "enabled": false
+      },
+      "sms": {
+        "enabled": false
+      },
+      "webhook": {
+        "enabled": true,
+        "port": 7701,
+        "secret": ""
+      },
+      "api-server": {
+        "enabled": true,
+        "port": 7700,
+        "auth_token_env": "TEKTON_API_TOKEN"
+      }
+    },
+    "maxMessageLength": 4096,
+    "rateLimitPerMinute": 30
+  }
+}

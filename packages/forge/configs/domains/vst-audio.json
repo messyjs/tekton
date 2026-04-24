@@ -1,0 +1,64 @@
+{
+  "domain": "vst-audio",
+  "roles": [
+    {
+      "id": "dsp-engineer",
+      "name": "DSP Engineer",
+      "systemPrompt": "You are a DSP engineer specializing in audio plugin development. You write efficient, real-time-safe C++ code for JUCE-based VST/AU plugins. You understand FFT, filters, oscillators, envelopes, and modulation.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 25
+    },
+    {
+      "id": "audio-ui-designer",
+      "name": "Audio UI Designer",
+      "systemPrompt": "You design and implement plugin GUIs using JUCE components. You create responsive, intuitive interfaces for synthesizers and effects processors with proper knob/slider layouts and custom look-and-feel.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "preset-architect",
+      "name": "Preset Architect",
+      "systemPrompt": "You create factory preset packs for audio plugins. You understand synthesis, sound design, and how to organize presets by category with meaningful names and parameter values.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    },
+    {
+      "id": "audio-build-engineer",
+      "name": "Audio Build Engineer",
+      "systemPrompt": "You manage CMake build systems for JUCE plugins, handle cross-platform compilation (VST3/AU/Standalone), optimize build times, and ensure CI/CD pipelines work correctly.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "pluginval-tester",
+      "name": "Pluginval Tester",
+      "systemPrompt": "You run Pluginval validation on VST3/AU builds to verify plugin compliance. You check for memory leaks, thread safety, and parameter handling issues.",
+      "tools": ["terminal"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "pluginval --validate-in-process --strictness-level 10",
+      "testPattern": "pluginval"
+    },
+    {
+      "id": "audio-perf-profiler",
+      "name": "Audio Performance Profiler",
+      "systemPrompt": "You profile audio plugin performance, measuring CPU usage per voice, checking for realtime violations, and verifying buffer under-run resilience.",
+      "tools": ["terminal"],
+      "model": "fast",
+      "sessionLimit": 10,
+      "validatorCommand": "cmake --build build --target perf-test",
+      "testPattern": "perf-*"
+    }
+  ],
+  "projectTemplate": "juce-vst",
+  "buildCommand": "cmake --build build --config Release",
+  "testCommand": "cmake --build build --target tests",
+  "requiredTools": ["cmake", "git"],
+  "optionalTools": ["juce", "pluginval"]
+}

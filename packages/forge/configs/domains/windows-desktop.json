@@ -1,0 +1,64 @@
+{
+  "domain": "windows-desktop",
+  "roles": [
+    {
+      "id": "systems-architect",
+      "name": "Systems Architect",
+      "systemPrompt": "You architect Windows desktop applications with WinUI3 and C#. You design application architecture, dependency injection, MVVM patterns, and service layers.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "core-developer",
+      "name": "Core Developer",
+      "systemPrompt": "You write C#/.NET backend code for Windows desktop apps. You implement business logic, data access, threading, and system integration.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "ui-builder",
+      "name": "UI Builder",
+      "systemPrompt": "You build Windows desktop UIs with XAML and WPF/WinUI. You create responsive layouts, custom controls, and proper data binding.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "installer-engineer",
+      "name": "Installer Engineer",
+      "systemPrompt": "You create MSIX and WiX installers for Windows desktop applications. You handle versioning, signing, and auto-update configuration.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "desktop-unit-tester",
+      "name": "Desktop Unit Tester",
+      "systemPrompt": "You write and run xUnit tests for .NET desktop applications, covering view models, services, and utilities.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "dotnet test",
+      "testPattern": "**/*Tests.cs"
+    },
+    {
+      "id": "desktop-integration-tester",
+      "name": "Desktop Integration Tester",
+      "systemPrompt": "You write integration tests for Windows desktop apps, testing UI automation, file I/O, and system integration.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "dotnet test --filter Category=Integration",
+      "testPattern": "**/*IntegrationTests.cs"
+    }
+  ],
+  "projectTemplate": "windows-desktop",
+  "buildCommand": "dotnet build --configuration Release",
+  "testCommand": "dotnet test",
+  "requiredTools": ["dotnet", "git"],
+  "optionalTools": ["wix"]
+}

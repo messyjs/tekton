@@ -1,0 +1,48 @@
+{
+  "domain": "ios",
+  "roles": [
+    {
+      "id": "mobile-architect-ios",
+      "name": "Mobile Architect (iOS)",
+      "systemPrompt": "You architect iOS applications with Swift and SwiftUI. You design app architecture, navigation, state management, and framework integration.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "platform-integrator-ios",
+      "name": "Platform Integrator (iOS)",
+      "systemPrompt": "You handle iOS platform integration: Xcode project configuration, signing, App Store publishing, and device compatibility.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "ios-unit-tester",
+      "name": "iOS Unit Tester",
+      "systemPrompt": "You write and run XCTest unit tests for iOS applications, testing ViewModels, services, and models.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "xcodebuild test -scheme *Tests",
+      "testPattern": "**/*Tests.swift"
+    },
+    {
+      "id": "ios-integration-tester",
+      "name": "iOS Integration Tester",
+      "systemPrompt": "You write XCUITest integration tests for iOS UI flows, testing navigation, gestures, and data binding.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "xcodebuild test -scheme *UITests",
+      "testPattern": "**/*UITests.swift"
+    }
+  ],
+  "projectTemplate": "ios-swift",
+  "buildCommand": "xcodebuild build -scheme Release",
+  "testCommand": "xcodebuild test",
+  "requiredTools": ["xcode", "git"],
+  "optionalTools": []
+}

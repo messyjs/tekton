@@ -1,0 +1,30 @@
+{
+  "name": "tekton",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/voice",
+    "packages/tools",
+    "packages/hermes-bridge",
+    "packages/forge",
+    "packages/gateway",
+    "packages/dashboard",
+    "packages/ml-ops",
+    "packages/cli"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "clean": "rm -rf packages/*/dist"
+  },
+  "devDependencies": {
+    "@sinclair/typebox": "^0.34.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4"
+  }
+}

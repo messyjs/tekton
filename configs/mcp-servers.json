@@ -1,0 +1,10 @@
+{
+  "tekton-docling": {
+    "command": "tekton-docling",
+    "args": ["--mode", "mcp"],
+    "description": "Document parsing, OCR, chunking via Docling",
+    "auto_start": false,
+    "health_check": "http://localhost:7701/health",
+    "install_hint": "pip install tekton-docling"
+  }
+}

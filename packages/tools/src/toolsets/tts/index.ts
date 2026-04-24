@@ -1,0 +1,1 @@
+export { textToSpeechTool } from "./tts.js";

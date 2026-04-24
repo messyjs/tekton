@@ -1,0 +1,113 @@
+[
+  {
+    "id": "architect-tasks",
+    "name": "Architecture tasks to deep model",
+    "description": "Route architecture and design tasks to the deep model",
+    "conditions": [{ "type": "keyword", "value": "architect" }],
+    "priority": 95,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic" }
+  },
+  {
+    "id": "security-audit",
+    "name": "Security audit to deep model",
+    "description": "Route security audits to the deep model with fallback",
+    "conditions": [{ "type": "keyword", "value": "security audit" }],
+    "priority": 90,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic", "useFallback": true }
+  },
+  {
+    "id": "refactor-tasks",
+    "name": "Refactor tasks to deep model",
+    "description": "Route refactoring to the deep model",
+    "conditions": [{ "type": "keyword", "value": "refactor" }],
+    "priority": 85,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic" }
+  },
+  {
+    "id": "debug-complex",
+    "name": "Complex debugging to deep model",
+    "description": "Route complex debugging tasks to the deep model",
+    "conditions": [{ "type": "keyword", "value": "debug complex" }],
+    "priority": 80,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic" }
+  },
+  {
+    "id": "migrate-tasks",
+    "name": "Migration tasks to deep model",
+    "description": "Route migration tasks to the deep model",
+    "conditions": [{ "type": "keyword", "value": "migrate" }],
+    "priority": 75,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic" }
+  },
+  {
+    "id": "typo-fixes",
+    "name": "Typo fixes to fast model",
+    "description": "Route typo fixes and simple renames to the fast model",
+    "conditions": [{ "type": "keyword", "value": "typo" }],
+    "priority": 70,
+    "enabled": true,
+    "action": { "model": "fast", "provider": "ollama" }
+  },
+  {
+    "id": "simple-format",
+    "name": "Simple format tasks to fast model",
+    "description": "Route formatting and listing tasks under 50 tokens to the fast model",
+    "conditions": [
+      { "type": "token_below", "value": "50" },
+      { "type": "keyword", "value": "format" }
+    ],
+    "priority": 60,
+    "enabled": true,
+    "action": { "model": "fast", "provider": "ollama" }
+  },
+  {
+    "id": "vision-tasks",
+    "name": "Vision tasks to vision model",
+    "description": "Route image analysis to a vision-capable model",
+    "conditions": [{ "type": "keyword", "value": "analyze image" }],
+    "priority": 55,
+    "enabled": true,
+    "action": { "model": "gpt-4o", "provider": "openai" }
+  },
+  {
+    "id": "long-prompts",
+    "name": "Long prompts to deep model",
+    "description": "Route prompts with more than 500 tokens to the deep model",
+    "conditions": [{ "type": "token_above", "value": "500" }],
+    "priority": 50,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic" }
+  },
+  {
+    "id": "skill-tasks",
+    "name": "Skill-matched tasks to fast model",
+    "description": "Tasks matching a known skill can use the fast model",
+    "conditions": [{ "type": "skill_match", "value": "" }],
+    "priority": 40,
+    "enabled": true,
+    "action": { "model": "fast", "provider": "ollama" }
+  },
+  {
+    "id": "code-tasks",
+    "name": "Code generation to code model",
+    "description": "Route code generation tasks to a code-specialized model",
+    "conditions": [{ "type": "keyword", "value": "write code" }],
+    "priority": 45,
+    "enabled": true,
+    "action": { "model": "deepseek-coder", "provider": "deepseek" }
+  },
+  {
+    "id": "regex-patterns",
+    "name": "Regex pattern routing",
+    "description": "Route tasks matching custom regex patterns",
+    "conditions": [{ "type": "regex", "value": "(?:rewrite|redesign|overhaul)\\s+(?:the\\s+)?(?:system|architecture|module)" }],
+    "priority": 88,
+    "enabled": true,
+    "action": { "model": "deep", "provider": "anthropic" }
+  }
+]

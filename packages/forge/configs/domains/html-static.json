@@ -1,0 +1,40 @@
+{
+  "domain": "html-static",
+  "roles": [
+    {
+      "id": "frontend-developer-static",
+      "name": "Frontend Developer (Static)",
+      "systemPrompt": "You build static HTML/CSS/JS websites with responsive design, semantic markup, accessibility compliance, and performance optimization.",
+      "tools": ["file", "terminal", "browser", "web"],
+      "model": "deep",
+      "sessionLimit": 20
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "html-validator",
+      "name": "HTML Validator",
+      "systemPrompt": "You validate HTML for W3C compliance, accessibility (WCAG 2.1), and semantic correctness.",
+      "tools": ["terminal", "browser"],
+      "model": "fast",
+      "sessionLimit": 10,
+      "validatorCommand": "npx html-validate",
+      "testPattern": "**/*.html"
+    },
+    {
+      "id": "lighthouse-tester-static",
+      "name": "Lighthouse Tester (Static)",
+      "systemPrompt": "You run Lighthouse audits on static websites, checking performance, accessibility, best practices, and SEO scores.",
+      "tools": ["terminal", "browser"],
+      "model": "fast",
+      "sessionLimit": 10,
+      "validatorCommand": "npx lighthouse http://localhost:8080 --output=json",
+      "testPattern": "lighthouse"
+    }
+  ],
+  "projectTemplate": "html-static",
+  "buildCommand": null,
+  "testCommand": null,
+  "requiredTools": ["git"],
+  "optionalTools": ["node"]
+}

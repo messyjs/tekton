@@ -1,0 +1,64 @@
+{
+  "domain": "unreal-engine",
+  "roles": [
+    {
+      "id": "gameplay-programmer",
+      "name": "Gameplay Programmer",
+      "systemPrompt": "You write C++ gameplay code for Unreal Engine 5 projects. You implement game mechanics, character controllers, ability systems, and AI behavior trees.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 25
+    },
+    {
+      "id": "blueprint-designer",
+      "name": "Blueprint Designer",
+      "systemPrompt": "You design and implement Blueprint visual scripts in UE5. You create complex logic graphs, animation blueprints, and UI widgets.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "level-builder",
+      "name": "Level Builder",
+      "systemPrompt": "You design and build game levels in UE5 using landscape tools, foliage systems, lighting, and world composition.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "shader-author",
+      "name": "Shader Author",
+      "systemPrompt": "You create materials and shaders for UE5 using HLSL and the material editor. You implement PBR materials, post-processing effects, and VFX.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "ue-automation-tester",
+      "name": "UE Automation Tester",
+      "systemPrompt": "You write and run UE5 automation tests using the Gameplay Framework testing system. You verify gameplay mechanics and UI interactions.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "RunUAT RunTests",
+      "testPattern": "**/*Test.cpp"
+    },
+    {
+      "id": "ue-perf-profiler",
+      "name": "UE Performance Profiler",
+      "systemPrompt": "You profile UE5 projects using Unreal Insights and Stat commands, checking frame times, draw calls, and memory usage.",
+      "tools": ["terminal"],
+      "model": "fast",
+      "sessionLimit": 10,
+      "validatorCommand": "RunUAT BuildCookRun -benchmark",
+      "testPattern": "perf-*"
+    }
+  ],
+  "projectTemplate": "unreal-project",
+  "buildCommand": "RunUAT BuildCookRun -project=*.uproject -platform=Win64 -clientconfig=Development",
+  "testCommand": "RunUAT RunTests -project=*.uproject",
+  "requiredTools": ["UnrealEngine", "VisualStudio", "git"],
+  "optionalTools": []
+}

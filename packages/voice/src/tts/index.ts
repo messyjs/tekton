@@ -1,0 +1,1 @@
+export { TTSManager } from "./tts-manager.js";

@@ -1,0 +1,44 @@
+{
+  "defaults": {
+    "deep": 25,
+    "standard": 20,
+    "fast": 15,
+    "light": 10
+  },
+  "categories": {
+    "engineer": 20,
+    "designer": 20,
+    "tester": 15,
+    "reviewer": 15,
+    "integrator": 15,
+    "builder": 20
+  },
+  "roleOverrides": {
+    "dsp-engineer": 25,
+    "audio-ui-designer": 20,
+    "preset-architect": 15,
+    "audio-build-engineer": 15,
+    "frontend-developer": 20,
+    "backend-developer": 20,
+    "devops-agent": 15,
+    "systems-architect": 20,
+    "core-developer": 20,
+    "ui-builder": 20,
+    "installer-engineer": 15,
+    "gameplay-programmer": 25,
+    "blueprint-designer": 20,
+    "level-builder": 20,
+    "shader-author": 20,
+    "mobile-architect": 20,
+    "platform-integrator": 15,
+    "parametric-designer": 20,
+    "mechanical-engineer": 20,
+    "render-agent": 15,
+    "dfm-reviewer": 15
+  },
+  "warnings": {
+    "firstWarning": 3,
+    "secondWarning": 2,
+    "finalWarning": 1
+  }
+}

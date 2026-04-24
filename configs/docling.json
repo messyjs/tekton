@@ -1,0 +1,28 @@
+{
+  "enabled": true,
+  "mode": "http",
+  "port": 7701,
+  "ocr": {
+    "enabled": true,
+    "engine": "easyocr",
+    "languages": ["en"]
+  },
+  "tables": {
+    "mode": "accurate"
+  },
+  "vlm": {
+    "enabled": false,
+    "model": "granite-docling"
+  },
+  "chunking": {
+    "default_max_tokens": 512
+  },
+  "cache": {
+    "enabled": true,
+    "dir": "~/.tekton/docling-cache",
+    "max_size_mb": 500
+  },
+  "batch": {
+    "max_concurrent": 4
+  }
+}

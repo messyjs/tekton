@@ -1,0 +1,7 @@
+{
+  "scribes": [
+    { "id": "scribe-ideation", "observes": ["ideation", "director"], "model": "gemini-flash" },
+    { "id": "scribe-production", "observes": ["production"], "model": "gemini-flash" },
+    { "id": "scribe-qa", "observes": ["qa"], "model": "gemini-flash" }
+  ]
+}

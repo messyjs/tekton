@@ -1,0 +1,48 @@
+{
+  "domain": "android",
+  "roles": [
+    {
+      "id": "mobile-architect",
+      "name": "Mobile Architect",
+      "systemPrompt": "You architect Android applications with Kotlin and Jetpack Compose. You design app architecture, navigation, state management, and platform integration.",
+      "tools": ["file", "terminal", "browser"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "platform-integrator-android",
+      "name": "Platform Integrator",
+      "systemPrompt": "You handle Android platform integration: Gradle build configuration, permissions, Play Store publishing, signing, and device compatibility.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "android-unit-tester",
+      "name": "Android Unit Tester",
+      "systemPrompt": "You write and run JUnit tests for Android applications, testing ViewModels, repositories, and utilities.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "./gradlew test",
+      "testPattern": "**/*Test.kt"
+    },
+    {
+      "id": "android-integration-tester",
+      "name": "Android Integration Tester",
+      "systemPrompt": "You write Espresso integration tests for Android UI flows, testing Compose screens, navigation, and data binding.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "./gradlew connectedAndroidTest",
+      "testPattern": "**/*IntegrationTest.kt"
+    }
+  ],
+  "projectTemplate": "android-kotlin",
+  "buildCommand": "./gradlew assembleDebug",
+  "testCommand": "./gradlew test",
+  "requiredTools": ["java", "android-sdk", "git"],
+  "optionalTools": []
+}

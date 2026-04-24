@@ -1,0 +1,34 @@
+{
+  "name": "@tekton/dashboard",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.0",
+    "@sinclair/typebox": "^0.34.0",
+    "@tekton/core": "^0.1.0",
+    "@tekton/gateway": "^0.1.0",
+    "@tekton/hermes-bridge": "^0.1.0",
+    "@tekton/tools": "^0.1.0",
+    "@tekton/voice": "^0.1.0",
+    "better-sqlite3": "^11.0.0",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

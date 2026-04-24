@@ -1,0 +1,56 @@
+{
+  "domain": "cross-platform",
+  "roles": [
+    {
+      "id": "frontend-developer-cross",
+      "name": "Frontend Developer (Cross-Platform)",
+      "systemPrompt": "You build cross-platform desktop apps with React/Svelte and Electron/Tauri. You write UI code that works across Windows, macOS, and Linux.",
+      "tools": ["file", "terminal", "browser", "web"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "backend-developer-cross",
+      "name": "Backend Developer (Cross-Platform)",
+      "systemPrompt": "You write Node.js or Rust backend logic for cross-platform desktop apps: IPC, native integration, file system access, and system tray management.",
+      "tools": ["file", "terminal"],
+      "model": "deep",
+      "sessionLimit": 20
+    },
+    {
+      "id": "platform-integrator-cross",
+      "name": "Platform Integrator (Cross-Platform)",
+      "systemPrompt": "You handle native API integration, packaging, code signing, and auto-updates for cross-platform desktop apps across Windows, macOS, and Linux.",
+      "tools": ["file", "terminal"],
+      "model": "fast",
+      "sessionLimit": 15
+    }
+  ],
+  "testRoles": [
+    {
+      "id": "cross-unit-tester",
+      "name": "Cross-Platform Unit Tester",
+      "systemPrompt": "You write and run Vitest unit tests for cross-platform desktop applications, testing components, stores, and utilities.",
+      "tools": ["terminal", "file"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "npm test",
+      "testPattern": "**/*.test.{ts,tsx}"
+    },
+    {
+      "id": "cross-integration-tester",
+      "name": "Cross-Platform Integration Tester",
+      "systemPrompt": "You write and run Playwright integration tests covering user flows, IPC communication, and native features.",
+      "tools": ["terminal", "browser"],
+      "model": "fast",
+      "sessionLimit": 15,
+      "validatorCommand": "npx playwright test",
+      "testPattern": "**/*.e2e.{ts,tsx}"
+    }
+  ],
+  "projectTemplate": "electron-app",
+  "buildCommand": "npm run build && npm run package",
+  "testCommand": "npm test",
+  "requiredTools": ["node", "npm", "git"],
+  "optionalTools": ["rust", "cargo"]
+}

@@ -1,0 +1,10 @@
+export { TelegramAdapter } from "./telegram.js";
+export { DiscordAdapter } from "./discord.js";
+export { SlackAdapter } from "./slack.js";
+export { WhatsAppAdapter } from "./whatsapp.js";
+export { SignalAdapter } from "./signal.js";
+export { MatrixAdapter } from "./matrix.js";
+export { EmailAdapter } from "./email.js";
+export { SMSAdapter } from "./sms.js";
+export { WebhookAdapter } from "./webhook.js";
+export { ApiServerAdapter } from "./api-server.js";
