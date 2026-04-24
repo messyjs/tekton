@@ -6,8 +6,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:tekton_app/domain/install/install.dart';
 import 'package:tekton_app/presentation/providers/app_providers.dart';
+import 'package:tekton_app/services/logger.dart';
 
 enum ModelFilter { all, downloaded, custom }
 
@@ -23,16 +26,16 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
   int _deviceRamMB = 0;
   bool _checkingRam = false;
   bool _scanningModels = false;
+  String _scanStatus = '';
 
   // Download progress tracking per model
-  final Map<String, double> _downloadProgress = {}; // modelId -> 0.0-1.0
-  final Map<String, bool> _downloading = {}; // modelId -> isDownloading
+  final Map<String, double> _downloadProgress = {};
+  final Map<String, bool> _downloading = {};
 
   @override
   void initState() {
     super.initState();
     _checkRam();
-    _scanForExistingModels();
   }
 
   @override
@@ -49,6 +52,8 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
       }
     }).toList();
 
+    final ramKnown = _deviceRamMB > 0;
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -59,8 +64,8 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
               icon: _scanningModels
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.folder_open),
-              tooltip: 'Scan for downloaded models',
-              onPressed: _scanningModels ? null : _scanForExistingModels,
+              tooltip: 'Browse for GGUF models',
+              onPressed: _scanningModels ? null : _browseForModels,
             ),
             IconButton(
               icon: const Icon(Icons.link),
@@ -95,53 +100,60 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Your Device', style: theme.textTheme.titleSmall),
-                            if (_deviceRamMB > 0)
-                              Text('${(_deviceRamMB / 1024).round()} GB RAM available', style: theme.textTheme.bodySmall?.copyWith(color: Colors.green))
+                            if (ramKnown)
+                              Text(
+                                '${(_deviceRamMB / 1024.0 * 100).round() / 100} GB RAM available (${(_deviceRamMB / 0.65 / 1024).round()} GB total)',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFF84CC16), // lime green
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              )
                             else
-                              Text('Models matching your RAM are highlighted', style: theme.textTheme.bodySmall),
+                              Text('Check your device RAM to filter compatible models', style: theme.textTheme.bodySmall),
                           ],
                         ),
                       ),
-                      FilledButton.tonal(
-                        onPressed: _checkingRam ? null : _checkRam,
-                        child: _checkingRam
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Check RAM'),
+                      // Grayed out when RAM already known
+                      Opacity(
+                        opacity: ramKnown ? 0.5 : 1.0,
+                        child: FilledButton.tonal(
+                          onPressed: ramKnown ? null : _checkRam,
+                          child: _checkingRam
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : Text(ramKnown ? 'Checked' : 'Check RAM'),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
 
+              // Scan status banner
+              if (_scanStatus.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: theme.colorScheme.onSecondaryContainer),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(_scanStatus, style: theme.textTheme.bodySmall)),
+                    ],
+                  ),
+                ),
+
               // Model list
               Expanded(
                 child: filteredModels.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.inbox, size: 48, color: theme.colorScheme.outline),
-                          const SizedBox(height: 16),
-                          Text('No models found', style: theme.textTheme.titleMedium),
-                          const SizedBox(height: 8),
-                          Text(
-                            _filter == ModelFilter.custom
-                              ? 'Import a GGUF model from URL'
-                              : 'Download a model to get started',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.tonal(
-                            onPressed: _scanForExistingModels,
-                            child: Text(_scanningModels ? 'Scanning...' : 'Scan Device for Models'),
-                          ),
-                        ],
-                      ),
-                    )
+                  ? _buildEmptyState(theme)
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                       children: [
-                        if (_filter == ModelFilter.all) ...[
+                        if (_filter == ModelFilter.all && filteredModels.where((m) => !_isCustomModel(m)).isNotEmpty) ...[
                           Text('Recommended for You', style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
                           ...filteredModels.where((m) => !_isCustomModel(m)).map((m) =>
@@ -167,6 +179,52 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
     );
   }
 
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.inbox, size: 48, color: theme.colorScheme.outline),
+          const SizedBox(height: 16),
+          Text('No models found', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(
+            _filter == ModelFilter.custom
+              ? 'Import a GGUF model from URL'
+              : 'Download a model or browse for one on your device',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonal(
+            onPressed: _scanningModels ? null : _browseForModels,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _scanningModels
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.folder_open, size: 18),
+                const SizedBox(width: 8),
+                Text(_scanningModels ? 'Scanning...' : 'Browse for Models'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            onPressed: () => _importFromUrl(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.link, size: 18),
+                const SizedBox(width: 8),
+                const Text('Import from URL'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool _isCustomModel(ModelEntry m) {
     final builtInIds = BuiltInModels.catalog.map((b) => b.id).toSet();
     return !builtInIds.contains(m.id);
@@ -175,27 +233,25 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
   // ==================== Device RAM Detection ====================
 
   Future<void> _checkRam() async {
+    if (_deviceRamMB > 0) return; // already known
     setState(() => _checkingRam = true);
     try {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
         final android = await deviceInfo.androidInfo;
-        // totalPhysicalMemory is in bytes on some devices, or we estimate
-        // from available features. Fallback: assume flagship (8GB)
         int totalRamMB = 8192; // default assumption
-        // Android device info doesn't expose RAM directly in all versions
-        // Use the host name as a heuristic for known devices
+
         final model = android.model.toLowerCase();
         final manufacturer = android.manufacturer.toLowerCase();
 
         // Samsung Galaxy S24 Ultra = 12GB
         if (model.contains('sm-s928') || model.contains('s24 ultra')) totalRamMB = 12288;
-        else if (model.contains('s24+') || model.contains('sm-s926')) totalRamMB = 12288;
+        else if (model.contains('sm-s926') || model.contains('s24+')) totalRamMB = 12288;
         else if (model.contains('s24') || model.contains('sm-s921')) totalRamMB = 8192;
         // Samsung S23 series
         else if (model.contains('s23 ultra')) totalRamMB = 12288;
         else if (model.contains('s23')) totalRamMB = 8192;
-        // Pixel 8 Pro, Pixel 9
+        // Pixel 8/9
         else if (model.contains('pixel 9 pro')) totalRamMB = 16384;
         else if (model.contains('pixel 9')) totalRamMB = 12288;
         else if (model.contains('pixel 8 pro')) totalRamMB = 12288;
@@ -203,111 +259,140 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
         // Generic flagships
         else if (model.contains('pro') || model.contains('ultra')) totalRamMB = 12288;
 
-        // Available RAM is typically 60-70% of total (OS uses the rest)
+        // Available RAM is ~65% of total (OS + GPU uses the rest)
         _deviceRamMB = (totalRamMB * 0.65).round();
       } else {
         _deviceRamMB = 8192;
       }
+
+      setState(() {
+        _scanStatus = 'Device has ${(_deviceRamMB / 1024).round()} GB available RAM';
+      });
     } catch (e) {
       _deviceRamMB = 6144; // safe default
+      setState(() {
+        _scanStatus = 'Could not detect exact RAM, assuming 6 GB available';
+      });
     }
     setState(() => _checkingRam = false);
   }
 
-  // ==================== Scan for Existing GGUF Files ====================
+  // ==================== Browse for GGUF Files (using file_picker) ====================
 
-  Future<void> _scanForExistingModels() async {
-    setState(() => _scanningModels = true);
+  Future<void> _browseForModels() async {
+    setState(() {
+      _scanningModels = true;
+      _scanStatus = 'Browsing for GGUF files...';
+    });
+
     try {
-      final catalog = ModelCatalog.instance;
+      // First, scan our own app directory
+      await _scanAppDirectory();
 
-      // Scan our own models directory first
-      await catalog.init(); // re-checks downloads
+      // Then, use file_picker to let user browse for GGUF files
+      final result = await FilePicker.pickFiles(
+        type: FileType.any,
+        allowMultiple: true,
+        dialogTitle: 'Select GGUF model files',
+        // On Android this opens the system file picker (SAF)
+      );
 
-      // Scan common directories where other apps store GGUF files
-      final searchPaths = <String>[];
-
-      if (Platform.isAndroid) {
-        // Uncensored-Local-AI stores models here
-        searchPaths.addAll([
-          '/storage/emulated/0/Android/data/com.techjarves.uncensoredlocalai/files/models',
-          '/storage/emulated/0/Android/data/com.techjarves.uncensored_local_ai/files/models',
-          '/storage/emulated/0/Download',
-          '/storage/emulated/0/Models',
-        ]);
-        // Also check our own app directory
-        final appDir = await _getAppSupportDir();
-        if (appDir != null) searchPaths.add('${appDir.path}/models');
+      if (result != null && result.files.isNotEmpty) {
+        int imported = 0;
+        for (final pickedFile in result.files) {
+          final filePath = pickedFile.path;
+          if (filePath != null && filePath.toLowerCase().endsWith('.gguf')) {
+            await _registerFoundModel(filePath);
+            imported++;
+          }
+        }
+        setState(() {
+          _scanStatus = imported > 0
+            ? 'Imported $imported model(s) from file picker'
+            : 'No .gguf files selected';
+        });
+      } else {
+        // User cancelled the file picker — still show if we found anything in app dir
+        setState(() {
+          _scanStatus = 'Browse cancelled. Use Import from URL to add models manually.';
+        });
       }
+    } catch (e) {
+      log.warning('File picker error: $e');
+      setState(() {
+        _scanStatus = 'File picker not available. Try Import from URL instead.';
+      });
+    }
 
-      for (final searchPath in searchPaths) {
-        final dir = Directory(searchPath);
-        if (await dir.exists()) {
-          await for (final entity in dir.list(recursive: false)) {
-            if (entity is File && entity.path.toLowerCase().endsWith('.gguf')) {
-              final fileName = entity.path.split('/').last;
-              final fileSize = await entity.length();
-              final name = fileName.replaceAll('.gguf', '').replaceAll('-Q4_K_M', '').replaceAll('-', ' ');
+    setState(() => _scanningModels = false);
+  }
 
-              // Check if we already have this model
-              final existing = catalog.allModels.where((m) =>
-                m.localPath == entity.path || m.url.endsWith(fileName)
-              );
-
-              if (existing.isEmpty) {
-                // Register as a found model
-                final id = 'found-${DateTime.now().millisecondsSinceEpoch}';
-                final ramEstimate = (fileSize / (1024 * 1024) * 1.5).round(); // model needs ~1.5x file size in RAM
-                final contextLen = _suggestContextLength(ramEstimate);
-
-                catalog.addModel(ModelEntry(
-                  id: id,
-                  name: name.trim().isNotEmpty ? name.trim() : fileName,
-                  description: 'Found on device at ${entity.path}',
-                  url: '',
-                  sizeBytes: fileSize,
-                  ramRequiredMB: ramEstimate,
-                  quantization: _guessQuant(fileName),
-                  contextLength: contextLen,
-                  capabilities: ['chat'],
-                  recommendedTier: DeviceTier.flagship,
-                  isDownloaded: true,
-                  localPath: entity.path,
-                ));
-              } else if (!existing.first.isDownloaded) {
-                // Mark as downloaded if we found the file
-                existing.first.isDownloaded = true;
-                existing.first.localPath = entity.path;
-                existing.first.sizeBytes = fileSize;
-              }
-            }
+  /// Scan our own app models directory
+  Future<void> _scanAppDirectory() async {
+    try {
+      final appDir = await getApplicationSupportDirectory();
+      final modelsDir = Directory('${appDir.path}/models');
+      if (await modelsDir.exists()) {
+        await for (final entity in modelsDir.list(recursive: false)) {
+          if (entity is File && entity.path.toLowerCase().endsWith('.gguf')) {
+            await _registerFoundModel(entity.path, isAppDir: true);
           }
         }
       }
     } catch (e) {
-      // Permission denied is common — just skip
+      log.warning('Error scanning app directory: $e');
     }
-    setState(() => _scanningModels = false);
   }
 
-  Future<Directory?> _getAppSupportDir() async {
-    try {
-      final dir = await _getAppSupportPath();
-      final modelsDir = Directory('$dir/models');
-      if (await modelsDir.exists()) return modelsDir;
-    } catch (_) {}
-    return null;
-  }
-
-  // Use path_provider via a workaround since we can't import it directly here
-  Future<String> _getAppSupportPath() async {
-    // Delegate to model catalog which already uses path_provider
+  /// Register a found GGUF file with the catalog
+  Future<void> _registerFoundModel(String filePath, {bool isAppDir = false}) async {
     final catalog = ModelCatalog.instance;
-    final models = catalog.downloadedModels;
-    if (models.isNotEmpty && models.first.localPath != null) {
-      return models.first.localPath!.substring(0, models.first.localPath!.lastIndexOf('/'));
+    final fileName = filePath.split('/').last.split('\\').last;
+    final file = File(filePath);
+
+    // Check if we already track this file
+    final existing = catalog.allModels.where((m) =>
+      m.localPath == filePath || m.url.endsWith(fileName)
+    );
+
+    if (existing.isEmpty) {
+      int fileSize = 0;
+      try { fileSize = await file.length(); } catch (_) {}
+
+      final name = fileName
+        .replaceAll('.gguf', '')
+        .replaceAll('-Q4_K_M', '')
+        .replaceAll('-Q5_K_M', '')
+        .replaceAll('-Q8_0', '')
+        .replaceAll('-', ' ')
+        .trim();
+      final ramEstimate = fileSize > 0 ? (fileSize / (1024 * 1024) * 1.5).round() : 0;
+      final contextLen = _suggestContextLength(ramEstimate);
+
+      final id = isAppDir
+        ? 'local-${fileName.hashCode.abs()}'
+        : 'found-${DateTime.now().millisecondsSinceEpoch}';
+
+      catalog.addModel(ModelEntry(
+        id: id,
+        name: name.isNotEmpty ? name : fileName,
+        description: isAppDir ? 'Downloaded in app' : 'Found at ${filePath.split('/').last.split('\\').last}',
+        url: '',
+        sizeBytes: fileSize,
+        ramRequiredMB: ramEstimate,
+        quantization: _guessQuant(fileName),
+        contextLength: contextLen,
+        capabilities: ['chat'],
+        recommendedTier: DeviceTier.flagship,
+        isDownloaded: true,
+        localPath: filePath,
+      ));
+      log.info('Registered found model: $name at $filePath');
+    } else if (!existing.first.isDownloaded) {
+      existing.first.isDownloaded = true;
+      existing.first.localPath = filePath;
+      try { existing.first.sizeBytes = await file.length(); } catch (_) {}
     }
-    return '/data/user/0/com.tekton.app/files'; // fallback
   }
 
   String _guessQuant(String fileName) {
@@ -320,8 +405,7 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
     return 'Q4_K_M';
   }
 
-  /// Auto-suggest context length based on available RAM.
-  /// Does not set max — picks a safe value that leaves room for the OS.
+  /// Auto-suggest context length based on available RAM
   int _suggestContextLength(int ramRequiredMB) {
     final availableMB = _deviceRamMB > 0 ? _deviceRamMB : 6144;
     final headroomMB = availableMB - ramRequiredMB;
@@ -330,12 +414,19 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
     if (headroomMB < 1000) return 4096;
     if (headroomMB < 2000) return 8192;
     if (headroomMB < 4000) return 16384;
-    return 32768; // never exceeds 32K for mobile
+    return 32768;
   }
 
   // ==================== Download with Progress ====================
 
   Future<void> _downloadModel(ModelEntry model) async {
+    if (model.url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No download URL for ${model.name}')),
+      );
+      return;
+    }
+
     setState(() {
       _downloading[model.id] = true;
       _downloadProgress[model.id] = 0.0;
@@ -354,8 +445,14 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
       _downloading[model.id] = false;
       if (success) {
         _downloadProgress[model.id] = 1.0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${model.name} downloaded successfully')),
+        );
       } else {
         _downloadProgress.remove(model.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to download ${model.name}. Check your connection.')),
+        );
       }
     });
   }
@@ -401,7 +498,7 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text('Context length will be auto-set based on your device RAM.',
+              Text('Context length auto-set based on your device RAM.',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
@@ -420,7 +517,7 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
               final name = nameController.text.isEmpty
                 ? url.split('/').last.replaceAll('.gguf', '')
                 : nameController.text;
-              final contextLen = _suggestContextLength(0); // estimate after download
+              final contextLen = _suggestContextLength(0);
 
               final model = ModelEntry(
                 id: id,
@@ -477,7 +574,7 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                    color: Theme.of(context).colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text('Custom', style: Theme.of(context).textTheme.labelSmall),
@@ -492,14 +589,15 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
                   const SizedBox(height: 4),
                   Row(children: [
                     Icon(_deviceRamMB >= model.ramRequiredMB ? Icons.check_circle : Icons.warning,
-                      size: 16, color: _deviceRamMB >= model.ramRequiredMB ? Colors.green : Colors.orange),
+                      size: 16, color: _deviceRamMB >= model.ramRequiredMB ? const Color(0xFF84CC16) : Colors.orange),
                     const SizedBox(width: 8),
                     Text(_deviceRamMB >= model.ramRequiredMB
                       ? 'Fits your device (${(_deviceRamMB/1024).round()} GB available)'
                       : 'May be slow (${(_deviceRamMB/1024).round()} GB available, needs ${model.ramFormatted})',
                       style: TextStyle(
-                        color: _deviceRamMB >= model.ramRequiredMB ? Colors.green : Colors.orange,
+                        color: _deviceRamMB >= model.ramRequiredMB ? const Color(0xFF84CC16) : Colors.orange,
                         fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ]),
@@ -552,7 +650,7 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
                     ),
                   ],
                 ),
-              ] else ...[
+              ] else if (model.url.isNotEmpty) ...[
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
@@ -570,6 +668,10 @@ class _ModelCatalogScreenState extends ConsumerState<ModelCatalogScreen> {
                         : const Text('Download'),
                   ),
                 ),
+              ] else ...[
+                // No URL and not downloaded — local file model
+                Text('This model was found on your device. No download URL available.',
+                  style: Theme.of(context).textTheme.bodySmall),
               ],
             ],
           ),
@@ -625,6 +727,7 @@ class _ModelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fitsDevice = ramMB <= 0 || model.ramRequiredMB <= 0 || ramMB >= model.ramRequiredMB;
+    final limeGreen = const Color(0xFF84CC16);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -650,8 +753,8 @@ class _ModelCard extends StatelessWidget {
                       : model.isDownloaded ? Icons.check_circle
                       : isDownloading ? Icons.downloading
                       : Icons.download,
-                    color: model.isLoaded ? Colors.green
-                      : model.isDownloaded ? theme.colorScheme.primary
+                    color: model.isLoaded ? limeGreen
+                      : model.isDownloaded ? limeGreen
                       : isDownloading ? theme.colorScheme.primary
                       : fitsDevice ? theme.colorScheme.outline
                       : Colors.orange,
@@ -676,19 +779,19 @@ class _ModelCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
+                        color: limeGreen.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('Active', style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w600)),
+                      child: const Text('Active', style: TextStyle(color: Color(0xFF84CC16), fontSize: 11, fontWeight: FontWeight.w600)),
                     )
                   else if (model.isDownloaded)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
+                        color: limeGreen.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text('Ready', style: TextStyle(color: theme.colorScheme.primary, fontSize: 11)),
+                      child: const Text('Ready', style: TextStyle(color: Color(0xFF84CC16), fontSize: 11, fontWeight: FontWeight.w600)),
                     )
                   else if (!fitsDevice)
                     Container(
@@ -697,7 +800,7 @@ class _ModelCard extends StatelessWidget {
                         color: Colors.orange.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('Slow', style: TextStyle(color: Colors.orange, fontSize: 11)),
+                      child: const Text('Slow', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.w600)),
                     ),
                 ],
               ),
@@ -711,17 +814,18 @@ class _ModelCard extends StatelessWidget {
                     value: downloadProgress,
                     minHeight: 6,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    color: limeGreen,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${(downloadProgress! * 100).toStringAsFixed(0)}% downloaded',
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary),
+                  style: theme.textTheme.labelSmall?.copyWith(color: limeGreen, fontWeight: FontWeight.w600),
                 ),
               ],
 
               // Quick download button if not downloaded and not downloading
-              if (!model.isDownloaded && !isDownloading) ...[
+              if (!model.isDownloaded && !isDownloading && model.url.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
@@ -752,7 +856,7 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+          Icon(icon, size: 16, color: const Color(0xFF84CC16)),
           const SizedBox(width: 8),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
           const Spacer(),

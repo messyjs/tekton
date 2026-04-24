@@ -209,7 +209,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_connectionResult == null) {
       statusIcon = const SizedBox.shrink();
     } else if (_connectionResult == true) {
-      statusIcon = Icon(Icons.check_circle, color: Colors.green.shade600, size: 28);
+      statusIcon = Icon(Icons.check_circle, color: Color(0xFF84CC16), size: 28);
     } else {
       statusIcon = Icon(Icons.cancel, color: Colors.red.shade600, size: 28);
     }
@@ -253,9 +253,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               if (_discoveredHost != null) ...[
                 const SizedBox(height: 4),
                 Row(children: [
-                  Icon(Icons.wifi, size: 14, color: Colors.green.shade600),
+                  Icon(Icons.wifi, size: 14, color: Color(0xFF84CC16)),
                   const SizedBox(width: 4),
-                  Text('Found: $_discoveredHost', style: TextStyle(color: Colors.green.shade700, fontSize: 12)),
+                  Text('Found: $_discoveredHost', style: TextStyle(color: Color(0xFF6AAF0C), fontSize: 12)),
                   TextButton(
                     onPressed: () {
                       _apiEndpointController.text = _discoveredHost!;
@@ -291,14 +291,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: Color(0xFF84CC16).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                    border: Border.all(color: Color(0xFF84CC16).withValues(alpha: 0.3)),
                   ),
                   child: Row(children: [
-                    Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                    Icon(Icons.check_circle, color: Color(0xFF84CC16), size: 20),
                     const SizedBox(width: 8),
-                    Text('Connected to Ollama!', style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.w600)),
+                    Text('Connected to Ollama!', style: TextStyle(color: Color(0xFF4A7A0A), fontWeight: FontWeight.w600)),
                   ]),
                 ),
               ],

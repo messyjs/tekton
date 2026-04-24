@@ -75,7 +75,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // === AI Backends ===
           _sectionHeader(context, 'AI Backends'),
           ...backends.map((b) => ListTile(
-            leading: Icon(_providerIcon(b.provider), color: b.isConnected ? Colors.green : Colors.grey),
+            leading: Icon(_providerIcon(b.provider), color: b.isConnected ? const Color(0xFF84CC16) : Colors.grey),
             title: Text(b.name),
             subtitle: Text('${b.provider.name} · ${b.defaultModel}'),
             trailing: Row(
@@ -277,17 +277,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   static const Map<String, Color> _accentColors = {
-    'Lime Green': Color(0xFF84CC16),
+    'Lime': Color(0xFF84CC16),
+    'Green': Color(0xFF22C55E),
     'Emerald': Color(0xFF10B981),
-    'Cyan': Color(0xFF06B6D4),
-    'Blue': Color(0xFF3B82F6),
-    'Indigo': Color(0xFF6366F1),
-    'Purple': Color(0xFF8B5CF6),
-    'Pink': Color(0xFFEC4899),
-    'Rose': Color(0xFFF43F5E),
-    'Orange': Color(0xFFF97316),
     'Amber': Color(0xFFF59E0B),
-    'Teal': Color(0xFF14B8A6),
+    'Orange': Color(0xFFF97316),
+    'Red': Color(0xFFEF4444),
+    'Rose': Color(0xFFF43F5E),
+    'Pink': Color(0xFFEC4899),
+    'Violet': Color(0xFF8B5CF6),
+    'Indigo': Color(0xFF6366F1),
+    'Blue': Color(0xFF3B82F6),
     'Slate': Color(0xFF64748B),
   };
 
@@ -296,6 +296,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (entry.value.value == color.value) return entry.key;
     }
     return 'Custom';
+  }
+
+  /// Returns true for light/bright colors that need dark text for contrast
+  bool _isLightColor(Color color) {
+    final r = (color.value >> 16) & 0xFF;
+    final g = (color.value >> 8) & 0xFF;
+    final b = color.value & 0xFF;
+    // Perceived brightness formula
+    final luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6;
   }
 
   void _showColorPicker(BuildContext context) {
@@ -329,11 +339,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         color: entry.value,
                         borderRadius: BorderRadius.circular(12),
                         border: current.value == entry.value.value
-                          ? Border.all(color: Colors.white, width: 3)
+                          ? Border.all(color: _isLightColor(entry.value) ? const Color(0xFF1A2E05) : Colors.white, width: 3)
                           : null,
                       ),
                       child: current.value == entry.value.value
-                        ? const Icon(Icons.check, color: Colors.white, size: 28)
+                        ? Icon(Icons.check, color: _isLightColor(entry.value) ? const Color(0xFF1A2E05) : Colors.white, size: 28)
                         : null,
                     ),
                   )).toList(),
