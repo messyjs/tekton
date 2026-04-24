@@ -1,5 +1,5 @@
-/// Tekton Server Mode — extend the local API server into a full multi-model server.
-/// OpenAI-compatible endpoints for other Tekton instances and apps.
+/// Tekton Server Mode — OpenAI-compatible local API server.
+/// Binds to localhost by default (secure). Users opt-in to 0.0.0.0.
 
 import 'dart:async';
 import 'dart:convert';
@@ -18,6 +18,7 @@ class TektonServer {
   final List<void Function(_ServerEvent)> _listeners = [];
 
   int port = 4891;
+  bool bindToLocalhost = true; // Security: default to localhost only
   bool isRunning = false;
 
   // Server metrics
@@ -26,9 +27,10 @@ class TektonServer {
   DateTime? startTime;
 
   /// Start the server
-  Future<void> start({int? portOverride}) async {
+  Future<void> start({int? portOverride, bool? bindAllInterfaces}) async {
     if (isRunning) return;
     port = portOverride ?? 4891;
+    if (bindAllInterfaces != null) bindToLocalhost = !bindAllInterfaces;
 
     final router = _buildRouter();
     final handler = const shelf.Pipeline()
@@ -36,10 +38,14 @@ class TektonServer {
         .addMiddleware(_corsMiddleware())
         .addHandler(router.call);
 
-    _server = await io.serve(handler, InternetAddress.anyIPv4, port);
+    final address = bindToLocalhost
+        ? InternetAddress.loopbackIPv4
+        : InternetAddress.anyIPv4;
+
+    _server = await io.serve(handler, address, port);
     isRunning = true;
     startTime = DateTime.now();
-    log.info('Tekton Server running on port $port');
+    log.info('Tekton Server running on ${bindToLocalhost ? "127.0.0.1" : "0.0.0.0"}:$port');
   }
 
   /// Stop the server
@@ -210,6 +216,7 @@ class TektonServer {
   shelf.Response _handleServerStatus(shelf.Request request) =>
     shelf.Response.ok(jsonEncode({
       'running': isRunning,
+      'bindAddress': bindToLocalhost ? '127.0.0.1' : '0.0.0.0',
       'port': port,
       'uptime': startTime != null ? DateTime.now().difference(startTime!).inSeconds : 0,
       'totalRequests': totalRequests,
@@ -265,7 +272,7 @@ class _ConnectedClient {
 }
 
 class _ServerEvent {
-  final String type; // client_connected, client_disconnected, request_completed
+  final String type;
   final dynamic data;
 
   _ServerEvent(this.type, this.data);

@@ -17,10 +17,10 @@ class Logger {
 
   void _log(LogLevel level, String message, {String? tag, Object? error, StackTrace? stackTrace}) {
     final prefix = switch (level) {
-      LogLevel.debug => '🔍',
-      LogLevel.info => 'ℹ️',
-      LogLevel.warning => '⚠️',
-      LogLevel.error => '❌',
+      LogLevel.debug => '[DBG]',
+      LogLevel.info => '[INF]',
+      LogLevel.warning => '[WRN]',
+      LogLevel.error => '[ERR]',
     };
     final tagStr = tag != null ? '[$tag] ' : '';
     developer.log('$prefix $tagStr$message', level: level.index, name: 'Tekton');

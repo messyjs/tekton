@@ -130,7 +130,7 @@ class AgentPresets {
     AgentConfig(
       id: 'preset-file',
       displayName: 'File Analyst',
-      avatar: '📁',
+      avatar: 'F',
       systemPrompt: _fileAnalystPrompt,
       modelRef: modelRef,
       backendId: localBackendId,
@@ -147,7 +147,7 @@ class AgentPresets {
     AgentConfig(
       id: 'preset-quick',
       displayName: 'Quick Chat',
-      avatar: '⚡',
+      avatar: 'Q',
       systemPrompt: _quickChatPrompt,
       modelRef: modelRef,
       backendId: localBackendId,

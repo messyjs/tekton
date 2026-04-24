@@ -274,6 +274,8 @@ export interface PITIInput extends MortgageInput {
   annualPropertyTax: number;
   annualInsurance: number;
   annualPMI?: number;
+  downPayment?: number;
+  purchasePrice?: number;
 }
 
 export interface AffordabilityInput {

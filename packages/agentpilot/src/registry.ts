@@ -3,7 +3,7 @@
  * Each agent owns its domain and processes messages autonomously.
  */
 
-import type { AgentId, AgentDefinition, ToolDefinition } from "../types.js";
+import type { AgentId, AgentDefinition, ToolDefinition } from "./types.js";
 import {
   ORCHESTRATOR_PROMPT,
   EMAIL_MEDIA_PROMPT,
@@ -15,16 +15,16 @@ import {
   CALCULATOR_PROMPT,
   MARKETING_CONTENT_PROMPT,
   SCHEDULING_LOGISTICS_PROMPT,
-} from "../prompts/index.js";
-import { calculatorTools } from "./tools/calculator-tools.js";
-import { emailMediaTools } from "./tools/email-media-tools.js";
-import { mlsListingTools } from "./tools/mls-listing-tools.js";
-import { marketIntelligenceTools } from "./tools/market-intelligence-tools.js";
-import { formsDocumentsTools } from "./tools/forms-documents-tools.js";
-import { transactionTools } from "./tools/transaction-tools.js";
-import { crmLeadsTools } from "./tools/crm-leads-tools.js";
-import { marketingContentTools } from "./tools/marketing-content-tools.js";
-import { schedulingLogisticsTools } from "./tools/scheduling-logistics-tools.js";
+} from "./prompts/index.js";
+import { calculatorTools } from "./agents/tools/calculator-tools.js";
+import { emailMediaTools } from "./agents/tools/email-media-tools.js";
+import { mlsListingTools } from "./agents/tools/mls-listing-tools.js";
+import { marketIntelligenceTools } from "./agents/tools/market-intelligence-tools.js";
+import { formsDocumentsTools } from "./agents/tools/forms-documents-tools.js";
+import { transactionTools } from "./agents/tools/transaction-tools.js";
+import { crmLeadsTools } from "./agents/tools/crm-leads-tools.js";
+import { marketingContentTools } from "./agents/tools/marketing-content-tools.js";
+import { schedulingLogisticsTools } from "./agents/tools/scheduling-logistics-tools.js";
 
 // ── Agent Base ──────────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ abstract class BaseAgent implements AgentRuntime {
     return this.heuristicProcess(message);
   }
 
-  protected heuristicProcess(_message: string): string {
+  protected heuristicProcess(_message: string): unknown {
     return `[${this.id}] Received — no LLM available for reasoning. Tools available: ${this.tools.map(t => t.name).join(", ")}`;
   }
 }

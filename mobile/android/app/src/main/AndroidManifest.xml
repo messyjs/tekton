@@ -36,12 +36,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Local API Server Service -->
-        <service
-            android:name=".TektonServerService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
-
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

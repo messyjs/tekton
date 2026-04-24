@@ -11,7 +11,8 @@
     "packages/gateway",
     "packages/dashboard",
     "packages/ml-ops",
-    "packages/cli"
+    "packages/cli",
+    "packages/agentpilot"
   ],
   "engines": {
     "node": ">=20.0.0"

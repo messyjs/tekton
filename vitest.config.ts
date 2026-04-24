@@ -20,6 +20,7 @@ export default defineConfig({
       "@tekton/dashboard": path.resolve(__dirname, "packages/dashboard/src/index.ts"),
       "@tekton/ml-ops": path.resolve(__dirname, "packages/ml-ops/src/index.ts"),
       "@tekton/forge": path.resolve(__dirname, "packages/forge/src/index.ts"),
+      "@tekton/agentpilot": path.resolve(__dirname, "packages/agentpilot/src/index.ts"),
     },
   },
 });

@@ -15,7 +15,7 @@ import type {
   DelegationResult,
   OrchestratorConfig,
   RoutePriority,
-} from "../types.js";
+} from "./types.js";
 import { AGENT_REGISTRY } from "./registry.js";
 
 export class Orchestrator {
@@ -121,7 +121,7 @@ export class Orchestrator {
     context?: string,
     extraContext?: Record<string, unknown>,
   ): Promise<DelegationResult> {
-    const agent = AGENT_REGISTRY[agentId];
+    const agent = AGENT_REGISTRY[agentId as keyof typeof AGENT_REGISTRY];
     if (!agent) {
       return { agentId, success: false, error: `Unknown agent: ${agentId}` };
     }

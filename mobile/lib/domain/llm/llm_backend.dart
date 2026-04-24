@@ -33,6 +33,7 @@ class BackendConfig {
   bool isConnected;
   DateTime createdAt;
   Map<String, String> headers;
+  String? customSystemPrompt; // Per-model system prompt override
 
   BackendConfig({
     required this.id,
@@ -46,6 +47,7 @@ class BackendConfig {
     this.isConnected = false,
     DateTime? createdAt,
     this.headers = const {},
+    this.customSystemPrompt,
   }) : createdAt = createdAt ?? DateTime.now();
 
   /// Build headers for HTTP requests

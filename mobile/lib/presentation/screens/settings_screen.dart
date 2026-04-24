@@ -1,9 +1,12 @@
-/// Settings screen — app configuration, backend management, preferences
+/// Settings screen — app configuration, backend management, server, and preferences
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tekton_app/app.dart';
 import 'package:tekton_app/domain/llm/llm.dart';
+import 'package:tekton_app/domain/llm/backend_manager.dart';
 import 'package:tekton_app/domain/config/config.dart';
+import 'package:tekton_app/domain/server/server.dart';
 import 'package:tekton_app/presentation/providers/app_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -18,6 +21,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _urlController = TextEditingController();
   final _keyController = TextEditingController();
   final _modelController = TextEditingController();
+  final _systemPromptController = TextEditingController();
+  final _portController = TextEditingController();
 
   @override
   void dispose() {
@@ -25,6 +30,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _urlController.dispose();
     _keyController.dispose();
     _modelController.dispose();
+    _systemPromptController.dispose();
+    _portController.dispose();
     super.dispose();
   }
 
@@ -32,24 +39,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final backends = ref.watch(backendsProvider);
-    final defaultBackend = ref.watch(defaultBackendProvider);
+    final server = ref.watch(tektonServerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          // Theme
-          _SectionHeader('Appearance'),
-          ListTile(
-            leading: const Icon(Icons.dark_mode),
-            title: const Text('Theme'),
-            subtitle: const Text('System default'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showThemePicker(context),
-          ),
+          // === Appearance ===
+          _sectionHeader(context, 'Appearance'),
+          Consumer(builder: (context, ref, _) {
+            final themeMode = ref.watch(themeModeProvider);
+            return ListTile(
+              leading: const Icon(Icons.dark_mode),
+              title: const Text('Theme'),
+              subtitle: Text(switch (themeMode) {
+                ThemeMode.dark => 'Dark',
+                ThemeMode.light => 'Light',
+                ThemeMode.system => 'System',
+              }),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showThemePicker(context),
+            );
+          }),
 
-          // Backends
-          _SectionHeader('AI Backends'),
+          // === AI Backends ===
+          _sectionHeader(context, 'AI Backends'),
           ...backends.map((b) => ListTile(
             leading: Icon(_providerIcon(b.provider), color: b.isConnected ? Colors.green : Colors.grey),
             title: Text(b.name),
@@ -67,6 +81,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Text('Default', style: theme.textTheme.labelSmall),
                   ),
                 IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => _editBackendSystemPrompt(context, b),
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () => _deleteBackend(b),
                 ),
@@ -80,8 +98,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => _showAddBackendDialog(context),
           ),
 
-          // Agent Routing
-          _SectionHeader('Agent Routing'),
+          // === Agent Routing ===
+          _sectionHeader(context, 'Agent Routing'),
           ListTile(
             leading: const Icon(Icons.route),
             title: const Text('Default Routing Mode'),
@@ -90,8 +108,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => _showRoutingModePicker(context),
           ),
 
-          // Memory
-          _SectionHeader('Memory'),
+          // === Inference Parameters ===
+          _sectionHeader(context, 'Inference Parameters'),
+          _InferenceParamsSection(),
+
+          // === Memory ===
+          _sectionHeader(context, 'Memory'),
           SwitchListTile(
             secondary: const Icon(Icons.psychology),
             title: const Text('AI Memory'),
@@ -100,8 +122,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) {},
           ),
 
-          // Install
-          _SectionHeader('Local Engine'),
+          // === Local Engine ===
+          _sectionHeader(context, 'Local Engine'),
           ListTile(
             leading: const Icon(Icons.download),
             title: const Text('Download Engine'),
@@ -112,14 +134,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
 
-          // Server
-          _SectionHeader('Server Mode'),
+          // === Server Mode ===
+          _sectionHeader(context, 'Server Mode'),
           SwitchListTile(
-            secondary: const Icon(Icons.dns),
+            secondary: Icon(server.isRunning ? Icons.dns : Icons.dns_outlined),
             title: const Text('Enable Server'),
-            subtitle: const Text('Expose models via OpenAI-compatible API'),
-            value: false,
-            onChanged: (v) {},
+            subtitle: Text(server.isRunning
+              ? 'Running on ${server.bindToLocalhost ? "127.0.0.1" : "0.0.0.0"}:${server.port}'
+              : 'Expose models via OpenAI-compatible API'),
+            value: server.isRunning,
+            onChanged: (v) async {
+              if (v) {
+                try {
+                  await server.start();
+                  ref.invalidate(tektonServerProvider);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Server failed to start: $e')),
+                    );
+                  }
+                }
+              } else {
+                await server.stop();
+                ref.invalidate(tektonServerProvider);
+              }
+              setState(() {});
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.numbers),
+            title: const Text('Server Port'),
+            subtitle: Text('${server.port}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showPortConfig(context, server),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.lan),
+            title: const Text('Bind to All Interfaces'),
+            subtitle: const Text('Allow network access (0.0.0.0). Default: localhost only.'),
+            value: !server.bindToLocalhost,
+            onChanged: (v) async {
+              if (server.isRunning) {
+                await server.stop();
+              }
+              server.bindToLocalhost = !v;
+              setState(() {});
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(v
+                    ? 'Will bind to 0.0.0.0 on next start'
+                    : 'Will bind to localhost on next start')),
+                );
+              }
+            },
           ),
           ListTile(
             leading: const Icon(Icons.wifi_find),
@@ -129,8 +197,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () {},
           ),
 
-          // About
-          _SectionHeader('About'),
+          // === About ===
+          _sectionHeader(context, 'About'),
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('Tekton'),
@@ -158,13 +226,112 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showThemePicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(title: Text('Theme', style: Theme.of(context).textTheme.titleLarge)),
-          ListTile(leading: const Icon(Icons.brightness_auto), title: const Text('System'), onTap: () { Navigator.pop(context); }),
-          ListTile(leading: const Icon(Icons.light_mode), title: const Text('Light'), onTap: () { Navigator.pop(context); }),
-          ListTile(leading: const Icon(Icons.dark_mode), title: const Text('Dark'), onTap: () { Navigator.pop(context); }),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Theme', style: Theme.of(context).textTheme.titleLarge),
+            ),
+            Consumer(builder: (context, ref, _) {
+              final current = ref.watch(themeModeProvider);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.brightness_auto),
+                    title: const Text('System'),
+                    trailing: current == ThemeMode.system ? const Icon(Icons.check) : null,
+                    onTap: () { ref.read(themeModeProvider.notifier).setTheme(ThemeMode.system); Navigator.pop(context); },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.light_mode),
+                    title: const Text('Light'),
+                    trailing: current == ThemeMode.light ? const Icon(Icons.check) : null,
+                    onTap: () { ref.read(themeModeProvider.notifier).setTheme(ThemeMode.light); Navigator.pop(context); },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.dark_mode),
+                    title: const Text('Dark'),
+                    trailing: current == ThemeMode.dark ? const Icon(Icons.check) : null,
+                    onTap: () { ref.read(themeModeProvider.notifier).setTheme(ThemeMode.dark); Navigator.pop(context); },
+                  ),
+                ],
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPortConfig(BuildContext context, TektonServer server) {
+    _portController.text = server.port.toString();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Server Port'),
+        content: TextField(
+          controller: _portController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Port',
+            hintText: '4891',
+            border: OutlineInputBorder(),
+            helperText: 'Choose a port from 1024 to 65535',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final port = int.tryParse(_portController.text) ?? 4891;
+              server.port = port.clamp(1024, 65535);
+              Navigator.pop(context);
+              setState(() {});
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _editBackendSystemPrompt(BuildContext context, BackendConfig backend) {
+    _systemPromptController.text = backend.customSystemPrompt ?? '';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('System Prompt: ${backend.name}'),
+        content: TextField(
+          controller: _systemPromptController,
+          maxLines: 8,
+          decoration: const InputDecoration(
+            labelText: 'Custom System Prompt',
+            border: OutlineInputBorder(),
+            hintText: 'Override the default system prompt for this model...',
+            alignLabelWithHint: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              backend.customSystemPrompt = null;
+              _systemPromptController.clear();
+              Navigator.pop(context);
+            },
+            child: const Text('Reset'),
+          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              backend.customSystemPrompt = _systemPromptController.text.isEmpty
+                ? null : _systemPromptController.text;
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
         ],
       ),
     );
@@ -234,20 +401,91 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showRoutingModePicker(BuildContext context) {}
-}
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader(this.title);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _sectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(
         color: Theme.of(context).colorScheme.primary,
         fontWeight: FontWeight.bold,
       )),
+    );
+  }
+}
+
+class _InferenceParamsSection extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_InferenceParamsSection> createState() => _InferenceParamsSectionState();
+}
+
+class _InferenceParamsSectionState extends ConsumerState<_InferenceParamsSection> {
+  double _temperature = 0.7;
+  double _topP = 0.9;
+  int _topK = 40;
+  int _contextLength = 8192;
+  int _threadCount = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        ListTile(
+          title: Text('Temperature: ${_temperature.toStringAsFixed(1)}'),
+          subtitle: Slider(
+            value: _temperature,
+            min: 0,
+            max: 2,
+            divisions: 20,
+            label: _temperature.toStringAsFixed(1),
+            onChanged: (v) => setState(() => _temperature = v),
+          ),
+        ),
+        ListTile(
+          title: Text('Top P: ${_topP.toStringAsFixed(1)}'),
+          subtitle: Slider(
+            value: _topP,
+            min: 0,
+            max: 1,
+            divisions: 10,
+            label: _topP.toStringAsFixed(1),
+            onChanged: (v) => setState(() => _topP = v),
+          ),
+        ),
+        ListTile(
+          title: Text('Top K: $_topK'),
+          subtitle: Slider(
+            value: _topK.toDouble(),
+            min: 1,
+            max: 100,
+            divisions: 99,
+            label: '$_topK',
+            onChanged: (v) => setState(() => _topK = v.round()),
+          ),
+        ),
+        ListTile(
+          title: Text('Context Length: ${(_contextLength / 1024).round()}K'),
+          subtitle: Slider(
+            value: _contextLength.toDouble(),
+            min: 512,
+            max: 131072,
+            divisions: 20,
+            label: '${(_contextLength / 1024).round()}K',
+            onChanged: (v) => setState(() => _contextLength = v.round()),
+          ),
+        ),
+        ListTile(
+          title: Text('Threads: $_threadCount'),
+          subtitle: Slider(
+            value: _threadCount.toDouble(),
+            min: 1,
+            max: 16,
+            divisions: 15,
+            label: '$_threadCount',
+            onChanged: (v) => setState(() => _threadCount = v.round()),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -281,9 +519,7 @@ class _EngineDownloadSection extends StatelessWidget {
                   const Text('Supports: arm64-v8a, armeabi-v7a, x86_64'),
                   const SizedBox(height: 16),
                   FilledButton.icon(
-                    onPressed: () {
-                      // Trigger engine download
-                    },
+                    onPressed: () {},
                     icon: const Icon(Icons.download),
                     label: const Text('Download Engine'),
                   ),

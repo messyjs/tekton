@@ -39,21 +39,21 @@ class _AgentConfigScreenState extends ConsumerState<AgentConfigScreen> {
                 Text('Quick Setup', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 12),
                 _PresetCard(
-                  icon: '💻',
+                  icon: 'C',
                   title: 'Code Agent',
                   subtitle: 'GLM-5.1 remote · Best for coding',
                   onTap: () => _createPreset('code', backends),
                 ),
                 const SizedBox(height: 8),
                 _PresetCard(
-                  icon: '📁',
+                  icon: 'F',
                   title: 'File Analyst',
                   subtitle: 'Gemma 4 E4B local · File & document analysis',
                   onTap: () => _createPreset('file', backends),
                 ),
                 const SizedBox(height: 8),
                 _PresetCard(
-                  icon: '⚡',
+                  icon: 'Q',
                   title: 'Quick Chat',
                   subtitle: 'Gemma 4 E2B local · Fast responses',
                   onTap: () => _createPreset('quick', backends),
@@ -148,7 +148,7 @@ class _AgentConfigScreenState extends ConsumerState<AgentConfigScreen> {
     final promptCtl = TextEditingController(text: existing?.systemPrompt ?? '');
     final modelCtl = TextEditingController(text: existing?.modelRef ?? 'gpt-4o');
     String? selectedBackendId = existing?.backendId;
-    var selectedAvatar = existing?.avatar ?? '🤖';
+    var selectedAvatar = existing?.avatar ?? 'A';
     final toolPermissions = <String>{...?existing?.enabledTools};
     final taskAffinities = <String>{...?existing?.taskAffinities};
 

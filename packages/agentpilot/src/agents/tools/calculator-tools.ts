@@ -28,7 +28,7 @@ import {
   acresToSqft,
   rectangleArea,
   triangleArea,
-} from "../calculator.js";
+} from "../../tools/calculator.js";
 
 export const calculatorTools: ToolDefinition[] = [
   {

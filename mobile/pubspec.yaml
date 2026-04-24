@@ -56,7 +56,7 @@ dependencies:
   ffi: ^2.1.4
 
   # Audio (Phase 5)
-  record: ^5.1.3
+  record: ^6.2.0
   audioplayers: ^6.1.0
 
 dev_dependencies:
@@ -68,9 +68,16 @@ dev_dependencies:
   # hive_generator conflicts with riverpod_generator, will manage adapters manually
   # hive_generator: ^2.0.1
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#0f172a"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
 
 flutter:
   uses-material-design: true
-  # assets:
-  #   - assets/icons/
-  #   - assets/models/
+  assets:
+    - assets/
