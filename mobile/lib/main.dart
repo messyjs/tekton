@@ -5,6 +5,11 @@ import 'package:path_provider/path_provider.dart' as path_provider;
 import 'dart:io';
 import 'app.dart';
 import 'domain/config/registry.dart';
+import 'domain/agent/agent_manager.dart';
+import 'domain/chat/chat_storage.dart';
+import 'domain/install/model_catalog.dart';
+import 'domain/memory/memory_store.dart';
+import 'domain/tools/tool_registry.dart';
 import 'services/logger.dart';
 
 void main() {
@@ -56,23 +61,17 @@ class _AppInitializerState extends State<_AppInitializer> {
       setState(() => _status = 'Registering data types...');
       await Registry.init();
 
-      // Step 3: Open boxes one at a time, recovering from corruption
-      final boxNames = ['settings', 'conversations', 'messages', 'agents', 'memories', 'backends', 'models'];
-      for (int i = 0; i < boxNames.length; i++) {
-        final box = boxNames[i];
-        setState(() => _status = 'Loading $box (${i + 1}/${boxNames.length})...');
-        try {
-          await Hive.openBox(box);
-        } catch (e) {
-          log.warning('Failed to open Hive box "$box": $e — recreating');
-          try {
-            await Hive.deleteBoxFromDisk(box);
-            await Hive.openBox(box);
-          } catch (e2) {
-            log.error('Failed to recreate box "$box": $e2 — skipping');
-          }
-        }
-      }
+      // Step 3: Initialize singletons (they open their own typed Hive boxes)
+      setState(() => _status = 'Loading chat data...');
+      await ChatStorage.instance.init();
+      setState(() => _status = 'Loading agents...');
+      await AgentManager.instance.init();
+      setState(() => _status = 'Loading models...');
+      await ModelCatalog.instance.init();
+      setState(() => _status = 'Loading memories...');
+      await MemoryStore.instance.init();
+      setState(() => _status = 'Loading tools...');
+      ToolRegistry.instance.registerDefaults();
 
       setState(() {
         _initialized = true;
@@ -91,9 +90,11 @@ class _AppInitializerState extends State<_AppInitializer> {
         }
         await Hive.initFlutter();
         await Registry.init();
-        for (final box in ['settings', 'conversations', 'messages', 'agents', 'memories', 'backends', 'models']) {
-          await Hive.openBox(box);
-        }
+        await ChatStorage.instance.init();
+        await AgentManager.instance.init();
+        await ModelCatalog.instance.init();
+        await MemoryStore.instance.init();
+        ToolRegistry.instance.registerDefaults();
         setState(() {
           _initialized = true;
           _status = 'Ready (recovered)';
