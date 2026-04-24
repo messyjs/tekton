@@ -61,6 +61,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => _showThemePicker(context),
             );
           }),
+          Consumer(builder: (context, ref, _) {
+            final seedColor = ref.watch(seedColorProvider);
+            return ListTile(
+              leading: Icon(Icons.palette, color: seedColor),
+              title: const Text('Accent Color'),
+              subtitle: Text(_colorName(seedColor)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showColorPicker(context),
+            );
+          }),
 
           // === AI Backends ===
           _sectionHeader(context, 'AI Backends'),
@@ -260,6 +270,77 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               );
             }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const Map<String, Color> _accentColors = {
+    'Lime Green': Color(0xFF84CC16),
+    'Emerald': Color(0xFF10B981),
+    'Cyan': Color(0xFF06B6D4),
+    'Blue': Color(0xFF3B82F6),
+    'Indigo': Color(0xFF6366F1),
+    'Purple': Color(0xFF8B5CF6),
+    'Pink': Color(0xFFEC4899),
+    'Rose': Color(0xFFF43F5E),
+    'Orange': Color(0xFFF97316),
+    'Amber': Color(0xFFF59E0B),
+    'Teal': Color(0xFF14B8A6),
+    'Slate': Color(0xFF64748B),
+  };
+
+  String _colorName(Color color) {
+    for (final entry in _accentColors.entries) {
+      if (entry.value.value == color.value) return entry.key;
+    }
+    return 'Custom';
+  }
+
+  void _showColorPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Accent Color', style: Theme.of(context).textTheme.titleLarge),
+            ),
+            Consumer(builder: (context, ref, _) {
+              final current = ref.watch(seedColorProvider);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: _accentColors.entries.map((entry) => InkWell(
+                    onTap: () {
+                      ref.read(seedColorProvider.notifier).setColor(entry.value);
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: entry.value,
+                        borderRadius: BorderRadius.circular(12),
+                        border: current.value == entry.value.value
+                          ? Border.all(color: Colors.white, width: 3)
+                          : null,
+                      ),
+                      child: current.value == entry.value.value
+                        ? const Icon(Icons.check, color: Colors.white, size: 28)
+                        : null,
+                    ),
+                  )).toList(),
+                ),
+              );
+            }),
+            const SizedBox(height: 16),
           ],
         ),
       ),

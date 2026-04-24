@@ -61,7 +61,11 @@ class _AppInitializerState extends State<_AppInitializer> {
       setState(() => _status = 'Registering data types...');
       await Registry.init();
 
-      // Step 3: Initialize singletons (they open their own typed Hive boxes)
+      // Step 3: Open settings box first (needed by seedColorProvider)
+      setState(() => _status = 'Loading settings...');
+      await Hive.openBox('settings');
+
+      // Step 4: Initialize singletons (they open their own typed Hive boxes)
       setState(() => _status = 'Loading chat data...');
       await ChatStorage.instance.init();
       setState(() => _status = 'Loading agents...');

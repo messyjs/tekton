@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Brand colors
-  static const Color primarySeed = Color(0xFF6750A4);
-  static const Color surfaceDark = Color(0xFF1C1B1F);
-  static const Color surfaceLight = Color(0xFFFFFBFE);
-  static const Color onSurface = Color(0xFF1C1B1F);
-  static const Color onSurfaceDark = Color(0xFFE6E1E5);
+  // Default brand color: lime green
+  static Color primarySeed = const Color(0xFF84CC16); // lime-500
+
+  static const Color surfaceDark = Color(0xFF0F172A); // slate-900
+  static const Color surfaceLight = Color(0xFFFAFAFA);
+  static const Color onSurface = Color(0xFF0F172A);
+  static const Color onSurfaceDark = Color(0xFFE2E8F0);
 
   static ThemeData get lightTheme => _buildTheme(Brightness.light);
   static ThemeData get darkTheme => _buildTheme(Brightness.dark);
@@ -15,8 +16,8 @@ class AppTheme {
   static ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final colorScheme = isDark
-        ? const ColorScheme.dark(primary: primarySeed, surface: surfaceDark, onSurface: onSurfaceDark)
-        : const ColorScheme.light(primary: primarySeed, surface: surfaceLight, onSurface: onSurface);
+        ? ColorScheme.dark(primary: primarySeed, surface: surfaceDark, onSurface: onSurfaceDark)
+        : ColorScheme.light(primary: primarySeed, surface: surfaceLight, onSurface: onSurface);
 
     return ThemeData(
       useMaterial3: true,
@@ -53,6 +54,8 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -64,5 +67,10 @@ class AppTheme {
         ),
       ),
     );
+  }
+
+  /// Rebuild themes with a new seed color
+  static void setSeedColor(Color color) {
+    primarySeed = color;
   }
 }
