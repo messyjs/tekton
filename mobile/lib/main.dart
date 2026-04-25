@@ -7,10 +7,12 @@ import 'app.dart';
 import 'domain/config/registry.dart';
 import 'domain/agent/agent_manager.dart';
 import 'domain/chat/chat_storage.dart';
-import 'domain/install/model_catalog.dart';
+import 'domain/install/install.dart';
+import 'domain/llm/llm.dart';
 import 'domain/memory/memory_store.dart';
 import 'domain/tools/tool_registry.dart';
 import 'services/logger.dart';
+import 'secrets.dart';
 
 void main() {
   // Ensure Flutter bindings are initialized before any async work
@@ -77,6 +79,9 @@ class _AppInitializerState extends State<_AppInitializer> {
       setState(() => _status = 'Loading tools...');
       ToolRegistry.instance.registerDefaults();
 
+      // Step 5: Ensure at least one backend exists (cloud fallback)
+      _ensureDefaultBackend();
+
       setState(() {
         _initialized = true;
         _status = 'Ready';
@@ -99,6 +104,7 @@ class _AppInitializerState extends State<_AppInitializer> {
         await ModelCatalog.instance.init();
         await MemoryStore.instance.init();
         ToolRegistry.instance.registerDefaults();
+        _ensureDefaultBackend();
         setState(() {
           _initialized = true;
           _status = 'Ready (recovered)';
@@ -109,6 +115,40 @@ class _AppInitializerState extends State<_AppInitializer> {
           _error = 'Failed to initialize: $e2\n\nPlease restart the app.';
         });
       }
+    }
+  }
+
+  /// Ensure at least one default backend exists so chat works out of the box.
+  /// If secrets.dart has kEnableCloudFallback=true and an API key,
+  /// we auto-register a cloud backend the user can chat with immediately.
+  void _ensureDefaultBackend() {
+    final bm = BackendManager.instance;
+
+    // If user already has a backend configured (from onboarding or previous run), skip
+    if (bm.backends.isNotEmpty) return;
+
+    // If cloud fallback is enabled, register the default cloud backend
+    if (kEnableCloudFallback && kDefaultCloudApiKey.isNotEmpty) {
+      bm.registerBackend(BackendConfig(
+        id: 'default-cloud',
+        name: 'Ollama Cloud (${kDefaultCloudModel})',
+        provider: ApiProvider.openai, // OpenAI-compatible endpoint
+        baseUrl: kDefaultCloudApiUrl,
+        apiKey: kDefaultCloudApiKey,
+        defaultModel: kDefaultCloudModel,
+        isDefault: true,
+      ));
+      log.info('Auto-configured cloud backend: ${kDefaultCloudApiUrl}');
+    } else {
+      // Register a placeholder that points nowhere — user must set up
+      bm.registerBackend(BackendConfig(
+        id: 'setup-required',
+        name: 'No backend configured',
+        provider: ApiProvider.ollama,
+        baseUrl: 'http://localhost:11434',
+        defaultModel: 'gemma3:4b',
+      ));
+      log.info('No default backend — user must configure one');
     }
   }
 

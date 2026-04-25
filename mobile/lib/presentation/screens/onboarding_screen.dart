@@ -26,7 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // Cloud config
   final _apiEndpointController = TextEditingController(text: 'http://192.168.1.100:11434');
   final _apiKeyController = TextEditingController();
-  String _selectedModel = 'gemma3:latest';
+  String _selectedModel = 'gemma3:4b';
   String _selectedProvider = 'ollama';
 
   // Connection test state: null=untested, true=success, false=failed
@@ -343,7 +343,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Model Name',
                       border: OutlineInputBorder(),
-                      hintText: 'gemma3:latest',
+                      hintText: 'gemma3:4b',
                       prefixIcon: Icon(Icons.smart_toy),
                     ),
                     onChanged: (v) => _selectedModel = v,
@@ -428,10 +428,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ==================== Local Section ====================
   List<Widget> _buildLocalSection(ThemeData theme) {
     final quickModels = [
-      ('Gemma 4 2B (Q4_K_M)', 'https://huggingface.co/google/gemma-4-2b-it-GGUF/resolve/main/gemma-4-2b-it-Q4_K_M.gguf', '2B params, ~1.5GB, runs on any phone'),
-      ('Gemma 4 4B (Q4_K_M)', 'https://huggingface.co/google/gemma-4-4b-it-GGUF/resolve/main/gemma-4-4b-it-Q4_K_M.gguf', '4B params, ~3GB, best for flagship phones'),
+      ('Gemma 3 4B (Q4_K_M)', 'https://huggingface.co/google/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf', '4B params, ~2.5GB, runs on any phone'),
+      ('Dolphin 2.9 2B (Q4_K_M)', 'https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-2b-GGUF/resolve/main/dolphin-2.9-llama3-2b-Q4_K_M.gguf', '2B params, uncensored, fast'),
       ('Phi-3.5 Mini 3.8B (Q4_K_M)', 'https://huggingface.co/microsoft/Phi-3.5-mini-instruct-GGUF/resolve/main/phi-3.5-mini-instruct-Q4_K_M.gguf', '3.8B params, great for code and reasoning'),
-      ('Dolphin 2.9 2B (Q4_K_M)', 'https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-2b-GGUF/resolve/main/dolphin-2.9-llama3-2b-Q4_K_M.gguf', '2B params, uncensored'),
     ];
 
     return [
@@ -722,12 +721,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _completeOnboarding() {
+    // Remove any auto-created default backend before adding user's choice
+    final bm = BackendManager.instance;
+    for (final b in bm.backends.toList()) {
+      if (b.id == 'default-cloud' || b.id == 'setup-required') {
+        bm.removeBackend(b.id);
+      }
+    }
+
     if (_selectedMode != 'local') {
       final provider = _selectedProvider == 'ollama' ? ApiProvider.ollama
         : _selectedProvider == 'anthropic' ? ApiProvider.anthropic
         : ApiProvider.openai;
 
-      BackendManager.instance.registerBackend(BackendConfig(
+      bm.registerBackend(BackendConfig(
         id: 'default-${_selectedProvider}',
         name: _selectedProvider == 'ollama' ? 'Ollama ($_selectedModel)' : 'Cloud ($_selectedModel)',
         provider: provider,
