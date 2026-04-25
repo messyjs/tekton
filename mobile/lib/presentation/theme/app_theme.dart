@@ -2,17 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Brand palette: lime green + dark charcoal
+  // Brand palette: lime green primary, dark grey secondary (replaces aqua)
   static Color primarySeed = const Color(0xFF84CC16); // lime-500
-
-  // Dark theme colors
-  static const Color darkSurface = Color(0xFF1A1A2E); // deep charcoal-navy
-  static const Color darkCard = Color(0xFF16213E); // slightly lighter card
-  static const Color darkOnSurface = Color(0xFFE2E8F0); // light text on dark
-
-  // Light theme colors
-  static const Color lightSurface = Color(0xFFFAFAFA);
-  static const Color lightOnSurface = Color(0xFF0F172A); // dark text on light
 
   static ThemeData get lightTheme => _buildTheme(Brightness.light);
   static ThemeData get darkTheme => _buildTheme(Brightness.dark);
@@ -20,35 +11,31 @@ class AppTheme {
   static ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
 
-    // Build from seed for harmonious palette, then override specific slots
+    // Build from seed, then swap aqua/teal for dark grey
     final baseScheme = ColorScheme.fromSeed(
       seedColor: primarySeed,
       brightness: brightness,
     );
 
-    // Lime green + dark grey color scheme:
-    // - Primary: lime green (bright) → black text on it
-    // - Secondary: dark grey/midnight → white text on it
-    // - Tertiary: soft warm grey → readable text
-    // - NO aqua, NO teal, NO cyan
     final colorScheme = baseScheme.copyWith(
-      // Primary = lime green — black text on it for contrast
-      onPrimary: isDark ? const Color(0xFF1A2E05) : const Color(0xFF1A2E05),
+      // Primary = lime green — black text on it
+      onPrimary: const Color(0xFF1A2E05),
 
-      // Secondary = dark charcoal — white text on it
-      secondary: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155), // slate-400/slate-700
-      onSecondary: isDark ? const Color(0xFF0F172A) : Colors.white,
+      // Secondary = dark grey (was aqua/teal) — white text on it
+      secondary: isDark ? const Color(0xFF64748B) : const Color(0xFF334155), // slate-500 / slate-700
+      onSecondary: isDark ? Colors.white : Colors.white,
 
-      // Tertiary = warm muted green (not aqua/teal!)
-      tertiary: isDark ? const Color(0xFFA3E635) : const Color(0xFF4D7C0F), // lime-400/lime-800
+      // SecondaryContainer = dark grey tinted (replaces aqua containers)
+      secondaryContainer: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0), // slate-800 / slate-200
+      onSecondaryContainer: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF1E293B),
+
+      // Tertiary = warm muted lime (not aqua!)
+      tertiary: isDark ? const Color(0xFFA3E635) : const Color(0xFF4D7C0F), // lime-400 / lime-800
       onTertiary: isDark ? const Color(0xFF1A2E05) : Colors.white,
 
-      // Surface = dark charcoal in dark mode
-      surface: isDark ? darkSurface : lightSurface,
-      onSurface: isDark ? darkOnSurface : lightOnSurface,
-
-      // Container = slightly lighter dark for cards
-      surfaceContainerHigh: isDark ? darkCard : const Color(0xFFF1F5F9),
+      // Remove any remaining teal/cyan residuals
+      tertiaryContainer: isDark ? const Color(0xFF2D3B1A) : const Color(0xFFD9F99D),
+      onTertiaryContainer: isDark ? const Color(0xFFA3E635) : const Color(0xFF1A2E05),
     );
 
     return ThemeData(
@@ -62,12 +49,11 @@ class AppTheme {
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 1,
-        backgroundColor: isDark ? darkSurface : lightSurface,
-        foregroundColor: isDark ? darkOnSurface : lightOnSurface,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: isDark ? darkCard : null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
@@ -94,7 +80,6 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: isDark ? darkSurface : null,
         indicatorColor: colorScheme.primaryContainer,
         labelTextStyle: WidgetStateProperty.all(
           GoogleFonts.interTextTheme().bodySmall,
@@ -103,7 +88,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary, // dark text on lime
+          foregroundColor: colorScheme.onPrimary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

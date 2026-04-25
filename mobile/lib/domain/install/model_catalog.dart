@@ -79,10 +79,10 @@ class BuiltInModels {
   static List<ModelEntry> get catalog => [
     // === Recommended for all devices ===
     ModelEntry(
-      id: 'gemma3-4b-q4km',
-      name: 'Gemma 3 4B (Q4_K_M)',
-      description: 'Google Gemma 3 4B instruction-tuned. Fast responses, works on any phone. Best lightweight model.',
-      url: 'https://huggingface.co/google/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf',
+      id: 'gemma4-4b-q4km',
+      name: 'Gemma 4 4B (Q4_K_M)',
+      description: 'Google Gemma 4 4B instruction-tuned. Fast responses, works on any phone. Best lightweight model.',
+      url: 'https://huggingface.co/google/gemma-4-4b-it-GGUF/resolve/main/gemma-4-4b-it-Q4_K_M.gguf',
       sizeBytes: 2500 * 1024 * 1024,
       ramRequiredMB: 4500,
       quantization: 'Q4_K_M',
@@ -117,10 +117,10 @@ class BuiltInModels {
       recommendedTier: DeviceTier.midrange,
     ),
     ModelEntry(
-      id: 'gemma3-12b-q4km',
-      name: 'Gemma 3 12B (Q4_K_M)',
-      description: 'Full Gemma 3 12B model. Best quality, requires 8GB+ RAM. Server-grade on mobile.',
-      url: 'https://huggingface.co/google/gemma-3-12b-it-GGUF/resolve/main/gemma-3-12b-it-Q4_K_M.gguf',
+      id: 'gemma4-12b-q4km',
+      name: 'Gemma 4 12B (Q4_K_M)',
+      description: 'Full Gemma 4 12B model. Best quality, requires 8GB+ RAM. Server-grade on mobile.',
+      url: 'https://huggingface.co/google/gemma-4-12b-it-GGUF/resolve/main/gemma-4-12b-it-Q4_K_M.gguf',
       sizeBytes: 7600 * 1024 * 1024,
       ramRequiredMB: 10000,
       quantization: 'Q4_K_M',

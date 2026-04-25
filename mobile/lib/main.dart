@@ -146,7 +146,7 @@ class _AppInitializerState extends State<_AppInitializer> {
         name: 'No backend configured',
         provider: ApiProvider.ollama,
         baseUrl: 'http://localhost:11434',
-        defaultModel: 'gemma3:4b',
+        defaultModel: 'gemma4:4b',
       ));
       log.info('No default backend — user must configure one');
     }

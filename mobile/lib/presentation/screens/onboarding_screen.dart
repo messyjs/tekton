@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:tekton_app/domain/llm/llm.dart';
@@ -26,7 +27,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // Cloud config
   final _apiEndpointController = TextEditingController(text: 'http://192.168.1.100:11434');
   final _apiKeyController = TextEditingController();
-  String _selectedModel = 'gemma3:4b';
+  String _selectedModel = 'gemma4:4b';
   String _selectedProvider = 'ollama';
 
   // Connection test state: null=untested, true=success, false=failed
@@ -269,6 +270,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               const SizedBox(height: 8),
               Text('Tip: Run "ollama serve" on your workstation, then enter its IP.',
                 style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+              const SizedBox(height: 6),
+              // Termux helper — copy/paste command to get workstation IP
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Find your workstation IP:', style: theme.textTheme.labelMedium),
+                    const SizedBox(height: 4),
+                    _CopyableCommand('Linux/Mac: ip addr | grep "inet " | grep -v 127', theme),
+                    const SizedBox(height: 2),
+                    _CopyableCommand('Windows: ipconfig | findstr IPv4', theme),
+                    const SizedBox(height: 2),
+                    _CopyableCommand('Termux (on phone): pkg install net-tools \u0026\u0026 ifconfig wlan0', theme),
+                    const SizedBox(height: 4),
+                    Text('Your phone and workstation must be on the same WiFi.',
+                      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
 
               // Test button with clear status
@@ -343,7 +369,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Model Name',
                       border: OutlineInputBorder(),
-                      hintText: 'gemma3:4b',
+                      hintText: 'gemma4:4b',
                       prefixIcon: Icon(Icons.smart_toy),
                     ),
                     onChanged: (v) => _selectedModel = v,
@@ -428,7 +454,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ==================== Local Section ====================
   List<Widget> _buildLocalSection(ThemeData theme) {
     final quickModels = [
-      ('Gemma 3 4B (Q4_K_M)', 'https://huggingface.co/google/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf', '4B params, ~2.5GB, runs on any phone'),
+      ('Gemma 4 4B (Q4_K_M)', 'https://huggingface.co/google/gemma-4-4b-it-GGUF/resolve/main/gemma-4-4b-it-Q4_K_M.gguf', '4B params, ~2.5GB, runs on any phone'),
       ('Dolphin 2.9 2B (Q4_K_M)', 'https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-2b-GGUF/resolve/main/dolphin-2.9-llama3-2b-Q4_K_M.gguf', '2B params, uncensored, fast'),
       ('Phi-3.5 Mini 3.8B (Q4_K_M)', 'https://huggingface.co/microsoft/Phi-3.5-mini-instruct-GGUF/resolve/main/phi-3.5-mini-instruct-Q4_K_M.gguf', '3.8B params, great for code and reasoning'),
     ];
@@ -804,6 +830,48 @@ class _ModeCard extends StatelessWidget {
               if (selected) Icon(Icons.check_circle, color: theme.colorScheme.primary),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CopyableCommand extends StatelessWidget {
+  final String command;
+  final ThemeData theme;
+  const _CopyableCommand(this.command, this.theme);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Copy to clipboard
+        final data = ClipboardData(text: command);
+        Clipboard.setData(data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 1),
+            content: Text('Copied!'),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(command, style: TextStyle(
+                fontFamily: 'RobotoMono',
+                fontSize: 11,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+              )),
+            ),
+            Icon(Icons.content_copy, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+          ],
         ),
       ),
     );
