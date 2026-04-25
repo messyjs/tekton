@@ -283,13 +283,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Find your workstation IP:', style: theme.textTheme.labelMedium),
-                    const SizedBox(height: 4),
-                    _CopyableCommand('Linux/Mac: ip addr | grep "inet " | grep -v 127', theme),
-                    const SizedBox(height: 2),
-                    _CopyableCommand('Windows: ipconfig | findstr IPv4', theme),
-                    const SizedBox(height: 2),
-                    _CopyableCommand('Termux (on phone): pkg install net-tools \u0026\u0026 ifconfig wlan0', theme),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+                    _CopyableCommand(label: 'Linux / Mac', command: 'ip addr | grep "inet " | grep -v 127', theme: theme),
+                    const SizedBox(height: 3),
+                    _CopyableCommand(label: 'Windows', command: 'ipconfig | findstr IPv4', theme: theme),
+                    const SizedBox(height: 3),
+                    _CopyableCommand(label: 'Termux', command: 'ifconfig wlan0 2>/dev/null || ip addr show wlan0', theme: theme),
+                    const SizedBox(height: 3),
+                    _CopyableCommand(label: 'Or just', command: 'hostname -I', theme: theme),
+                    const SizedBox(height: 6),
                     Text('Your phone and workstation must be on the same WiFi.',
                       style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.4))),
                   ],
@@ -837,43 +839,55 @@ class _ModeCard extends StatelessWidget {
 }
 
 class _CopyableCommand extends StatelessWidget {
+  final String label;
   final String command;
   final ThemeData theme;
-  const _CopyableCommand(this.command, this.theme);
+  const _CopyableCommand({required this.label, required this.command, required this.theme});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Copy to clipboard
-        final data = ClipboardData(text: command);
-        Clipboard.setData(data);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 1),
-            content: Text('Copied!'),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(4),
+    return Row(
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(label, style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w600,
+          )),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(command, style: TextStyle(
-                fontFamily: 'RobotoMono',
-                fontSize: 11,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-              )),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: command));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  duration: const Duration(seconds: 1),
+                  content: Text('Copied: $command'),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(command, style: TextStyle(
+                      fontFamily: 'RobotoMono',
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                    )),
+                  ),
+                  Icon(Icons.content_copy, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                ],
+              ),
             ),
-            Icon(Icons.content_copy, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
