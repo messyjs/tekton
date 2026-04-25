@@ -21,7 +21,7 @@ import {
 import { setGlobalPool } from "@tekton/tools";
 import { HermesBridge, type BridgeConfig } from "@tekton/hermes-bridge";
 import type { ParsedArgs } from "./run.js";
-import { createTektonResourceLoader, type TektonResourceLoaderConfig } from "./resource-loader.js";
+import { createTektonResourceLoader, createTektonResourceLoaderOptions, type TektonResourceLoaderConfig } from "./resource-loader.js";
 import { createTektonTools } from "./tools/tekton-tools.js";
 import { createOnPromptHook, type HookConfig } from "./hooks/on-prompt.js";
 import { createOnResponseHook } from "./hooks/on-response.js";
@@ -176,6 +176,11 @@ export function createTektonRuntimeFactory(
     // Apply route mode from CLI flag
     modelRouter.setMode(parsedArgs.tekton.route as RoutingMode);
 
+    // Honor --no-learning flag — pause Hermes bridge
+    if (parsedArgs.tekton.noLearning) {
+      hermesBridge.setPaused(true);
+    }
+
     const telemetry = new TelemetryTracker(
       path.join(tektonHome, "telemetry.db"),
     );
@@ -216,23 +221,23 @@ export function createTektonRuntimeFactory(
     const services = await createAgentSessionServices({
       cwd,
       agentDir: getAgentDir(),
+      resourceLoaderOptions: createTektonResourceLoaderOptions(resourceLoaderConfig),
     });
-
-    // Replace the resource loader with our custom one
-    // (The services create a DefaultResourceLoader, but we need our overrides)
-    // Since services.resourceLoader is readonly, we use resourceLoaderOptions instead:
-    // Actually, we create services first then override by creating the session
-    // with our custom tools + our resource loader provides the system prompt.
 
     // 4. Create Tekton custom tools (with agent pool)
     const customTools = createTektonTools(hermesBridge, memory, agentPool);
 
-    // 5. Create session with custom tools
+    // 5. Build model selection from CLI flags --provider/--model
+    const modelSelection = buildModelSelection(parsedArgs, services.modelRegistry);
+
+    // 6. Create session with custom tools, model selection, and thinking level
     const sessionResult = await createAgentSessionFromServices({
       services,
       sessionManager,
       sessionStartEvent,
       customTools,
+      model: modelSelection,
+      thinkingLevel: parsedArgs.pi.thinking as any,
     });
 
     return {
@@ -277,4 +282,22 @@ export async function createTektonRuntime(
   process.on("exit", () => { stopDoclingSidecar(); });
 
   return runtime;
+}
+
+/** Resolve a Model object from --provider and --model CLI flags using the model registry. */
+function buildModelSelection(
+  parsedArgs: ParsedArgs,
+  modelRegistry: any,
+): any | undefined {
+  const provider = parsedArgs.pi.provider;
+  const modelId = parsedArgs.pi.model;
+  if (provider && modelId) {
+    return modelRegistry.find(provider, modelId);
+  }
+  if (modelId) {
+    // Try to find the model across all providers
+    const all = modelRegistry.getAvailable();
+    return all.find((m: any) => m.id === modelId);
+  }
+  return undefined;
 }
