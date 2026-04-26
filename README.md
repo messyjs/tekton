@@ -39,6 +39,9 @@ npx tekton --no-learning   # Start without learning for this session
 | Multi-Platform | Gate | Telegram, Discord, Slack, WhatsApp, +6 more adapters |
 | Voice I/O | Voice | STT local→Groq→OpenAI, TTS edge→ElevenLabs→OpenAI |
 | Document Intelligence | Docling | PDF, DOCX, PPTX, XLSX, images → Markdown with OCR and tables |
+| Web Browsing | browser-use | AI agent that autonomously completes web tasks |
+| Ableton Live Control | AbletonOSC | Full DAW control: transport, tracks, clips, devices |
+| FL Studio Control | FL Studio API | Full DAW control: channels, piano roll, mixer, plugins |
 | Web Dashboard | Dashboard | 11-page SPA with dark theme |
 | Training Orchestration | ML-Ops | QLoRA, ternary BitNet, GRPO reasoning |
 | Fallback Chains | OpenMythos | Automatic model failover on errors |
@@ -76,6 +79,9 @@ Use `--no-learning` to pause learning for a session (e.g., CI/CD, debugging, one
 | `/tekton:train` | ML training (config/start/status/eval/export/gpu) |
 | `/tekton:voice` | Voice I/O control |
 | `/tekton:docling` | Document intelligence (status, parse, start, stop, formats, config) |
+| `/tekton:browse` | AI web browsing (status, task, start, stop) |
+| `/tekton:ableton` | Ableton Live control (status, play, stop, tempo, tracks, start, stop) |
+| `/tekton:flstudio` | FL Studio control (status, play, stop, tempo, channels, tracks, start, stop) |
 | `/tekton:gateway` | Messaging gateway control |
 | `/tekton:forge` | Forge product engineering (optional) |
 | `/tekton:personality` | Personality presets |
@@ -131,16 +137,19 @@ See [FORGE-BUILD-GUIDE.md](FORGE-BUILD-GUIDE.md) for details.
 
 ```
 tekton-agent/
-├── packages/core/            # Foundation: SCP, routing, compression, memory
-├── packages/hermes-bridge/   # Learning loop: evaluation, skill extraction
-├── packages/tools/           # Tool execution: 10 toolsets (incl. Docling)
-├── packages/cli/             # Terminal interface: 23+ commands
-├── packages/gateway/         # Messaging: 10 platform adapters
-├── packages/voice/            # Voice I/O: STT/TTS/recording
-├── packages/dashboard/        # Web UI: 11 pages, REST API
-├── packages/ml-ops/           # Training: QLoRA, ternary, GRPO
-├── packages/docling-service/  # Document parsing sidecar (Python)
-└── packages/forge/            # [Optional] Product engineering pipeline
+├── packages/core/                   # Foundation: SCP, routing, compression, memory
+├── packages/hermes-bridge/          # Learning loop: evaluation, skill extraction
+├── packages/tools/                  # Tool execution: 10 toolsets (incl. Docling)
+├── packages/cli/                    # Terminal interface: 26+ commands
+├── packages/gateway/                # Messaging: 10 platform adapters
+├── packages/voice/                   # Voice I/O: STT/TTS/recording
+├── packages/dashboard/               # Web UI: 11 pages, REST API
+├── packages/ml-ops/                  # Training: QLoRA, ternary, GRPO
+├── packages/docling-service/          # Document parsing sidecar (Python)
+├── packages/browser-use-service/     # AI web browsing sidecar (Python)
+├── packages/ableton-service/          # Ableton Live control sidecar (Python)
+├── packages/flstudio-service/        # FL Studio control sidecar (Python)
+└── packages/forge/                   # [Optional] Product engineering pipeline
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full architecture details.
@@ -171,6 +180,10 @@ Tekton Agent combines ideas and code from open-source projects:
 - **[OpenMythos](https://github.com/kyegomez/OpenMythos)** — Adaptive computation, model routing
 - **[Caveman](https://github.com/juliusbrussee/caveman)** — Compression tiers, token optimization
 - **[Docling](https://github.com/docling-project/docling)** — Document parsing and intelligence
+- **[browser-use](https://github.com/browser-use/browser-use)** — AI web browsing agent
+- **[AbletonOSC](https://github.com/ideoforms/AbletonOSC)** — Ableton Live OSC interface
+- **[FL-Studio-API-Stubs](https://github.com/IL-Group/FL-Studio-API-Stubs)** — FL Studio Python API
+- **[PyFLP](https://github.com/demberto/PyFLP)** — FL Studio project file parser
 
 ## License
 

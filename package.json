@@ -12,6 +12,9 @@
     "packages/ml-ops",
     "packages/cli",
     "packages/docling-service",
+    "packages/browser-use-service",
+    "packages/ableton-service",
+    "packages/flstudio-service",
     "packages/forge"
   ],
   "engines": {

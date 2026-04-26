@@ -30,6 +30,9 @@ export { createDoclingCommand } from "./tekton-docling.js";
 export { createForgeCommand } from "./tekton-forge.js";
 export { createContextCommand } from "./tekton-context.js";
 export { createKnowledgeCommand } from "./tekton-knowledge.js";
+export { createBrowseCommand } from "./tekton-browse.js";
+export { createAbletonCommand } from "./tekton-ableton.js";
+export { createFLStudioCommand } from "./tekton-flstudio.js";
 
 // Convenience: register all commands with a registry
 import { CommandRegistry } from "./registry.js";
@@ -59,6 +62,9 @@ import { createDoclingCommand } from "./tekton-docling.js";
 import { createForgeCommand } from "./tekton-forge.js";
 import { createContextCommand } from "./tekton-context.js";
 import { createKnowledgeCommand } from "./tekton-knowledge.js";
+import { createBrowseCommand } from "./tekton-browse.js";
+import { createAbletonCommand } from "./tekton-ableton.js";
+import { createFLStudioCommand } from "./tekton-flstudio.js";
 import type { CommandContext } from "./types.js";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import type { AgentPool } from "@tekton/core";
@@ -106,6 +112,9 @@ export function createFullCommandRegistry(): CommandRegistry {
   registry.register(createForgeCommand());
   registry.register(createContextCommand());
   registry.register(createKnowledgeCommand());
+  registry.register(createBrowseCommand());
+  registry.register(createAbletonCommand());
+  registry.register(createFLStudioCommand());
 
   return registry;
 }
