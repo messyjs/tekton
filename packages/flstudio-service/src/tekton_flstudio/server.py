@@ -11,11 +11,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from .config import load_config
 from .bridge_client import FLSStudioBridgeClient
+
+# Web UI static files
+WEB_DIR = Path(__file__).parent.parent.parent / "web"
 
 _config: dict[str, Any] = {}
 _bridge: FLSStudioBridgeClient | None = None
@@ -38,10 +43,27 @@ def create_app():
 
     app = FastAPI(
         title="Tekton FL Studio Sidecar",
-        version="2.0.0",
+        version="3.0.0",
         description="Full DAW control via TCP bridge — Transport, Mixer, Channels, Step Sequencer, Plugins, Piano Roll",
     )
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+    # ─── Web UI ────────────────────────────────────────────────────────────
+    @app.get("/ui")
+    async def serve_ui():
+        html_path = WEB_DIR / "index.html"
+        if html_path.exists():
+            from fastapi.responses import HTMLResponse
+            return HTMLResponse(content=html_path.read_text(encoding="utf-8"), status_code=200)
+        return {"error": "Web UI not found", "web_dir": str(WEB_DIR)}
+
+    @app.get("/manifest.json")
+    async def serve_manifest():
+        from fastapi.responses import JSONResponse
+        manifest_path = WEB_DIR / "manifest.json"
+        if manifest_path.exists():
+            return JSONResponse(content=json.loads(manifest_path.read_text(encoding="utf-8")))
+        return {"error": "Manifest not found"}
 
     # ─── Health ────────────────────────────────────────────────────────────
 

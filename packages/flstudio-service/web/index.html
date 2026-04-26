@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tekton FL Studio</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="/manifest.json">
+<style>
+:root{--bg:#0d0d1a;--card:#151530;--card2:#1a1a3e;--accent:#2a2a5e;--hi:#e94560;--text:#eee;--dim:#777;--green:#4ecca3;--blue:#3498db;--orange:#e67e22;--radius:10px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'SF Pro',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* Tabs */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--accent);flex-shrink:0;z-index:10}
+.tabs button{flex:1;padding:10px 6px;border:none;background:none;color:var(--dim);font-size:18px;cursor:pointer;transition:.15s;position:relative}
+.tabs button.active{color:var(--hi)}
+.tabs button.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--hi);border-radius:2px}
+.tabs button .label{font-size:9px;display:block;margin-top:2px}
+
+/* Panels */
+.panel{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px}
+.panel.active{display:flex;flex-direction:column}
+
+/* Transport */
+.big-btn{display:flex;align-items:center;justify-content:center;padding:14px 8px;border:none;border-radius:var(--radius);font-size:20px;cursor:pointer;color:#fff;transition:.1s;user-select:none}
+.big-btn:active{transform:scale(.93);opacity:.85}
+.btn-play{background:#27ae60}.btn-stop{background:#c0392b}.btn-rec{background:var(--orange)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.info-card{background:var(--card);padding:10px;border-radius:8px}
+.info-card .lbl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.info-card .val{font-size:20px;font-weight:700;margin-top:2px}
+.tempo-row{display:flex;gap:6px;margin-top:10px}
+.tempo-row input{flex:1;padding:10px;border:none;border-radius:8px;background:var(--card2);color:var(--text);font-size:18px;text-align:center;outline:none}
+.tempo-row .set-btn{padding:10px 18px;border:none;border-radius:8px;background:var(--hi);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.preset-row{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.preset-btn{padding:6px 10px;border:1px solid var(--accent);border-radius:20px;background:none;color:var(--dim);font-size:11px;cursor:pointer}
+.preset-btn:active{background:var(--accent);color:var(--text)}
+
+/* Mixer */
+.mixer-scroll{overflow-x:auto;overflow-y:hidden;display:flex;gap:4px;padding:4px 0;flex:1}
+.strip{min-width:52px;max-width:60px;background:var(--card);border-radius:8px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.strip .sname{font-size:8px;color:var(--dim);max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.strip input[type=range]{writing-mode:vertical-lr;direction:rtl;height:70px;width:28px;accent-color:var(--green);margin:2px 0}
+.strip .sbtn{font-size:9px;padding:2px 6px;border:none;border-radius:4px;cursor:pointer;color:var(--text);min-width:24px}
+.strip .mute{background:#444}.strip .solo{background:#2a3a4a}.strip .arm{background:#2a4a3a}.strip .on{background:var(--hi)!important}
+
+/* Channels */
+.ch-card{background:var(--card);border-radius:8px;padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.ch-card .ch-idx{font-size:10px;color:var(--dim);min-width:18px}
+.ch-card .ch-name{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-card input[type=range]{width:50px;height:4px;accent-color:var(--green)}
+.ch-card .ch-btn{font-size:12px;padding:4px 7px;border:none;border-radius:4px;background:#444;color:var(--text);cursor:pointer}
+
+/* Piano Roll */
+.piano-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.piano-toolbar{display:flex;gap:4px;flex-wrap:wrap;padding:4px 0;flex-shrink:0}
+.piano-toolbar .pbtn{padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:11px;color:#fff}
+.piano-scroll{flex:1;overflow:auto;display:flex;position:relative}
+.piano-keys-col{width:32px;flex-shrink:0;position:sticky;left:0;z-index:2;background:var(--bg)}
+.p-key{height:14px;font-size:8px;text-align:right;padding-right:3px;line-height:14px;color:var(--dim);cursor:pointer;border-bottom:1px solid #222;user-select:none}
+.p-key.black{background:#111;color:#555}
+.p-key:active{background:var(--hi)!important}
+.piano-notes{position:relative;min-width:500px;min-height:100%}
+.note-bar{position:absolute;height:13px;border-radius:2px;opacity:.85;cursor:pointer}
+.note-bar:active{opacity:1}
+
+/* Chat */
+#chat-panel{display:flex;flex-direction:column;height:100%}
+#chat-log{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:5px}
+.msg{padding:8px 12px;border-radius:14px;max-width:88%;font-size:13px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap}
+.msg.user{background:var(--accent);align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:var(--card2);align-self:flex-start;border-bottom-left-radius:4px}
+.msg .result{font-size:11px;color:var(--dim);margin-top:4px;max-height:120px;overflow-y:auto;background:var(--bg);border-radius:6px;padding:6px;font-family:monospace}
+.quick-row{display:flex;gap:3px;padding:4px 6px;overflow-x:auto;flex-shrink:0}
+.quick-row .qbtn{padding:5px 10px;border:1px solid var(--accent);border-radius:16px;background:none;color:var(--dim);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.quick-row .qbtn:active{background:var(--accent);color:var(--text)}
+.chat-bar{display:flex;gap:5px;padding:6px;flex-shrink:0}
+.chat-bar input{flex:1;padding:10px 14px;border:none;border-radius:20px;background:var(--card2);color:var(--text);font-size:14px;outline:none}
+.chat-bar button{padding:10px 18px;border:none;border-radius:20px;background:var(--hi);color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+
+/* Status */
+.status{background:var(--card);padding:5px 10px;font-size:10px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--accent);flex-shrink:0}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot.on{background:var(--green)}.dot.off{background:#c0392b}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="active" data-tab="transport">🎛️<span class="label">Transport</span></button>
+  <button data-tab="mixer">🎚️<span class="label">Mixer</span></button>
+  <button data-tab="channels">🎹<span class="label">Channels</span></button>
+  <button data-tab="piano">🎵<span class="label">Piano</span></button>
+  <button data-tab="chat">💬<span class="label">Chat</span></button>
+</div>
+
+<div class="panel active" id="panel-transport">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <button class="big-btn btn-play" onclick="cmd('transport.start')">▶ Play</button>
+    <button class="big-btn btn-stop" onclick="cmd('transport.stop')">⏹ Stop</button>
+    <button class="big-btn btn-rec" onclick="cmd('transport.record')">⏺ Rec</button>
+  </div>
+  <div class="info-grid">
+    <div class="info-card"><div class="lbl">Status</div><div class="val" id="tv-status">—</div></div>
+    <div class="info-card"><div class="lbl">Position</div><div class="val" id="tv-pos">—</div></div>
+    <div class="info-card"><div class="lbl">Loop</div><div class="val" id="tv-loop">—</div></div>
+    <div class="info-card"><div class="lbl">Recording</div><div class="val" id="tv-rec">—</div></div>
+  </div>
+  <div class="tempo-row">
+    <input type="number" id="tempo-input" value="140" min="20" max="999" inputmode="numeric">
+    <button class="set-btn" onclick="setTempo()">Set BPM</button>
+  </div>
+  <div class="preset-row">
+    <button class="preset-btn" onclick="setTempoVal(80)">80 HipHop</button>
+    <button class="preset-btn" onclick="setTempoVal(120)">120 House</button>
+    <button class="preset-btn" onclick="setTempoVal(128)">128 EDM</button>
+    <button class="preset-btn" onclick="setTempoVal(140)">140 Dubstep</button>
+    <button class="preset-btn" onclick="setTempoVal(174)">174 DnB</button>
+  </div>
+</div>
+
+<div class="panel" id="panel-mixer">
+  <div style="font-size:12px;color:var(--dim);margin-bottom:6px">Mixer — tap M to mute, S to solo</div>
+  <div class="mixer-scroll" id="mixer-strips"></div>
+</div>
+
+<div class="panel" id="panel-channels">
+  <div style="font-size:12px;color:var(--dim);margin-bottom:6px">Channel Rack — 🎵 triggers note C4</div>
+  <div id="channels-list"></div>
+</div>
+
+<div class="panel" id="panel-piano">
+  <div class="piano-toolbar">
+    <button class="pbtn" style="background:var(--accent)" onclick="cmd('piano_roll.getState')">🔄 Refresh</button>
+    <button class="pbtn" style="background:#c0392b" onclick="cmd('piano_roll.clear')">🗑 Clear</button>
+    <button class="pbtn" style="background:#27ae60" onclick="addChord([60,64,67])">+ C</button>
+    <button class="pbtn" style="background:#2980b9" onclick="addChord([57,60,64])">+ Am</button>
+    <button class="pbtn" style="background:#8e44ad" onclick="addChord([65,69,72])">+ F</button>
+    <button class="pbtn" style="background:#e67e22" onclick="addChord([67,71,74])">+ G</button>
+    <button class="pbtn" style="background:#555" onclick="addChord([60,64,67,71])">+ Cmaj7</button>
+  </div>
+  <div class="piano-scroll" id="piano-scroll">
+    <div class="piano-keys-col" id="piano-keys"></div>
+    <div class="piano-notes" id="piano-notes"></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-chat">
+  <div id="chat-panel">
+    <div id="chat-log"></div>
+    <div class="quick-row">
+      <button class="qbtn" onclick="chatSend('play')">▶ Play</button>
+      <button class="qbtn" onclick="chatSend('stop')">⏹ Stop</button>
+      <button class="qbtn" onclick="chatSend('status')">📊 Status</button>
+      <button class="qbtn" onclick="chatSend('channels')">🎹 Channels</button>
+      <button class="qbtn" onclick="chatSend('mixer')">🎚️ Mixer</button>
+      <button class="qbtn" onclick="chatSend('piano')">🎵 Piano</button>
+      <button class="qbtn" onclick="chatSend('clear piano')">🗑 Clear</button>
+      <button class="qbtn" onclick="chatSend('tempo 128')">128</button>
+      <button class="qbtn" onclick="chatSend('tempo 140')">140</button>
+    </div>
+    <div class="chat-bar">
+      <input type="text" id="chat-input" placeholder="Type a command or describe what you want..." inputmode="text" autocomplete="off">
+      <button onclick="sendChat()">→</button>
+    </div>
+  </div>
+</div>
+
+<div class="status">
+  <span><span class="dot off" id="conn-dot"></span><span id="conn-text">Connecting...</span></span>
+  <span id="fl-info">FL Studio: —</span>
+</div>
+
+<script>
+const API = location.origin;
+let connected = false;
+let currentTab = 'transport';
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// ─── API Helpers ──────────────────────────────────────────────
+async function api(path, opts) {
+  try { const r = await fetch(API + path, opts); return await r.json(); }
+  catch(e) { return {success:false, error:e.message}; }
+}
+async function act(name, params) {
+  return api('/action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:name,params:params||{}})});
+}
+async function cmd(actionName, params) {
+  const r = await act(actionName, params);
+  if (!r.success) { addChat('⚠️ ' + (r.error||'unknown'), 'bot'); }
+  else if (r.result) { addChat(formatResult(r.result), 'bot'); }
+  autoRefresh();
+  return r;
+}
+
+function formatResult(r) {
+  if (!r || typeof r === 'string') return r || 'Done';
+  // Format specific result types nicely
+  if (r.tracks) return `🎚️ ${r.tracks.length} tracks loaded`;
+  if (r.channels) return `🎹 ${r.channels.length} channels loaded`;
+  if (r.notes) return `🎵 ${r.notes.length} notes in piano roll`;
+  if (r.is_playing !== undefined) return r.is_playing ? '▶ Playing' : '⏸ Paused';
+  if (r.stopped) return '⏹ Stopped';
+  if (r.notes_added) return `✅ Added ${r.notes_added} notes`;
+  if (r.notes_cleared !== undefined) return `🗑 Cleared ${r.notes_cleared} notes`;
+  if (r.notes_deleted) return `🗑 Deleted ${r.notes_deleted} notes`;
+  return JSON.stringify(r, null, 1);
+}
+
+// ─── Tab Switching ───────────────────────────────────────────
+document.querySelectorAll('.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('panel-' + tab).classList.add('active');
+    currentTab = tab;
+    if (tab === 'mixer') refreshMixer();
+    if (tab === 'channels') refreshChannels();
+    if (tab === 'piano') refreshPiano();
+  });
+});
+
+// ─── Transport ───────────────────────────────────────────────
+function setTempo() {
+  const v = parseFloat(document.getElementById('tempo-input').value);
+  if (v >= 20 && v <= 999) cmd('transport.setPlaybackSpeed', {speed: 1.0}).then(() => {
+    // Also set actual tempo via general API
+    act('transport.getStatus').then(r => {
+      if (r.success) addChat(`Tempo set to ${v} BPM`, 'bot');
+    });
+  });
+  // Use raw command for tempo
+  api('/execute', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({module:'general',function:'setSongTempo',args:[v]})})
+    .then(r => { addChat(`🥁 Tempo → ${v} BPM`, 'bot'); refreshStatus(); });
+}
+function setTempoVal(v) { document.getElementById('tempo-input').value = v; setTempo(); }
+
+// ─── Mixer ───────────────────────────────────────────────────
+async function refreshMixer() {
+  const r = await act('mixer.getAllTracks', {include_empty: false});
+  if (!r.success) return;
+  const tracks = (r.result && r.result.tracks) || [];
+  const el = document.getElementById('mixer-strips');
+  el.innerHTML = '';
+  tracks.slice(0, 20).forEach(t => {
+    const vol = Math.round((t.volume||0)*100);
+    const m = t.is_muted ? ' on' : '';
+    const s = t.is_solo ? ' on' : '';
+    el.innerHTML += `<div class="strip">
+      <div class="sname">${t.name||('Tr '+t.index)}</div>
+      <input type="range" min="0" max="100" value="${vol}" oninput="setVol(${t.index},this.value)">
+      <button class="sbtn mute${m}" onclick="muteTrack(${t.index})">M</button>
+      <button class="sbtn solo${s}" onclick="soloTrack(${t.index})">S</button>
+    </div>`;
+  });
+}
+function setVol(idx, v) { act('mixer.setTrackVolume', {track: idx, volume: v/100}); }
+function muteTrack(idx) { cmd('mixer.muteTrack', {track: idx}).then(() => refreshMixer()); }
+function soloTrack(idx) { cmd('mixer.soloTrack', {track: idx}).then(() => refreshMixer()); }
+
+// ─── Channels ────────────────────────────────────────────────
+async function refreshChannels() {
+  const r = await act('channels.getAll');
+  if (!r.success) return;
+  const chs = (r.result && r.result.channels) || [];
+  const el = document.getElementById('channels-list');
+  el.innerHTML = '';
+  chs.slice(0, 32).forEach(c => {
+    const vol = Math.round((c.volume||0)*100);
+    el.innerHTML += `<div class="ch-card">
+      <span class="ch-idx">${c.index}</span>
+      <span class="ch-name">${c.name||'—'}</span>
+      <input type="range" min="0" max="100" value="${vol}" oninput="setChVol(${c.index},this.value)">
+      <button class="ch-btn" onclick="muteCh(${c.index})">${c.is_muted?'🔇':'🔊'}</button>
+      <button class="ch-btn" onclick="triggerNote(${c.index})">🎵</button>
+    </div>`;
+  });
+}
+function setChVol(idx, v) { act('channels.setVolume', {index: idx, volume: v/100}); }
+function muteCh(idx) { cmd('channels.mute', {index: idx}).then(() => refreshChannels()); }
+function triggerNote(idx) { cmd('channels.triggerNote', {channel: idx, note: 60, velocity: 100}); }
+
+// ─── Piano Roll ─────────────────────────────────────────────
+async function refreshPiano() {
+  const r = await act('piano_roll.getState');
+  if (!r.success) { document.getElementById('piano-notes').innerHTML = '<div style="padding:20px;color:var(--dim);text-align:center">Open a piano roll in FL Studio first</div>'; return; }
+  const notes = (r.result && r.result.notes) || [];
+  const minNote = 36, maxNote = 96;
+  // Keys
+  let keysHtml = '';
+  for (let n = maxNote; n >= minNote; n--) {
+    const name = NOTE_NAMES[n%12] + Math.floor(n/12-1);
+    const isBlack = name.includes('#');
+    keysHtml += `<div class="p-key${isBlack?' black':''}" onclick="addNote(${n})">${isBlack?'':name}</div>`;
+  }
+  document.getElementById('piano-keys').innerHTML = keysHtml;
+  // Notes
+  const maxTime = notes.length ? Math.max(...notes.map(n=>(n.time||0)+(n.duration||0.5)), 4) : 4;
+  let notesHtml = '';
+  notes.forEach(n => {
+    const top = (maxNote - n.midi) * 15;
+    const left = (n.time||0) * 50;
+    const width = Math.max((n.duration||0.5) * 50, 8);
+    const bg = (n.velocity||0.8) > 0.7 ? 'var(--hi)' : 'var(--blue)';
+    notesHtml += `<div class="note-bar" style="top:${top}px;left:${left}px;width:${width}px;background:${bg}" title="${n.note_name||n.m||n.midi} @ ${n.time||0}"></div>`;
+  });
+  const grid = document.getElementById('piano-notes');
+  grid.innerHTML = notesHtml;
+  grid.style.height = ((maxNote - minNote + 1) * 15) + 'px';
+  grid.style.width = Math.max(maxTime * 50, 500) + 'px';
+}
+
+function addNote(midi) {
+  cmd('piano_roll.addNotes', {notes: [{midi: midi, time: 0, duration: 0.5, velocity: 0.8}], mode: 'add'}).then(() => setTimeout(refreshPiano, 300));
+}
+function addChord(notes) {
+  cmd('piano_roll.addChord', {midi_notes: notes, time: 0, duration: 1.0, velocity: 0.8}).then(() => setTimeout(refreshPiano, 300));
+}
+
+// ─── Chat ────────────────────────────────────────────────────
+function addChat(text, type) {
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function chatSend(text) {
+  addChat(text, 'user');
+  const parsed = parseCommand(text);
+  if (parsed) {
+    if (parsed.action) cmd(parsed.action, parsed.params);
+    else if (parsed.module) api('/execute', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(parsed)});
+  } else {
+    addChat('Unknown command. Try: play, stop, tempo 140, channels, mixer, piano, mute 3, solo 3, params 0', 'bot');
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  chatSend(text);
+  input.value = '';
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+
+function parseCommand(text) {
+  const t = text.toLowerCase().trim();
+  if (t === 'play' || t === 'start' || t === 'go') return {action:'transport.start'};
+  if (t === 'stop' || t === 'pause') return {action:'transport.stop'};
+  if (t === 'record' || t === 'rec') return {action:'transport.record'};
+  if (t === 'status' || t === 'info' || t === 'state') return {action:'transport.getStatus'};
+  if (t === 'channels' || t === 'channel rack') return {action:'channels.getAll'};
+  if (t === 'mixer' || t === 'tracks') return {action:'mixer.getAllTracks'};
+  if (t === 'piano' || t === 'notes' || t === 'piano roll') return {action:'piano_roll.getState'};
+  if (t.startsWith('clear') && t.includes('piano')) return {action:'piano_roll.clear'};
+  if (t === 'clear') return {action:'piano_roll.clear'};
+  const tempoMatch = t.match(/(?:set\s+)?tempo\s+(\d+(?:\.\d+)?)/);
+  if (tempoMatch) return {module:'general',function:'setSongTempo',args:[parseFloat(tempoMatch[1])]};
+  const muteMatch = t.match(/mute\s+(?:track\s+)?(\d+)/);
+  if (muteMatch) return {action:'mixer.muteTrack',params:{track:parseInt(muteMatch[1])}};
+  const soloMatch = t.match(/solo\s+(?:track\s+)?(\d+)/);
+  if (soloMatch) return {action:'mixer.soloTrack',params:{track:parseInt(soloMatch[1])}};
+  const volMatch = t.match(/(?:set\s+)?(?:track|volume)\s+(\d+)\s+(\d+(?:\.\d+)?)/);
+  if (volMatch) return {action:'mixer.setTrackVolume',params:{track:parseInt(volMatch[1]),volume:parseFloat(volMatch[2])/100}};
+  const paramMatch = t.match(/(?:params?|plugin)\s+(\d+)/);
+  if (paramMatch) return {action:'plugins.getParams',params:{index:parseInt(paramMatch[1])}};
+  return null;
+}
+
+// ─── Auto Refresh ────────────────────────────────────────────
+async function refreshStatus() {
+  const r = await act('transport.getStatus');
+  connected = r.success;
+  document.getElementById('conn-dot').className = 'dot ' + (connected ? 'on' : 'off');
+  document.getElementById('conn-text').textContent = connected ? 'Connected' : 'Disconnected';
+  if (connected && r.result) {
+    const d = r.result;
+    document.getElementById('tv-status').textContent = d.is_playing ? '▶ Playing' : '⏸ Paused';
+    document.getElementById('tv-pos').textContent = d.position || '—';
+    document.getElementById('tv-loop').textContent = d.loop_mode || '—';
+    document.getElementById('tv-rec').textContent = d.is_recording ? '🔴 Rec' : '—';
+  }
+}
+
+function autoRefresh() {
+  if (currentTab === 'transport') refreshStatus();
+  else if (currentTab === 'mixer') refreshMixer();
+  else if (currentTab === 'channels') refreshChannels();
+  else if (currentTab === 'piano') refreshPiano();
+}
+
+// Initial load
+refreshStatus();
+setInterval(() => { if (currentTab === 'transport') refreshStatus(); }, 3000);
+addChat('🎹 Tekton FL Studio Bridge v3.0\nType commands like: play, stop, tempo 140, channels, mixer, piano, mute 3, params 0', 'bot');
+</script>
+</body>
+</html>
