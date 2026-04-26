@@ -164,13 +164,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Credits
 
-Tekton Agent combines ideas and code from five open-source projects:
+Tekton Agent combines ideas and code from open-source projects:
 
-- **[Pi](https://github.com/mariozechner/pi-coding-agent)** — Terminal coding agent framework, CLI, tools
-- **[Hermes](https://github.com/mariozechner/hermes)** — Learning loop, skill extraction, context hygiene
-- **[OpenMythos](https://github.com/nicholas-carmona/openmythos)** — Adaptive computation, model routing
-- **[Caveman](https://github.com/nicholas-carmona/caveman)** — Compression tiers, token optimization
-- **[ULR](https://github.com/nicholas-carmona/ulr)** — Universal learning rate, reasoning training
+- **[Pi](https://github.com/badlogic/pi-mono)** — Terminal coding agent framework, CLI, tools
+- **[Hermes](https://github.com/nousresearch/hermes-agent)** — Learning loop, skill extraction, context hygiene
+- **[OpenMythos](https://github.com/kyegomez/OpenMythos)** — Adaptive computation, model routing
+- **[Caveman](https://github.com/juliusbrussee/caveman)** — Compression tiers, token optimization
+- **[Docling](https://github.com/docling-project/docling)** — Document parsing and intelligence
 
 ## License
 
