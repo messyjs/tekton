@@ -76,7 +76,7 @@ def create_app():
         return {
             "status": "ok" if connected else "disconnected",
             "service": "tekton-flstudio",
-            "version": "2.0.0",
+            "version": "3.0.0",
             "fl_studio_connected": connected,
             "transport": version_info if connected else None,
             "bridge_host": _config.get("bridge_host", "127.0.0.1"),
@@ -352,7 +352,7 @@ def run_mcp_server():
             return {"jsonrpc": "2.0", "id": req_id, "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "tekton-flstudio", "version": "2.0.0"},
+                "serverInfo": {"name": "tekton-flstudio", "version": "3.0.0"},
             }}
         elif method == "tools/list":
             return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": TOOLS}}

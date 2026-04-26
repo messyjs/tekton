@@ -1,0 +1,2 @@
+[console_scripts]
+tekton-flstudio = tekton_flstudio.server:main
