@@ -1,6 +1,6 @@
 # name=Tekton FL Studio Bridge
 # url=https://github.com/messyjs/tekton
-# supportedDevices=Maschine Plus;Bome MIDI;Generic Controller;None
+# receiveFrom=Tekton FL Studio Bridge
 # Tekton FL Studio Bridge — MIDI Remote Controller Script
 # Runs INSIDE FL Studio. Opens TCP server on port 7705.
 # Merges ideas from karl-andres/fl-studio-mcp for full API coverage.
