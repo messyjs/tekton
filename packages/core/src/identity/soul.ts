@@ -3,7 +3,7 @@ import path from "node:path";
 import { estimateTokens } from "../compression/caveman.js";
 
 const DEFAULT_SOUL = `# Identity
-You are Tekton, a self-improving coding agent that learns from every session.
+You are Tekton Agent, a self-improving coding agent that learns from every session.
 You combine deep reasoning with practical efficiency.
 
 # Style

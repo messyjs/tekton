@@ -1,6 +1,8 @@
 # @tekton/forge — Autonomous Product Engineering
 
-Forge is Tekton's product engineering system. It takes ideas and builds real, shippable products through multi-agent teams with session budgets, quality gates, and cross-session continuity.
+> **Optional package** — Forge is not built by default. Enable with `npm run build:forge` or during setup.
+
+Forge is Tekton Agent's product engineering system. It takes ideas and builds real, shippable products through multi-agent teams with session budgets, quality gates, and cross-session continuity.
 
 ## Overview
 

@@ -1,9 +1,9 @@
 #!/bin/bash
-# Tekton Setup Script
+# Tekton Agent Setup Script
 set -e
 
-echo "⚡ Tekton Setup"
-echo "================"
+echo "⚡ Tekton Agent Setup"
+echo "======================"
 echo ""
 
 # Check Node.js
@@ -30,11 +30,11 @@ else
   exit 1
 fi
 
-# Check Python (optional)
+# Check Python (optional, for docling)
 if command -v python3 &> /dev/null; then
-  echo "✓ Python3 $(python3 --version)"
+  echo "✓ Python3 $(python3 --version) (for Docling document intelligence)"
 else
-  echo "⚠ Python3 not found (needed for ML-Ops training scripts)"
+  echo "⚠ Python3 not found (needed for Docling document parsing)"
 fi
 
 # Check Git
@@ -64,8 +64,30 @@ echo "Installing dependencies..."
 npm install
 
 echo ""
-echo "Building packages..."
-npm run build
+echo "Building core packages..."
+npm run build:core
+
+echo ""
+echo "Building CLI..."
+npm run build:cli
+
+echo ""
+# Ask about Forge
+echo "─────────────────────────────────────────"
+echo "Forge — Autonomous Product Engineering"
+echo "Forge takes ideas and builds real products through multi-agent teams."
+echo "It adds /tekton:forge commands and a product engineering pipeline."
+echo "─────────────────────────────────────────"
+read -p "Enable Forge? [y/N]: " ENABLE_FORGE
+
+if [[ "$ENABLE_FORGE" =~ ^[Yy]$ ]]; then
+  echo "Building Forge..."
+  npm run build:forge
+  FORGE_ENABLED=true
+else
+  echo "Skipping Forge. Enable later with: /tekton:forge enable"
+  FORGE_ENABLED=false
+fi
 
 echo ""
 echo "Running tests..."
@@ -88,7 +110,10 @@ echo "Next steps:"
 echo "  1. Edit ~/.tekton/config.yaml to configure your models"
 echo "  2. Set API keys: export OPENAI_API_KEY=sk-..."
 echo "  3. Pull a model: ollama pull gemma3:12b"
-echo "  4. Start Tekton: npx tekton"
+echo "  4. Start Tekton Agent: npx tekton"
+if [ "$FORGE_ENABLED" = true ]; then
+  echo "  5. Use Forge: /tekton:forge enable"
+fi
 echo ""
 echo "Documentation: docs/SETUP.md"
 echo "Commands: /tekton:help"

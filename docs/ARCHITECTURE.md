@@ -1,8 +1,8 @@
-# Tekton Architecture
+# Tekton Agent Architecture
 
 ## Overview
 
-Tekton is a standalone terminal coding agent that combines five major systems into a unified platform:
+Tekton Agent is a standalone terminal coding agent that combines five major systems into a unified platform:
 
 ```
 ┌─────────────────────────────────────────────────────┐

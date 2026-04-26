@@ -2,7 +2,7 @@ import { Type } from "@sinclair/typebox";
 
 export const CONFIG_SCHEMA = Type.Object({
   identity: Type.Object({
-    soul: Type.String({ default: "Tekton — adaptive coding agent" }),
+    soul: Type.String({ default: "Tekton Agent — adaptive coding agent that learns" }),
     name: Type.String({ default: "tekton" }),
     soulPath: Type.String({ default: "~/.tekton/SOUL.md" }),
     memoryPath: Type.String({ default: "~/.tekton/MEMORY.md" }),

@@ -15,3 +15,18 @@ coverage/
 *.log
 tmp/
 temp/
+
+# Separate projects (not part of Tekton Agent)
+mobile/
+packages/agentpilot/
+packages/gann/
+
+# Dev-only files
+build-prompts/
+TASKS.md
+TEKTON-FULL-PROJECT-CONTEXT.md
+TEKTON-PHASE-*.md
+DESIGN_STANDARDS.md
+find_error.cjs
+fix_sp.cjs
+start-ollama-tunnel.bat

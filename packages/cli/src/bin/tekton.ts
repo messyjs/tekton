@@ -11,6 +11,6 @@ if (!process.env.PI_CODING_AGENT_DIR) {
 import { run } from "../run.js";
 
 run(process.argv.slice(2)).catch((err) => {
-  console.error("Tekton fatal error:", err);
+  console.error("Tekton Agent fatal error:", err);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 export const DEFAULT_CONFIG = {
   identity: {
-    soul: "Tekton — adaptive coding agent",
+    soul: "Tekton Agent — adaptive coding agent that learns",
     name: "tekton",
     soulPath: "~/.tekton/SOUL.md",
     memoryPath: "~/.tekton/MEMORY.md",

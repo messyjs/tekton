@@ -1,13 +1,19 @@
-# Contributing to Tekton
+# Contributing to Tekton Agent
 
 ## Setup
 
 ```bash
-git clone <repo-url>
-cd tekton
+git clone https://github.com/messyjs/tekton-agent.git
+cd tekton-agent
 npm install
 npm run build
 npm test
+```
+
+### Optional: Forge
+
+```bash
+npm run build:forge   # Build the Forge product engineering package
 ```
 
 ## Development Workflow

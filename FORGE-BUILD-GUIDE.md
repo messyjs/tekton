@@ -1,6 +1,6 @@
-# FORGE-BUILD-GUIDE.md — Phase 14: Real Agent Execution
+# FORGE-BUILD-GUIDE — Forge Product Engineering
 
-**Status: ✅ COMPLETE** | 687 tests passing (35 new) | All packages compile clean
+**Forge is an optional package.** Build with `npm run build:forge` or enable during `npm run setup`.
 
 ## What Changed
 

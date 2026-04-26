@@ -1,9 +1,9 @@
-# Tekton Setup Guide
+# Tekton Agent Setup Guide
 
 ## Prerequisites
 
 - **Node.js** 20+ (recommended: 22+)
-- **Python** 3.10+ (for ML-Ops training scripts)
+- **Python** 3.10+ (for Docling document intelligence & ML-Ops training)
 - **Git** 2.30+
 - **NVIDIA GPU** + CUDA (optional, for local training)
 - **Ollama** or other model provider API keys
@@ -12,27 +12,37 @@
 
 ```bash
 # Clone the repository
-git clone <tekton-repo-url>
-cd tekton
+git clone https://github.com/messyjs/tekton-agent.git
+cd tekton-agent
 
-# Install dependencies
+# Run setup (installs deps, builds, runs tests)
+npm run setup
+# Or manual install:
 npm install
-
-# Build all packages
-npm run build
-
-# Run tests
+npm run build:core
+npm run build:cli
 npm test
 ```
 
+### Optional: Forge
+
+Forge is Tekton Agent's autonomous product engineering system. It's **not built by default**:
+
+```bash
+# Build Forge (optional)
+npm run build:forge
+```
+
+Or enable during setup when prompted.
+
 ## Configuration
 
-Tekton uses `~/.tekton/config.yaml` for persistent settings:
+Tekton Agent uses `~/.tekton/config.yaml` for persistent settings:
 
 ```yaml
 identity:
-  name: tekton
-  soul: "Tekton — adaptive coding agent"
+  name: tekton-agent
+  soul: "Tekton Agent — adaptive coding agent that learns"
 
 models:
   fast:
@@ -51,7 +61,7 @@ compression:
   defaultTier: full
 
 learning:
-  enabled: true
+  enabled: true    # Learning ON by default (use --no-learning to pause)
 
 voice:
   stt: local
@@ -63,6 +73,21 @@ dashboard:
 
 gateway:
   platforms: []
+```
+
+## Learning Mode
+
+By default, Tekton Agent **learns from every session**:
+- Extracts skills from successful tasks
+- Refines existing skills over time
+- Tracks user preferences and coding style
+- Recommends context compaction when needed
+- **Zero extra token cost** — all learning is local
+
+To disable learning for a specific session (e.g., scripts, CI/CD):
+
+```bash
+npx tekton --no-learning
 ```
 
 ## Model Providers
@@ -89,14 +114,18 @@ export GROQ_API_KEY=gsk_...
 ## First Run
 
 ```bash
-# Start interactive session
+# Start interactive session (learning ON by default)
 npx tekton
+
+# Or without learning
+npx tekton --no-learning
 
 # Or use specific commands
 npx tekton --help
 /tekton:status
 /tekton:models
 /tekton:skills list
+/tekton:learn          # Trigger learning cycle manually
 ```
 
 ## Dashboard
@@ -135,3 +164,4 @@ gateway:
 | "Model not found" | Pull the model: `ollama pull gemma3:12b` |
 | "Port 7700 in use" | Change port in config: `dashboard.port: 8080` |
 | "No GPU detected" | Install nvidia-smi or use CPU-only models |
+| Learning seems slow | Learning is local — no API cost. Check `~/.tekton/skills/` for extracted skills |

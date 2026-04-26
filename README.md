@@ -1,21 +1,21 @@
-# ⚡ Tekton
+# ⚡ Tekton Agent
 
-Standalone terminal coding agent **and mobile AI platform** combining Pi SDK, Hermes learning loop, OpenMythos adaptive computation, Caveman compression, and context hygiene.
+Standalone terminal AI coding agent with adaptive routing, learning loop, multi-tier compression, and document intelligence.
 
 ```
-┌──────────────────────────────────────────────────┐
-│  ⚡ Tekton — Adaptive Coding Agent              │
-├──────────┬──────────┬──────────┬────────────────┤
-│  Core    │ Gateway  │  Voice   │  Dashboard     │
-│  SCP     │ 10 adapt │ STT/TTS  │  10 pages      │
-│  Route   │ Sessions │ Recorder │  REST API      │
-│  Compress│ Rate lim │ Handler │  Dark theme     │
-├──────────┼──────────┼──────────┼────────────────┤
-│  Hermes  │  Tools   │ ML-Ops   │  CLI           │
-│  Learn   │ 8 sets  │ QLoRA    │  22+ commands   │
-│  Evaluate│ Approval │ Ternary  │  Interactive    │
-│  Extract │ Sandbox  │ GRPO     │  Autocomplete   │
-└──────────┴──────────┴──────────┴────────────────┘
+┌──────────────────────────────────────────────────────┐
+│  ⚡ Tekton Agent — Adaptive Terminal Coding Agent    │
+├──────────┬──────────┬───────────┬───────────────────┤
+│  Core    │ Gateway  │  Voice    │  Dashboard        │
+│  SCP     │ 10 adapt │ STT/TTS   │  REST API + UI    │
+│  Route   │ Sessions │ Recorder  │  Dark theme        │
+│  Compress│ Rate lim │ Handler  │  Forge (optional)  │
+├──────────┼──────────┼───────────┼───────────────────┤
+│  Hermes  │  Tools   │  ML-Ops   │  CLI              │
+│  Learn   │ 10 sets │ QLoRA     │  23+ commands      │
+│  Evaluate│ Approval │ Ternary   │  Interactive       │
+│  Extract │ Sandbox  │ GRPO      │  Autocomplete      │
+└──────────┴──────────┴───────────┴───────────────────┘
 ```
 
 ## Quick Start
@@ -24,7 +24,8 @@ Standalone terminal coding agent **and mobile AI platform** combining Pi SDK, He
 npm install
 npm run build
 npm test           # 624 tests
-npx tekton          # Start interactive session
+npx tekton          # Start interactive session (learning ON by default)
+npx tekton --no-learning   # Start without learning for this session
 ```
 
 ## Features
@@ -34,13 +35,26 @@ npx tekton          # Start interactive session
 | SCP Protocol | OpenMythos | Structured Caveman Protocol for inter-agent communication |
 | 3-Tier Compression | Caveman | Lite/Compact/Full compression to stay in context |
 | Adaptive Routing | OpenMythos | Complexity-based model selection (fast ↔ deep) |
-| Learning Loop | Hermes | Evaluation → skill extraction → context hygiene |
+| Learning Loop | Hermes | Evaluation → skill extraction → context hygiene (ON by default) |
 | Multi-Platform | Gate | Telegram, Discord, Slack, WhatsApp, +6 more adapters |
 | Voice I/O | Voice | STT local→Groq→OpenAI, TTS edge→ElevenLabs→OpenAI |
 | Document Intelligence | Docling | PDF, DOCX, PPTX, XLSX, images → Markdown with OCR and tables |
-| Web Dashboard | Dashboard | 11-page React SPA with dark theme |
+| Web Dashboard | Dashboard | 11-page SPA with dark theme |
 | Training Orchestration | ML-Ops | QLoRA, ternary BitNet, GRPO reasoning |
 | Fallback Chains | OpenMythos | Automatic model failover on errors |
+| Forge (optional) | Product Eng | Multi-agent product engineering pipeline |
+
+## Learning Mode
+
+Tekton Agent **learns from every session** by default. The Hermes learning loop:
+
+- **Extracts skills** — Successful tasks become reusable skills stored locally
+- **Refines existing skills** — Better approaches update skill confidence
+- **Tracks your preferences** — User model learns coding style, tool preferences
+- **Manages context** — Recommends compaction when context gets heavy
+- **Zero extra token cost** — All learning is local, no API calls
+
+Use `--no-learning` to pause learning for a session (e.g., CI/CD, debugging, one-off scripts).
 
 ## Command Reference
 
@@ -63,11 +77,27 @@ npx tekton          # Start interactive session
 | `/tekton:voice` | Voice I/O control |
 | `/tekton:docling` | Document intelligence (status, parse, start, stop, formats, config) |
 | `/tekton:gateway` | Messaging gateway control |
+| `/tekton:forge` | Forge product engineering (optional) |
 | `/tekton:personality` | Personality presets |
 | `/tekton:soul` | Manage soul/identity |
 | `/tekton:help` | Full command reference |
 | `/model` | Switch model (Pi native) |
 | `/tree` / `/compact` / `/new` | Pi native commands |
+
+## CLI Flags
+
+| Flag | Description |
+|------|-------------|
+| `--no-learning` | Disable skill extraction & learning for this session |
+| `--provider <p>` | LLM provider (ollama, openai, anthropic, groq, together) |
+| `--model <m>` | Model to use |
+| `--route <mode>` | Routing mode: auto, fast, deep, rules |
+| `--compress <tier>` | Compression: off, lite, full, ultra |
+| `--dashboard` | Enable dashboard |
+| `--dashboard-port <n>` | Dashboard port (default: 7890) |
+| `--no-dashboard` | Disable dashboard |
+| `--soul <path>` | Override SOUL.md path |
+| `--personality <p>` | Personality preset: teacher, reviewer, researcher, pragmatic, creative |
 
 ## Providers
 
@@ -79,36 +109,38 @@ npx tekton          # Start interactive session
 | Groq | llama3, mixtral, gemma | API |
 | Together | 100+ open source models | API |
 
-## Mobile App
+## Forge (Optional)
 
-Tekton also includes a Flutter-based mobile app (`mobile/`) providing:
+Forge is Tekton Agent's optional product engineering system. Enable it during setup or anytime:
 
-- **Multi-backend chat** — OpenAI, Anthropic, Ollama, custom endpoints
-- **On-device inference** — llama.cpp FFI for Gemma models
-- **Progressive install** — Chat-only → Engine → Models → Agents
-- **Multi-agent orchestration** — Director (auto-route) + User (manual) modes
-- **Tool system** — Filesystem, web search, calculator, doc analysis, code exec
-- **Memory** — Persistent cross-conversation memory with forgetting curve
-- **Server mode** — Act as an OpenAI-compatible API for other devices
+```bash
+# During setup
+npm run setup        # Will ask: "Enable Forge? [y/N]"
 
-See [mobile/README.md](mobile/README.md) for details.
+# Or in-session
+/tekton:forge enable
+/tekton:forge new "Build a portfolio site with contact form"
+/tekton:forge status
+```
+
+See [FORGE-BUILD-GUIDE.md](FORGE-BUILD-GUIDE.md) for details.
 
 ## Architecture
 
-8 packages in a monorepo + Flutter mobile app:
+9 core packages + 1 optional in a monorepo:
 
 ```
-tekton/
-├── packages/core/          # Foundation: SCP, routing, compression, memory
-├── packages/hermes-bridge/ # Learning loop: evaluation, skill extraction
-├── packages/tools/          # Tool execution: 10 toolsets (incl. Docling)
-├── packages/cli/            # Terminal interface: 23+ commands
-├── packages/gateway/        # Messaging: 10 platform adapters
-├── packages/voice/          # Voice I/O: STT/TTS/recording
-├── packages/dashboard/       # Web UI: 11 pages (incl. Documents), REST API
-├── packages/ml-ops/          # Training: QLoRA, ternary, GRPO
-├── packages/docling-service/ # Document parsing sidecar (Python)
-└── mobile/                   # Flutter app: Android + Desktop AI platform
+tekton-agent/
+├── packages/core/            # Foundation: SCP, routing, compression, memory
+├── packages/hermes-bridge/   # Learning loop: evaluation, skill extraction
+├── packages/tools/           # Tool execution: 10 toolsets (incl. Docling)
+├── packages/cli/             # Terminal interface: 23+ commands
+├── packages/gateway/         # Messaging: 10 platform adapters
+├── packages/voice/            # Voice I/O: STT/TTS/recording
+├── packages/dashboard/        # Web UI: 11 pages, REST API
+├── packages/ml-ops/           # Training: QLoRA, ternary, GRPO
+├── packages/docling-service/  # Document parsing sidecar (Python)
+└── packages/forge/            # [Optional] Product engineering pipeline
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full architecture details.
@@ -117,6 +149,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full architecture details.
 
 - [Architecture](docs/ARCHITECTURE.md) — Full system architecture
 - [Docling](docs/DOCLING.md) — Document intelligence integration
+- [Forge Guide](FORGE-BUILD-GUIDE.md) — Product engineering pipeline
 - [SCP Specification](docs/SCP-SPEC.md) — Inter-agent protocol
 - [Routing](docs/ROUTING.md) — Adaptive model routing
 - [Compression Tiers](docs/COMPRESSION-TIERS.md) — Three-tier compression
@@ -131,7 +164,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Credits
 
-Tekton combines ideas and code from five open-source projects:
+Tekton Agent combines ideas and code from five open-source projects:
 
 - **[Pi](https://github.com/mariozechner/pi-coding-agent)** — Terminal coding agent framework, CLI, tools
 - **[Hermes](https://github.com/mariozechner/hermes)** — Learning loop, skill extraction, context hygiene

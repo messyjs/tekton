@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "tekton": "./dist/bin/tekton.js"
+    "tekton": "./dist/bin/tekton.js",
+    "tekton-agent": "./dist/bin/tekton.js"
   },
   "exports": {
     ".": {
@@ -24,9 +25,9 @@
     "@tekton/hermes-bridge": "^0.1.0",
     "@tekton/tools": "^0.1.0",
     "@tekton/dashboard": "^0.1.0",
-    "@tekton/forge": "^0.1.0",
     "@tekton/voice": "^0.1.0",
     "@tekton/ml-ops": "^0.1.0",
+    "@tekton/docling-service": "^0.1.0",
     "@sinclair/typebox": "^0.34.0"
   },
   "devDependencies": {

@@ -1,6 +1,9 @@
 /**
  * /tekton:forge — Forge project management commands.
  *
+ * Forge is an OPTIONAL package. If @tekton/forge is not installed,
+ * commands will show a message asking the user to install it.
+ *
  * Commands:
  *   /tekton:forge          — Show status (enabled/disabled, project count)
  *   /tekton:forge enable   — Enable Forge, create projects directory
@@ -16,9 +19,30 @@ import { loadConfig } from "@tekton/core";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import os from "node:os";
-import { ForgeRuntime, type ForgeRuntimeConfig } from "@tekton/forge";
-import { checkDomain, checkMultipleDomains } from "@tekton/forge";
-import type { ProductDomain } from "@tekton/forge";
+
+// ── Dynamic import for optional @tekton/forge ──────────────────────────
+
+let forgeModule: typeof import("@tekton/forge") | null = null;
+
+async function getForgeModule(): Promise<typeof import("@tekton/forge") | null> {
+  if (forgeModule !== null) return forgeModule;
+  try {
+    forgeModule = await import("@tekton/forge");
+    return forgeModule;
+  } catch {
+    forgeModule = null;
+    return null;
+  }
+}
+
+function forgeNotInstalledMessage(): string {
+  return (
+    "❌ Forge is not installed.\n\n" +
+    "Forge is an optional product engineering system. To enable it:\n\n" +
+    "  npm run build:forge\n\n" +
+    "Then restart Tekton Agent and run /tekton:forge enable."
+  );
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -64,22 +88,12 @@ function setForgeEnabled(enabled: boolean): void {
   }
 }
 
-function getForgeRuntime(tektonHome?: string): ForgeRuntime {
-  const home = tektonHome ?? getTektonHome();
-  const projectsDir = join(home, "forge-projects");
-
-  return new ForgeRuntime({
-    enabled: true,
-    projectsDir,
-  });
-}
-
 // ── Command registration ──────────────────────────────────────────────────
 
 export function createForgeCommand(): CommandRegistration {
   return {
     name: "tekton:forge",
-    description: "Forge — autonomous product engineering system",
+    description: "Forge — autonomous product engineering system (optional)",
     subcommands: {
       enable: "Enable Forge and create projects directory",
       disable: "Disable Forge",
@@ -93,29 +107,42 @@ export function createForgeCommand(): CommandRegistration {
       const subcommand = args.positional[0];
       const tektonHome = ctx?.tektonHome ?? getTektonHome();
 
-      // No subcommand: show status
-      if (!subcommand) {
-        const enabled = isForgeEnabled(tektonHome);
-        const runtime = getForgeRuntime(tektonHome);
-        const projects = runtime.listProjects();
-
-        piCtx.ui.notify(
-          `Forge: ${enabled ? "✅ Enabled" : "❌ Disabled"}\n\nProjects: ${projects.length}\n${projects.map(p => `  ${p.id} — ${p.phase}${p.title ? ` (${p.title})` : ""}${p.error ? ` ⚠️ ${p.error}` : ""}`).join("\n")}\n\nUse /tekton:forge enable to activate, /tekton:forge disable to deactivate.\nUse /tekton:forge new <brief> to start a project.`
-        );
-        return;
-      }
-
-      // enable
+      // enable/disable don't need the forge module
       if (subcommand === "enable") {
         setForgeEnabled(true);
-        piCtx.ui.notify("✅ Forge enabled. Projects directory: ~/.tekton/forge-projects");
+        piCtx.ui.notify("✅ Forge enabled. Projects directory: ~/.tekton/forge-projects\n\nRun /tekton:forge status to see projects.");
         return;
       }
 
-      // disable
       if (subcommand === "disable") {
         setForgeEnabled(false);
         piCtx.ui.notify("❌ Forge disabled.");
+        return;
+      }
+
+      // All other commands require @tekton/forge to be installed
+      const forge = await getForgeModule();
+      if (!forge) {
+        piCtx.ui.notify(forgeNotInstalledMessage());
+        return;
+      }
+
+      // No subcommand: show status
+      if (!subcommand) {
+        const enabled = isForgeEnabled(tektonHome);
+        if (!enabled) {
+          piCtx.ui.notify("Forge is not enabled. Run /tekton:forge enable to activate.");
+          return;
+        }
+        const runtime = new forge.ForgeRuntime({
+          enabled: true,
+          projectsDir: join(tektonHome, "forge-projects"),
+        });
+        const projects = runtime.listProjects();
+
+        piCtx.ui.notify(
+          `Forge: ✅ Enabled\n\nProjects: ${projects.length}\n${projects.map(p => `  ${p.id} — ${p.phase}${p.title ? ` (${p.title})` : ""}${p.error ? ` ⚠️ ${p.error}` : ""}`).join("\n")}\n\nUse /tekton:forge new <brief> to start a project.`
+        );
         return;
       }
 
@@ -125,6 +152,11 @@ export function createForgeCommand(): CommandRegistration {
         return;
       }
 
+      const runtime = new forge.ForgeRuntime({
+        enabled: true,
+        projectsDir: join(tektonHome, "forge-projects"),
+      });
+
       // new — start a new project
       if (subcommand === "new") {
         const brief = args.positional.slice(1).join(" ").trim();
@@ -133,7 +165,6 @@ export function createForgeCommand(): CommandRegistration {
           return;
         }
 
-        const runtime = getForgeRuntime(tektonHome);
         try {
           const projectId = await runtime.newProject(brief);
           const status = runtime.getProjectStatus(projectId);
@@ -156,7 +187,6 @@ export function createForgeCommand(): CommandRegistration {
       // status — show project status
       if (subcommand === "status") {
         const projectId = args.positional[1];
-        const runtime = getForgeRuntime(tektonHome);
 
         if (projectId) {
           const status = runtime.getProjectStatus(projectId);
@@ -192,7 +222,6 @@ export function createForgeCommand(): CommandRegistration {
           return;
         }
 
-        const runtime = getForgeRuntime(tektonHome);
         try {
           const state = await runtime.resumeProject(projectId);
           piCtx.ui.notify(
@@ -207,7 +236,6 @@ export function createForgeCommand(): CommandRegistration {
 
       // list — list projects
       if (subcommand === "list") {
-        const runtime = getForgeRuntime(tektonHome);
         const projects = runtime.listProjects();
 
         if (projects.length === 0) {
@@ -230,7 +258,7 @@ export function createForgeCommand(): CommandRegistration {
         }
 
         try {
-          const result = await checkDomain(domain as ProductDomain);
+          const result = await forge.checkDomain(domain as forge.ProductDomain);
 
           const lines = [
             `Domain: ${domain}`,

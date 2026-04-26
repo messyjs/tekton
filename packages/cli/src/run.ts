@@ -40,7 +40,7 @@ export interface ParsedArgs {
 }
 
 const HELP_TEXT = `
-Tekton — The self-improving coding agent
+Tekton Agent — The self-improving coding agent
 
 Usage: tekton [options] [message]
 

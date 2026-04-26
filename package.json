@@ -1,5 +1,5 @@
 {
-  "name": "tekton",
+  "name": "tekton-agent",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -7,18 +7,21 @@
     "packages/voice",
     "packages/tools",
     "packages/hermes-bridge",
-    "packages/forge",
     "packages/gateway",
     "packages/dashboard",
     "packages/ml-ops",
     "packages/cli",
-    "packages/agentpilot"
+    "packages/docling-service",
+    "packages/forge"
   ],
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "build:core": "npm run build -w @tekton/core -w @tekton/hermes-bridge -w @tekton/tools -w @tekton/voice -w @tekton/gateway -w @tekton/dashboard -w @tekton/ml-ops -w @tekton/docling-service",
+    "build:cli": "npm run build -w @tekton/cli",
+    "build:forge": "npm run build -w @tekton/forge",
     "test": "vitest run",
     "clean": "rm -rf packages/*/dist"
   },

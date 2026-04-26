@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<full-backup-content>
-    <!-- Exclude downloaded models from auto-backup (they're large) -->
-    <exclude domain="file" path="models/" />
-    <exclude domain="file" path="engine/" />
-</full-backup-content>
