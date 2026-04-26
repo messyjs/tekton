@@ -1,57 +1,179 @@
 # Tekton FL Studio Sidecar
 
-Control [FL Studio](https://www.image-line.com/fl-studio/) from Tekton Agent via a TCP bridge. Write melodies, shape synth patches, automate parameters — all from a single HTTP API.
+Full DAW control for FL Studio — Transport, Mixer, Channels, Step Sequencer, Plugins, Piano Roll.
 
-## How It Works
+Communicates via a **TCP bridge** running inside FL Studio as a MIDI controller script. No virtual MIDI ports, no keystroke hacks, no IAC Driver needed.
 
-Two-part system:
+## Architecture
 
-1. **Bridge script** runs inside FL Studio as a MIDI Controller Script (TCP server on port 7705)
-2. **Sidecar** is a FastAPI server (port 7704) that Tekton talks to
+```
+┌─────────────────┐     ┌──────────────────────────────┐     ┌───────────────────────┐
+│   Tekton        │     │   FL Studio Sidecar          │     │   FL Studio Bridge    │
+│   CLI / LLM     │────▶│   (FastAPI :7704 / MCP)      │────▶│   (TCP :7705)          │
+│                 │     │                              │     │   Runs INSIDE FL      │
+└─────────────────┘     └──────────────────────────────┘     └───────────────────────┘
+                                                               Direct FL Studio API:
+                                                               channels, mixer, transport,
+                                                               plugins, flpianoroll
+```
+
+**Why TCP, not MIDI+JSON like other FL MCP servers?**
+
+| Feature | Our TCP Bridge | karl-andres (MIDI+JSON) | calvinw (JSON+Keystroke) |
+|---------|---------------|------------------------|--------------------------|
+| Virtual MIDI port | ❌ Not needed | ✅ Required (IAC/loopMIDI) | ❌ Not needed |
+| Keystroke hack | ❌ Not needed | ❌ Not needed* | ✅ Required (Cmd+Opt+Y) |
+| Accessibility perms | ❌ Not needed | ❌ Not needed | ✅ Required (macOS) |
+| Piano Roll | ✅ Direct API | ✅ Keystroke trigger | ✅ Keystroke trigger |
+| Step Sequencer | ✅ Direct API | ✅ Direct API | ❌ Not supported |
+| Plugin Presets | ✅ Navigate/preset | ✅ Navigate/preset | ❌ Not supported |
+| Response latency | ~10ms TCP | ~50ms MIDI+poll | ~2s keystroke delay |
+| Bidirectional | ✅ TCP response | ✅ JSON file poll | ✅ JSON file poll |
+
+*\*Piano roll still uses keystroke trigger in karl-andres; transport/mixer/channels use MIDI*
 
 ## Installation
 
-1. Install sidecar: `pip install -e .`
-2. Copy `bridge/tekton_flstudio_bridge.py` to FL Studio's `Settings/Hardware/` folder
-3. Enable in FL Studio: `Options → MIDI Settings → Controller type → "Tekton FL Studio Bridge"`
-
-## Running
+### 1. Install the Python package
 
 ```bash
-tekton-flstudio --mode http --port 7704   # HTTP API server
-tekton-flstudio --mode mcp                # stdio MCP server
+cd packages/flstudio-service
+pip install -e .
 ```
 
-## API Endpoints
+### 2. Install the bridge script in FL Studio
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | FL Studio bridge connection status |
-| `/transport` | GET/POST | Play/stop/record/tempo/position |
-| `/channels` | GET | Channel Rack channels |
-| `/channels/{id}` | PATCH | Volume/pan/mute/solo/name |
-| `/mixer` | GET | Mixer tracks |
-| `/plugins/{id}/params` | GET | Plugin parameters (knobs!) |
-| `/plugins/{id}/params/{pid}` | PATCH | Set a plugin parameter |
-| `/piano_roll` | POST | Write notes (melodies!) |
-| `/execute` | POST | Raw FL Studio API command |
+Copy the bridge script to FL Studio's Hardware scripts folder:
 
-## Writing Melodies
+**Windows:**
+```
+copy bridge\tekton_flstudio_bridge.py "%USERPROFILE%\Documents\Image-Line\FL Studio\Settings\Hardware\"
+```
 
-```json
-POST /piano_roll
-{
+**macOS:**
+```bash
+cp bridge/tekton_flstudio_bridge.py ~/Documents/Image-Line/FL\ Studio/Settings/Hardware/
+```
+
+### 3. Enable in FL Studio
+
+1. Open FL Studio
+2. Go to **Options → MIDI Settings**
+3. Under **Input**, find and select the **Tekton FL Studio Bridge** controller
+4. The bridge starts a TCP server on port 7705 automatically
+
+### 4. Start the sidecar
+
+```bash
+# HTTP API mode
+tekton-flstudio --mode http --port 7704
+
+# MCP stdio mode (for AI assistants)
+tekton-flstudio --mode mcp
+```
+
+## Usage
+
+### CLI Commands (from Tekton Agent)
+
+```
+/tekton:flstudio status              — Check connection
+/tekton:flstudio play                — Start playback
+/tekton:flstudio stop                — Stop playback
+/tekton:flstudio tempo 140           — Set tempo to 140 BPM
+/tekton:flstudio channels            — List all channels
+/tekton:flstudio tracks              — List mixer tracks
+```
+
+### HTTP API Examples
+
+```bash
+# Transport
+curl http://localhost:7704/transport                          # Get status
+curl -X POST http://localhost:7704/transport -d '{"action":"play"}'
+curl -X POST http://localhost:7704/transport -d '{"action":"set_tempo","tempo":140}'
+
+# Mixer
+curl http://localhost:7704/mixer                               # All tracks
+curl http://localhost:7704/mixer/3                              # Track 3 info
+curl -X PATCH http://localhost:7704/mixer/3 -d '{"volume":0.8}'
+
+# Channels
+curl http://localhost:7704/channels                             # All channels
+curl -X PATCH http://localhost:7704/channels/0 -d '{"name":"Kick","volume":0.9}'
+
+# Step Sequencer
+curl http://localhost:7704/channels/0/steps                     # Get pattern
+curl -X PUT http://localhost:7704/channels/0/steps -d '{"pattern":[true,false,false,false,true,false,false,false]}'
+
+# Plugins
+curl http://localhost:7704/plugins/0/params                     # List params
+curl -X PATCH http://localhost:7704/plugins/0/params/5 -d '{"value":0.73}'
+
+# Piano Roll
+curl http://localhost:7704/piano_roll                           # Get all notes
+curl -X POST http://localhost:7704/piano_roll -d '{
   "action": "add_notes",
   "notes": [
-    {"number": 60, "time": 0, "length": 480, "velocity": 0.8},
-    {"number": 64, "time": 480, "length": 480, "velocity": 0.7},
-    {"number": 67, "time": 960, "length": 480, "velocity": 0.6}
+    {"midi": 60, "time": 0, "duration": 1.0, "velocity": 0.8},
+    {"midi": 64, "time": 0, "duration": 1.0, "velocity": 0.8},
+    {"midi": 67, "time": 0, "duration": 1.0, "velocity": 0.8}
   ]
-}
+}'
+
+# Chords
+curl -X POST http://localhost:7704/piano_roll/add_chord -d '{
+  "midi_notes": [60, 64, 67],
+  "time": 0,
+  "duration": 2.0
+}'
+
+# Raw API calls
+curl -X POST http://localhost:7704/execute -d '{"module":"general","function":"getVersion","args":[]}'
+curl -X POST http://localhost:7704/action -d '{"action":"channels.getAll"}'
 ```
+
+### MCP Tools (40+ tools)
+
+When running in MCP mode, the following tools are available:
+
+**Transport:** `flstudio_play`, `flstudio_stop`, `flstudio_record`, `flstudio_get_status`, `flstudio_set_tempo`, `flstudio_set_position`, `flstudio_set_loop_mode`, `flstudio_set_playback_speed`, `flstudio_get_song_length`
+
+**Mixer:** `flstudio_get_mixer_tracks`, `flstudio_set_track_volume`, `flstudio_set_track_pan`, `flstudio_mute_track`, `flstudio_solo_track`
+
+**Channels:** `flstudio_get_channels`, `flstudio_get_channel_info`, `flstudio_trigger_note`, `flstudio_set_channel_volume`, `flstudio_set_channel_pan`, `flstudio_mute_channel`, `flstudio_set_channel_name`, `flstudio_route_channel`
+
+**Step Sequencer:** `flstudio_set_step_sequence`, `flstudio_get_step_sequence`
+
+**Plugins:** `flstudio_get_plugin_params`, `flstudio_set_plugin_param`, `flstudio_next_preset`, `flstudio_prev_preset`
+
+**Piano Roll:** `flstudio_add_notes`, `flstudio_add_chord`, `flstudio_delete_notes`, `flstudio_clear_piano_roll`, `flstudio_get_piano_roll`
+
+**Raw API:** `flstudio_execute` (call any FL Studio API function)
+
+## Command Formats
+
+The bridge supports two command formats over TCP:
+
+**Structured action (karl-andres style):**
+```json
+{"action": "mixer.setTrackVolume", "params": {"track": 0, "volume": 0.8}}
+```
+
+**Generic API call:**
+```json
+{"module": "mixer", "function": "setTrackVolume", "args": [0, 0.8]}
+```
+
+Both return: `{"success": true, "result": {...}}` or `{"success": false, "error": "..."}`
 
 ## Credits
 
-- [FL-Studio-API-Stubs](https://github.com/IL-Group/FL-Studio-API-Stubs) — Official FL Studio Python API (63 ⭐)
-- [PyFLP](https://github.com/demberto/PyFLP) — FL Studio project file parser (188 ⭐)
-- [Flapi](https://github.com/MaddyGuthridge/Flapi) — Inspiration for TCP bridge approach (43 ⭐)
+- TCP bridge approach inspired by our own architecture
+- Structured action handlers ported from [karl-andres/fl-studio-mcp](https://github.com/karl-andres/fl-studio-mcp) (MIT License)
+- Piano roll integration approach from [calvinw/fl-studio-mcp](https://github.com/calvinw/fl-studio-mcp) (MIT License)
+- Key improvement: we use direct `flpianoroll` API calls over TCP instead of keystroke triggers
+
+## License
+
+MIT

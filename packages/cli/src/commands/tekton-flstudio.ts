@@ -8,6 +8,8 @@
  *   tempo     – Set/get tempo
  *   channels  – List channels in the Channel Rack
  *   tracks    – List mixer tracks
+ *   plugins   – List plugin parameters
+ *   piano     – Show piano roll state
  *   start     – Start the sidecar
  *   stop_svc  – Stop the sidecar
  */
@@ -55,6 +57,8 @@ export function createFLStudioCommand(): CommandRegistration {
       tempo: "Set/get tempo (e.g., /tekton:flstudio tempo 140)",
       channels: "List channels in the Channel Rack",
       tracks: "List mixer tracks",
+      plugins: "List plugin parameters for a channel",
+      piano: "Show piano roll state",
       start: "Start the FL Studio sidecar",
       stop_svc: "Stop the FL Studio sidecar",
     },
@@ -67,13 +71,15 @@ export function createFLStudioCommand(): CommandRegistration {
         case "tempo": await handleTempo(args, piCtx); break;
         case "channels": await handleChannels(piCtx); break;
         case "tracks": await handleTracks(piCtx); break;
+        case "plugins": await handlePlugins(args, piCtx); break;
+        case "piano": await handlePianoRoll(piCtx); break;
         case "start": await handleStart(piCtx); break;
         case "stop_svc": await handleStopSvc(piCtx); break;
         default: piCtx.ui.notify(`Unknown subcommand: ${sub}. Use: status, play, stop, tempo, channels, tracks, start, stop_svc`);
       }
     },
     getArgumentCompletions: (prefix: string): AutocompleteEntry[] | null => {
-      const subs = ["status", "play", "stop", "tempo", "channels", "tracks", "start", "stop_svc"];
+      const subs = ["status", "play", "stop", "tempo", "channels", "tracks", "plugins", "piano", "start", "stop_svc"];
       const matches = subs.filter(s => s.startsWith(prefix));
       return matches.length > 0 ? matches.map(s => ({ value: s, label: s })) : null;
     },
@@ -157,6 +163,34 @@ async function handleTracks(piCtx: ExtensionCommandContext): Promise<void> {
     if (!data.tracks || data.tracks.length === 0) { piCtx.ui.notify("No mixer tracks found"); return; }
     const lines = data.tracks.slice(0, 20).map(tr => `  ${tr.index}: ${tr.name || "Track " + tr.index} | Vol: ${tr.volume ?? "?"}`);
     piCtx.ui.notify(`🎚️ Mixer (${data.tracks.length}):\n${lines.join("\n")}`);
+  } catch (err) { piCtx.ui.notify(`❌ Error: ${err instanceof Error ? err.message : String(err)}`); }
+}
+
+async function handlePlugins(args: ParsedArgs, piCtx: ExtensionCommandContext): Promise<void> {
+  const { ok } = await checkHealth();
+  if (!ok) { piCtx.ui.notify("❌ FL Studio sidecar not running"); return; }
+  const channelId = parseInt(args.positional[1] || "0", 10);
+  try {
+    const resp = await fetch(`http://${HOST}:${PORT}/plugins/${channelId}/params`, { signal: AbortSignal.timeout(10000) });
+    const data = await resp.json() as { params?: Array<Record<string, unknown>>; plugin_name?: string };
+    if (!data.params || data.params.length === 0) { piCtx.ui.notify(`No plugin on channel ${channelId}`); return; }
+    const lines = data.params.slice(0, 20).map(p => `  ${p.index}: ${p.name} = ${p.value}`).join("\n");
+    const more = data.params.length > 20 ? `\n  ... and ${data.params.length - 20} more` : "";
+    piCtx.ui.notify(`🎛️ ${data.plugin_name || "Plugin"} (${channelId}) — ${data.params.length} params:\n${lines}${more}`);
+  } catch (err) { piCtx.ui.notify(`❌ Error: ${err instanceof Error ? err.message : String(err)}`); }
+}
+
+async function handlePianoRoll(piCtx: ExtensionCommandContext): Promise<void> {
+  const { ok } = await checkHealth();
+  if (!ok) { piCtx.ui.notify("❌ FL Studio sidecar not running"); return; }
+  try {
+    const resp = await fetch(`http://${HOST}:${PORT}/piano_roll`, { signal: AbortSignal.timeout(10000) });
+    const data = await resp.json() as { result?: { noteCount?: number; notes?: Array<Record<string, unknown>> } };
+    const result = data.result || data as unknown as Record<string, unknown>;
+    const noteCount = (result as any).noteCount ?? (result as any).notes?.length ?? 0;
+    const success = (result as any).success ?? true;
+    if (!success) { piCtx.ui.notify("❌ Piano roll state unavailable (need flpianoroll in FL Studio)"); return; }
+    piCtx.ui.notify(`🎹 Piano Roll: ${noteCount} notes`);
   } catch (err) { piCtx.ui.notify(`❌ Error: ${err instanceof Error ? err.message : String(err)}`); }
 }
 
