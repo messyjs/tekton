@@ -29,4 +29,6 @@ TEKTON-PHASE-*.md
 DESIGN_STANDARDS.md
 find_error.cjs
 fix_sp.cjs
-start-ollama-tunnel.bat
+start-ollama-tunnel.bat__pycache__/
+*.pyc
+*.egg-info/
