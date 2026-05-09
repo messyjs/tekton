@@ -32,3 +32,21 @@ fix_sp.cjs
 start-ollama-tunnel.bat__pycache__/
 *.pyc
 *.egg-info/
+
+# Scratch/dev files
+dash_*.js
+dash_*.html
+dashboard-inline*.js
+test_*.js
+test_*.html
+screenshot-*.png
+massive-*.png
+massive-*.jpg
+cs_*.js
+cs_*.json
+cs_*.txt
+fix-*.py
+served-page*.html
+vendor/
+tsconfig.tsbuildinfo
+packages/*/tsconfig.tsbuildinfo
