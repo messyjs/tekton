@@ -1,0 +1,167 @@
+@keyframes breathePulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--neon-dim);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--neon), 0 0 25px var(--neon);
+  }
+}
+
+.rail-btn.active {
+  animation: breathePulse 3s infinite alternate ease-in-out;
+}
+
+@keyframes shimmerLoad {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.gcard {
+  position: relative; /* Needed for ::before positioning */
+  overflow: hidden; /* To contain the shimmer effect */
+  background-color: rgba(0, 6, 18, 0.6); /* var(--bg2) with transparency */
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border); /* Ensure a base border for blur effect */
+  transition: all 0.2s ease-out; /* For hover effects */
+}
+
+.gcard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.05), transparent); /* var(--neon) at 5% opacity */
+  animation: shimmerLoad 1.5s infinite linear;
+  pointer-events: none; /* Allows interaction with the card below */
+  z-index: 1; /* Place above card content if needed, but below real overlays */
+}
+
+@keyframes gradientText {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.hero-score {
+  background: linear-gradient(90deg, var(--neon), var(--purple), var(--neon));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientText 3s linear infinite;
+  display: inline-block; /* Required for background-clip to work */
+}
+
+@keyframes typingCursor {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.topbar-brand::after {
+  content: '|'; /* Blinking cursor character */
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--neon);
+  animation: typingCursor 0.7s infinite step-end;
+}
+
+@keyframes borderPulse {
+  0%, 100% {
+    border-color: var(--border);
+  }
+  50% {
+    border-color: var(--neon);
+  }
+}
+
+.rail {
+  border-right: 1px solid var(--border);
+  animation: borderPulse 4s infinite alternate ease-in-out;
+}
+
+.gcard:hover {
+  border-left: 3px solid var(--neon);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); /* var(--neon) with opacity */
+  transform: translateY(-2px); /* Subtle lift effect */
+  border-right-color: var(--border2); /* Adjust other borders for consistency */
+  border-top-color: var(--border2);
+  border-bottom-color: var(--border2);
+}
+
+.rail-btn {
+  position: relative; /* For positioning the tooltip */
+}
+
+.rail-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%; /* Position to the right of the button */
+  top: 50%;
+  transform: translateY(-50%) translateX(10px); /* Initial offset to slide in */
+  background-color: var(--surface2);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth slide and fade */
+  z-index: 10;
+  pointer-events: none; /* Ensures tooltip doesn't block clicks */
+  font-family: 'Space Grotesk', sans-serif; /* Labels font */
+  font-size: 0.85em;
+  border: 1px solid var(--border2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.rail-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0px); /* Slide to final position */
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3); /* Subtle glow on hover */
+}
+
+.center {
+  /* Assuming .center is a primary content area */
+  background-image:
+    linear-gradient(to right, var(--surface2) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--surface2) 1px, transparent 1px);
+  background-size: 25px 25px; /* Size of the grid cells */
+  background-color: var(--bg2); /* Base background color */
+  background-blend-mode: overlay; /* Blends the grid subtly */
+  opacity: 0.15; /* Adjust for desired subtlety */
+  /* Ensure this doesn't conflict with other background properties if .center already has one */
+}
+
+@keyframes scanlineFade {
+  0% { opacity: 0.05; }
+  100% { opacity: 0.12; }
+}
+
+#scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Ensures it doesn't interfere with interaction */
+  z-index: 9999; /* Place it on top of everything */
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.1) 1px, rgba(0,0,0,0.1) 2px), /* Horizontal scanlines */
+    repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px), /* Vertical very subtle lines for noise */
+    radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, transparent 70%); /* Subtle noise-like texture */
+  background-size: 100% 2px, 2px 100%, 60px 60px; /* Sizes for each gradient layer */
+  animation: scanlineFade 5s infinite alternate ease-in-out; /* Subtle breathing effect for overall noise */
+}

@@ -1,0 +1,430 @@
+[
+  {
+    "id": "pred-1778019986655-0",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 80925.77,
+    "targetDate": "2026-05-19T15:26:26.655549",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_284",
+      "AT_NATURAL_SQUARE_MIDPOINT",
+      "AT_SQ9_LEVEL_S 7785\u00c2\u00b0 (Rev 22)",
+      "AT_CONFLUENCE_CRITICAL_SUPPORT",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $80,926 (CRITICAL)",
+    "createdAt": "2026-05-05T15:26:26.655577",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778019986655-1",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 81186.23,
+    "targetDate": "2026-05-19T15:26:26.655604",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_284",
+      "AT_NATURAL_SQUARE_MIDPOINT",
+      "AT_SQ9_LEVEL_S 7785\u00c2\u00b0 (Rev 22)",
+      "AT_CONFLUENCE_CRITICAL_SUPPORT",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $81,186 (STRONG)",
+    "createdAt": "2026-05-05T15:26:26.655618",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778019986655-2",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 80621.66,
+    "targetDate": "2026-05-19T15:26:26.655662",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_284",
+      "AT_NATURAL_SQUARE_MIDPOINT",
+      "AT_SQ9_LEVEL_S 7785\u00c2\u00b0 (Rev 22)",
+      "AT_CONFLUENCE_CRITICAL_SUPPORT",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $80,622 (CRITICAL)",
+    "createdAt": "2026-05-05T15:26:26.655673",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778019986655-3",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 81471.41,
+    "targetDate": "2026-05-19T15:26:26.655682",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_284",
+      "AT_NATURAL_SQUARE_MIDPOINT",
+      "AT_SQ9_LEVEL_S 7785\u00c2\u00b0 (Rev 22)",
+      "AT_CONFLUENCE_CRITICAL_SUPPORT",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $81,471 (STRONG)",
+    "createdAt": "2026-05-05T15:26:26.655708",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778019986655-4",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 80336.47,
+    "targetDate": "2026-05-19T15:26:26.655724",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_284",
+      "AT_NATURAL_SQUARE_MIDPOINT",
+      "AT_SQ9_LEVEL_S 7785\u00c2\u00b0 (Rev 22)",
+      "AT_CONFLUENCE_CRITICAL_SUPPORT",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $80,336 (CRITICAL)",
+    "createdAt": "2026-05-05T15:26:26.655733",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778019986655-5",
+    "ticker": "BTC-USD",
+    "predictionType": "TIME",
+    "direction": "STRONG_BULLISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 0,
+    "targetDate": "2026-05-10T15:26:26.655743",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "Lunar AT CARDINAL"
+    ],
+    "notes": "Lunar cardinal in 5d (294.8\u00b0)",
+    "createdAt": "2026-05-05T15:26:26.655760",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778019986655-6",
+    "ticker": "BTC-USD",
+    "predictionType": "TIME",
+    "direction": "STRONG_BULLISH",
+    "entryPrice": 80937.36,
+    "targetPrice": 0,
+    "targetDate": "2026-05-16T15:26:26.655768",
+    "gannScore": 93,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "Mercury AT CARDINAL"
+    ],
+    "notes": "Mercury cardinal in 11d (133.8\u00b0)",
+    "createdAt": "2026-05-05T15:26:26.655784",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-0",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 79897.74,
+    "targetDate": "2026-05-19T17:05:43.983290",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $79,898 (STRONG)",
+    "createdAt": "2026-05-05T17:05:43.983325",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-1",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 79624.59,
+    "targetDate": "2026-05-19T17:05:43.983341",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $79,625 (CRITICAL)",
+    "createdAt": "2026-05-05T17:05:43.983349",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-2",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 80197.36,
+    "targetDate": "2026-05-19T17:05:43.983355",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $80,197 (CRITICAL)",
+    "createdAt": "2026-05-05T17:05:43.983360",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-3",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 79356.96,
+    "targetDate": "2026-05-19T17:05:43.983365",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $79,357 (STRONG)",
+    "createdAt": "2026-05-05T17:05:43.983370",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-4",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 80474.96,
+    "targetDate": "2026-05-19T17:05:43.983375",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $80,475 (CRITICAL)",
+    "createdAt": "2026-05-05T17:05:43.983379",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-5",
+    "ticker": "BTC-USD",
+    "predictionType": "TIME",
+    "direction": "STRONG_BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 0,
+    "targetDate": "2026-05-10T17:05:43.983385",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "Lunar AT CARDINAL"
+    ],
+    "notes": "Lunar cardinal in 5d (295.7\u00b0)",
+    "createdAt": "2026-05-05T17:05:43.983394",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778025943983-6",
+    "ticker": "BTC-USD",
+    "predictionType": "TIME",
+    "direction": "STRONG_BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 0,
+    "targetDate": "2026-05-16T17:05:43.983399",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "Mercury AT CARDINAL"
+    ],
+    "notes": "Mercury cardinal in 11d (134.1\u00b0)",
+    "createdAt": "2026-05-05T17:05:43.983407",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-0",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 79897.74,
+    "targetDate": "2026-05-19T23:04:09.913533",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $79,898 (STRONG)",
+    "createdAt": "2026-05-05T23:04:09.913550",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-1",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 79624.59,
+    "targetDate": "2026-05-19T23:04:09.913562",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $79,625 (CRITICAL)",
+    "createdAt": "2026-05-05T23:04:09.913569",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-2",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 80197.36,
+    "targetDate": "2026-05-19T23:04:09.913575",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $80,197 (CRITICAL)",
+    "createdAt": "2026-05-05T23:04:09.913580",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-3",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 79356.96,
+    "targetDate": "2026-05-19T23:04:09.913584",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence SUPPORT $79,357 (STRONG)",
+    "createdAt": "2026-05-05T23:04:09.913588",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-4",
+    "ticker": "BTC-USD",
+    "predictionType": "PRICE",
+    "direction": "BEARISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 80474.96,
+    "targetDate": "2026-05-19T23:04:09.913593",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "AT_NATURAL_SQUARE_283",
+      "AT_SQ9_LEVEL_S 8145\u00c2\u00b0 (Rev 23)",
+      "AT_CONFLUENCE_STRONG_RESISTANCE",
+      "PLANETARY_CARDINAL_Mars"
+    ],
+    "notes": "Confluence RESISTANCE $80,475 (CRITICAL)",
+    "createdAt": "2026-05-05T23:04:09.913597",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-5",
+    "ticker": "BTC-USD",
+    "predictionType": "TIME",
+    "direction": "STRONG_BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 0,
+    "targetDate": "2026-05-10T23:04:09.913602",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "Lunar AT CARDINAL"
+    ],
+    "notes": "Lunar cardinal in 5d (298.7\u00b0)",
+    "createdAt": "2026-05-05T23:04:09.913611",
+    "status": "ACTIVE",
+    "resolved": false
+  },
+  {
+    "id": "pred-1778047449913-6",
+    "ticker": "BTC-USD",
+    "predictionType": "TIME",
+    "direction": "STRONG_BULLISH",
+    "entryPrice": 79827.91,
+    "targetPrice": 0,
+    "targetDate": "2026-05-16T23:04:09.913615",
+    "gannScore": 83,
+    "gannBias": "STRONG_BULLISH",
+    "signals": [
+      "Mercury AT CARDINAL"
+    ],
+    "notes": "Mercury cardinal in 11d (135.1\u00b0)",
+    "createdAt": "2026-05-05T23:04:09.913623",
+    "status": "ACTIVE",
+    "resolved": false
+  }
+]

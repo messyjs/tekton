@@ -1,0 +1,25 @@
+{
+  "name": "@tekton/pi-agent-service",
+  "version": "1.0.0",
+  "description": "PI Agent trading intelligence sidecar — Gann, Fibonacci, TradingView control via HTTP + MCP",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "hono": "^4.0.0",
+    "@tekton/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4"
+  },
+  "bin": {
+    "tekton-pi-agent": "dist/cli.js"
+  }
+}

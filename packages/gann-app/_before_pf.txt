@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""
+Trading Execution Engine — Paper Trading + Live Exchange/Prop Firm Integration
+
+Architecture:
+  ┌─────────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────────┐
+  │  12 Engines  │───▶│  Signal Gen  │───▶│  Risk Mgmt   │───▶│  Executor   │
+  │  (Analysis)  │    │  (Buy/Sell)  │    │  (1-3% Risk) │    │  (Exchange) │
+  └─────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
+
+Tiers:
+  1. LIGHTWEIGHT (zero tokens) — Pine Script export + Chart overlays
+  2. FULL (small tokens) — Auto-signal generation + Paper/Live execution
+
+Exchanges:
+  - Paper (simulated, default)
+  - Binance (spot + futures, testnet available)
+  - Bybit (futures, testnet available)
+  - Tradovate (futures, REST + WebSocket API)
+  - TradeStation (stocks/futures, REST API)
+  - Interactive Brokers (professional, TWS API)
+  - Coinbase (spot only)
+
+Prop Firms (by platform):
+  Tradovate-based:  Apex, Breakout Trader Funding, Upcomers, Klein Funding
+  NinjaTrader-based: TopStep, Earn2Trade
+  MetaTrader-based:  FTMO, FundedNext
+  Proprietary:      Wealth Charts
+
+SECURITY:
+  - Paper trading is DEFAULT mode
+  - API keys encrypted at rest with Fernet
+  - No auto-live-trading without explicit user consent
+"""
+
+import os
+import json
+import sqlite3
+import hashlib
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Optional, Dict, List, Any
+
+# ── Database ──────────────────────────────────────────────────────────
+
+DB_PATH = Path(__file__).parent / "trading_engine.db"
+
+def get_db():
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""CREATE TABLE IF NOT EXISTS trades (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        symbol TEXT NOT NULL,
+        side TEXT NOT NULL,
+        type TEXT DEFAULT 'market',
+        quantity REAL NOT NULL,
+        entry_price REAL,
+        exit_price REAL,
+        stop_loss REAL,
+        take_profit REAL,
+        engine_id TEXT,
+        signal_score INTEGER,
+        signal_bias TEXT,
+        status TEXT DEFAULT 'open',
+        pnl REAL DEFAULT 0,
+        fees REAL DEFAULT 0,
+        r_multiple REAL DEFAULT 0,
+        mode TEXT DEFAULT 'paper',
+        exchange TEXT DEFAULT 'paper',
+        tier TEXT DEFAULT 'full',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        closed_at TIMESTAMP
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS signals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        engine_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        score INTEGER,
+        bias TEXT,
+        key_levels TEXT,
+        analysis_summary TEXT,
+        tier TEXT DEFAULT 'full',
+        executed INTEGER DEFAULT 0,
+        trade_id INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS risk_config (
+        engine_id TEXT PRIMARY KEY,
+        max_risk_pct REAL DEFAULT 2.0,
+        max_daily_loss_pct REAL DEFAULT 5.0,
+        max_drawdown_pct REAL DEFAULT 10.0,
+        max_position_size REAL DEFAULT 0,
+        enabled INTEGER DEFAULT 0,
+        auto_trade INTEGER DEFAULT 0,
+        require_confirm INTEGER DEFAULT 1,
+        tier TEXT DEFAULT 'full'
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        exchange TEXT NOT NULL,
+        mode TEXT DEFAULT 'paper',
+        api_key_encrypted TEXT,
+        balance REAL DEFAULT 100000,
+        equity REAL DEFAULT 100000,
+        is_testnet INTEGER DEFAULT 0,
+        prop_firm TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS api_keys (
+        exchange TEXT PRIMARY KEY,
+        api_key_encrypted TEXT NOT NULL,
+        api_secret_encrypted TEXT NOT NULL,
+        passphrase_encrypted TEXT,
+        is_testnet INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )""")
+    # Insert default risk configs for all 12 engines
+    for eid in ['gann','casper','rumors','geo','ict','mj','franky','cryptoface','buffett','quant','tori','dtr','reece']:
+        c.execute("INSERT OR IGNORE INTO risk_config (engine_id) VALUES (?)", [eid])
+    conn.commit()
+    conn.close()
+
+
+# ── Exchange / Prop Firm Registry ─────────────────────────────────────
+
+SUPPORTED_EXCHANGES = {
+    "paper": {
+        "name": "Paper Trading",
+        "type": "simulated",
+        "has_testnet": True,
+        "is_testnet": True,
+        "fees": 0,
+        "supports": ["spot", "futures"],
+        "api_base": None,
+    },
+    "binance": {
+        "name": "Binance",
+        "type": "exchange",
+        "has_testnet": True,
+        "is_testnet": False,
+        "fees": 0.04,
+        "supports": ["spot", "futures"],
+        "api_base": "https://api.binance.com",
+        "testnet_base": "https://testnet.binancefuture.com",
+    },
+    "bybit": {
+        "name": "Bybit",
+        "type": "exchange",
+        "has_testnet": True,
+        "is_testnet": False,
+        "fees": 0.06,
+        "supports": ["futures"],
+        "api_base": "https://api.bybit.com",
+        "testnet_base": "https://api-testnet.bybit.com",
+    },
+    "tradovate": {
+        "name": "Tradovate",
+        "type": "broker",
+        "has_testnet": True,
+        "is_testnet": False,
+        "fees": 0.25,  # Per side, micros
+        "supports": ["futures"],
+        "api_base": "https://live.tradovateapi.com",
+        "testnet_base": "https://demo.tradovateapi.com",
+    },
+    "tradestation": {
+        "name": "TradeStation",
+        "type": "broker",
+        "has_testnet": True,
+        "is_testnet": False,
+        "fees": 0.50,
+        "supports": ["stocks", "futures", "options"],
+        "api_base": "https://api.tradestation.com",
+        "testnet_base": "https://sim-api.tradestation.com",
+    },
+    "ibkr": {
+        "name": "Interactive Brokers",
+        "type": "broker",
+        "has_testnet": True,
+        "is_testnet": False,
+        "fees": 0.35,
+        "supports": ["stocks", "futures", "options", "forex"],
+        "api_base": "127.0.0.1:7497",  # TWS Gateway
+    },
+}
+

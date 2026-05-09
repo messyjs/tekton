@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEKTON Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="/vendor/react.min.js"></script>
+<script src="/vendor/react-dom.min.js"></script>
+<style>
+/* ── DECODED TERMINAL Design System ── */
+:root {
+  --bg: #05070d;
+  --bg2: #0a0f1a;
+  --surface: #0c1222;
+  --surface2: #111a30;
+  --border: rgba(99,102,241,0.12);
+  --border2: rgba(255,255,255,0.06);
+  --neon: #6366f1;
+  --neon-dim: rgba(99,102,241,0.1);
+  --neon-glow: rgba(99,102,241,0.35);
+  --green: #10b981;
+  --green-dim: rgba(16,185,129,0.1);
+  --red: #f43f5e;
+  --red-dim: rgba(244,63,94,0.1);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.1);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.1);
+  --purple: #a855f7;
+  --text: #f0f0f5;
+  --text2: #64748b;
+  --text3: #334155;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sora', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+/* Mesh background */
+#mesh {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(16,185,129,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.06) 0%, transparent 70%);
+  z-index: 0;
+  animation: meshDrift 30s ease-in-out infinite alternate;
+}
+#noise {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.4; z-index: 0; pointer-events: none;
+}
+@keyframes meshDrift {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.1) rotate(2deg); }
+}
+@keyframes breathe { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+/* ── Layout ── */
+.app { display: flex; height: 100vh; position: relative; z-index: 1; }
+/* ── Sidebar ── */
+.sidebar {
+  width: 52px;
+  transition: width 0.25s cubic-bezier(0.16,1,0.3,1);
+  background: rgba(8,11,20,0.92);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: relative; z-index: 10;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.sidebar:hover { width: 180px; }
+.sidebar-brand {
+  padding: 14px 12px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  min-height: 52px;
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar:hover .brand-label { opacity: 1; transition-delay: 0.1s; }
+.brand-logo {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--neon), var(--purple));
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--sans); font-weight: 800; font-size: 11px;
+  color: #fff; flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.brand-label { opacity: 0; transition: opacity 0.15s; padding-top: 2px; }
+.brand-name { font-size: 13px; font-weight: 800; letter-spacing: 3px; color: var(--text); font-family: var(--sans); }
+.brand-sub { font-size: 7px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; font-family: var(--mono); margin-top: 1px; }
+.nav-list { flex: 1; padding: 8px 0; overflow-y: auto; overflow-x: hidden; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  color: var(--text2); font-size: 12px; font-weight: 500;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  white-space: nowrap; overflow: hidden;
+  font-family: var(--sans);
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+.nav-item.active { color: var(--neon); border-left-color: var(--neon); background: var(--neon-dim); }
+.nav-icon { width: 20px; text-align: center; font-size: 13px; flex-shrink: 0; }
+.nav-label { opacity: 0; transition: opacity 0.15s; }
+.sidebar:hover .nav-label { opacity: 1; }
+/* ── Main Content ── */
+.main {
+  flex: 1; overflow-y: auto; padding: 0;
+  position: relative;
+}
+.page {
+  padding: 20px 24px;
+  animation: fadeSlideIn 0.3s ease;
+  min-height: calc(100vh - 52px);
+}
+/* ── Top Bar ── */
+.topbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,11,20,0.95);
+  backdrop-filter: blur(16px);
+  flex-shrink: 0;
+  min-height: 52px;
+}
+/* ── Cards ── */
+.gcard {
+  background: rgba(12,18,34,0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.2s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.gcard::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  opacity: 0.3;
+}
+.gcard:hover { border-color: var(--neon); box-shadow: 0 0 20px var(--neon-dim); }
+.gcard-green::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+.gcard-red::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+.gcard-amber::before { background: linear-gradient(90deg, transparent, var(--amber), transparent); }
+/* ── Typography ── */
+.sec-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 10px; font-family: var(--sans);
+}
+h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text2); font-family: var(--sans); }
+/* ── Hero Block ── */
+.hero {
+  display: flex; align-items: center; gap: 24px;
+  padding: 24px 24px 20px;
+  background: linear-gradient(135deg, var(--neon-dim), transparent 70%);
+  border-radius: 0 0 12px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.hero-score {
+  font-size: 52px; font-weight: 700; line-height: 1;
+  font-family: var(--sans); letter-spacing: -2px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  background: linear-gradient(135deg, var(--neon), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-bias {
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+  margin-top: 4px; font-family: var(--sans);
+}
+.hero-price {
+  font-family: var(--sans); font-size: 28px; font-weight: 700;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.hero-meta {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text2); line-height: 1.6; letter-spacing: 0.5px;
+}
+/* ── Dots / Badges / Tags ── */
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dot-green { background: var(--green); box-shadow: 0 0 6p

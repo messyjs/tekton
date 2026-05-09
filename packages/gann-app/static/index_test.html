@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>CC Test</title>
+<script src="/vendor/react.min.js"></script>
+<script src="/vendor/react-dom.min.js"></script>
+<style>body{background:#05070d;color:#fff;font-family:Sora,sans-serif;margin:40px}h1{color:#6366f1}</style>
+</head><body>
+<div id="root"></div>
+<script>
+var e = React.createElement;
+function App() {
+  return e('div', null,
+    e('h1', null, 'TEKTON Command Center'),
+    e('p', null, 'If you see this, React works.'),
+    e('p', {style:{color:'#10b981'}}, 'The full app will be restored next.')
+  );
+}
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+} catch(err) {
+  document.body.innerHTML = '<p style="color:red">ERROR: ' + err.message + '</p>';
+}
+</script></body></html>

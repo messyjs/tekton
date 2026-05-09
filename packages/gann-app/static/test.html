@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>React Test</title></head>
+<body>
+<div id="root"></div>
+<script src="/vendor/react.min.js"></script>
+<script src="/vendor/react-dom.min.js"></script>
+<script>
+var e = React.createElement;
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    e('div', null,
+      e('h1', null, 'React Works!'),
+      e('p', null, 'If you see this, React is loading correctly.')
+    )
+  );
+  console.log('React mounted successfully');
+} catch(err) {
+  document.getElementById('root').innerHTML = '<h1 style="color:red">React Error: ' + err.message + '</h1><pre>' + (err.stack || '') + '</pre>';
+  console.error('React error:', err);
+}
+</script>
+</body></html>

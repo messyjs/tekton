@@ -1,0 +1,715 @@
+
+
+# Mapping: prop firm -> which exchange connector to use
+PROP_FIRM_EXCHANGE = {
+    "apex": "tradovate",
+    "breakout": "tradovate",
+    "upcomers": "tradovate",
+    "klein": "tradovate",
+    "topstep": "tradestation",       # NinjaTrader uses TS data feed
+    "earn2trade": "tradestation",
+    "ftmo": "ibkr",                  # MetaTrader typically no direct API
+    "fundednext": "ibkr",
+    "wealth_charts": "paper",        # Proprietary, no public API yet
+}
+
+
+# ── Tier Comparison ───────────────────────────────────────────────────
+
+TIER_COMPARISON = {
+    "lightweight": {
+        "name": "Lightweight (Zero Tokens)",
+        "cost_per_analysis": 0,
+        "features": [
+            "Pine Script export (copy to TradingView)",
+            "Chart overlays with engine key levels",
+            "VWAP / Support / Resistance lines",
+            "Engine-specific indicator levels",
+            "No API keys required",
+            "Runs entirely client-side",
+        ],
+        "limitations": [
+            "No auto-signal generation",
+            "No trade execution",
+            "No P&L tracking",
+            "Manual confirmation required",
+        ],
+        "token_estimate": "0 tokens",
+        "latency": "<10ms (local)",
+    },
+    "full": {
+        "name": "Full (Small Tokens)",
+        "cost_per_analysis": 200,
+        "features": [
+            "All Lightweight features",
+            "Auto-signal generation (score >= 60)",
+            "Paper trading with P&L tracking",
+            "Risk management per engine",
+            "Exchange API integration",
+            "Prop firm rule enforcement",
+            "Trade journal + stats",
+            "Equity curve tracking",
+            "R-multiple tracking",
+        ],
+        "limitations": [
+            "~200-500 tokens per analysis",
+            "Exchange API keys required for live",
+            "Prop firm rules may limit trading style",
+        ],
+        "token_estimate": "200-500 tokens/analysis",
+        "latency": "<3s (with LLM)",
+    },
+}
+
+
+# ── Signal Generator ──────────────────────────────────────────────────
+
+ENGINE_RISK_PROFILES = {
+    "gann":       {"max_risk_pct": 2.0, "typical_tf": "4H", "style": "swing"},
+    "casper":     {"max_risk_pct": 2.0, "typical_tf": "4H", "style": "swing"},
+    "rumors":     {"max_risk_pct": 1.5, "typical_tf": "5m", "style": "scalp"},
+    "geo":        {"max_risk_pct": 2.0, "typical_tf": "15m", "style": "intraday"},
+    "ict":        {"max_risk_pct": 2.0, "typical_tf": "15m", "style": "intraday"},
+    "mj":         {"max_risk_pct": 2.5, "typical_tf": "1H", "style": "swing"},
+    "franky":     {"max_risk_pct": 1.5, "typical_tf": "5m", "style": "scalp"},
+    "cryptoface":{"max_risk_pct": 2.0, "typical_tf": "4H", "style": "swing"},
+    "buffett":    {"max_risk_pct": 3.0, "typical_tf": "1W", "style": "invest"},
+    "quant":      {"max_risk_pct": 1.0, "typical_tf": "1H", "style": "algo"},
+    "tori":       {"max_risk_pct": 1.5, "typical_tf": "5m", "style": "scalp"},
+    "dtr":        {"max_risk_pct": 2.0, "typical_tf": "1m", "style": "scalp"},
+    "reece":       {"max_risk_pct": 1.5, "typical_tf": "1m", "style": "scalp"},
+}
+
+MIN_SIGNAL_SCORE = 60  # Minimum engine score to generate a signal
+
+def generate_signal(analysis: dict, account_balance: float = 100000,
+                    engine_risk: dict = None) -> Optional[dict]:
+    """Generate a trade signal from engine analysis.
+    
+    Returns None if score < MIN_SIGNAL_SCORE or risk checks fail.
+    """
+    engine_id = analysis.get("engine", "gann")
+    score = analysis.get("score", 0)
+    
+    if score < MIN_SIGNAL_SCORE:
+        return None
+    
+    risk = engine_risk or ENGINE_RISK_PROFILES.get(engine_id, ENGINE_RISK_PROFILES["gann"])
+    max_risk_pct = risk["max_risk_pct"]
+    
+    price = analysis.get("currentPrice", 0)
+    if not price or price <= 0:
+        return None
+    
+    # Determine direction from bias
+    bias = analysis.get("bias", "").upper()
+    if any(w in bias for w in ["BULL", "LONG", "BUY", "OS", "OVERSOLD"]):
+        direction = "LONG"
+    elif any(w in bias for w in ["BEAR", "SHORT", "SELL", "OB", "OVERBOUGHT"]):
+        direction = "SHORT"
+    else:
+        return None  # No clear direction
+    
+    # Find stop loss and take profit from key levels
+    key_levels = analysis.get("keyLevels", [])
+    supports = [l["price"] for l in key_levels if l.get("type") == "support"]
+    resistances = [l["price"] for l in key_levels if l.get("type") == "resistance"]
+    
+    if direction == "LONG":
+        stop = max(supports) if supports else price * 0.98
+        tp_candidates = [r for r in resistances if r > price]
+        take_profit = min(tp_candidates) if tp_candidates else price * 1.02
+    else:
+        stop = min(resistances) if resistances else price * 1.02
+        tp_candidates = [s for s in supports if s < price]
+        take_profit = max(tp_candidates) if tp_candidates else price * 0.98
+    
+    # Position sizing based on risk
+    risk_per_share = abs(price - stop)
+    if risk_per_share <= 0:
+        return None
+    
+    dollar_risk = account_balance * (max_risk_pct / 100)
+    quantity = round(dollar_risk / risk_per_share, 4)
+    
+    # R:R calculation
+    reward = abs(take_profit - price)
+    rr_ratio = round(reward / risk_per_share, 2) if risk_per_share > 0 else 0
+    
+    signal = {
+        "engine_id": engine_id,
+        "direction": direction,
+        "symbol": analysis.get("ticker", "UNKNOWN"),
+        "entry_price": round(price, 2),
+        "stop_loss": round(stop, 2),
+        "take_profit": round(take_profit, 2),
+        "quantity": quantity,
+        "risk_pct": max_risk_pct,
+        "dollar_risk": round(dollar_risk, 2),
+        "rr_ratio": rr_ratio,
+        "score": score,
+        "bias": bias,
+        "tier": "full",
+        "timestamp": datetime.now().isoformat(),
+        "analysis_summary": analysis.get("summary", ""),
+    }
+    
+    return signal
+
+
+# ── Paper Trading Engine ──────────────────────────────────────────────
+
+class PaperEngine:
+    """Simulated trading engine — no real money, instant fills."""
+    
+    def __init__(self, initial_balance=100000, account_name="Paper Default",
+                 prop_firm=None, exchange="paper"):
+        self.balance = initial_balance
+        self.equity = initial_balance
+        self.initial_balance = initial_balance
+        self.positions = {}  # symbol -> position dict
+        self.trades = []
+        self.daily_pnl = 0
+        self.daily_start_equity = initial_balance
+        self.peak_equity = initial_balance
+        self.max_drawdown = 0
+        self.account_name = account_name
+        self.prop_firm = prop_firm
+        self.exchange = exchange
+        self.fees_pct = SUPPORTED_EXCHANGES.get(exchange, {}).get("fees", 0)
+        self._reset_daily_if_needed()
+    
+    def _reset_daily_if_needed(self):
+        """Reset daily P&L tracker at midnight."""
+        today = datetime.now().date()
+        if not hasattr(self, '_last_reset_date') or self._last_reset_date != today:
+            self.daily_pnl = 0
+            self.daily_start_equity = self.equity
+            self._last_reset_date = today
+    
+    def _check_prop_firm_rules(self, signal: dict) -> dict:
+        """Check if trade complies with prop firm rules."""
+        if not self.prop_firm:
+            return {"allowed": True, "reason": "No prop firm rules"}
+        
+        firm = PROP_FIRMS.get(self.prop_firm)
+        if not firm:
+            return {"allowed": True, "reason": "Unknown prop firm"}
+        
+        # Find the account size tier
+        acct_sizes = firm["account_sizes"]
+        idx = 0
+        for i, s in enumerate(acct_sizes):
+            if s <= self.initial_balance:
+                idx = i
+        
+        max_daily_loss_pct = firm["max_daily_loss_pct"][idx]
+        max_dd_pct = firm["max_drawdown_pct"][idx]
+        
+        # Daily loss check
+        daily_loss_pct = abs(self.daily_pnl) / self.daily_start_equity * 100
+        if daily_loss_pct >= max_daily_loss_pct and self.daily_pnl < 0:
+            return {"allowed": False, "reason": f"Daily loss limit hit ({daily_loss_pct:.1f}% >= {max_daily_loss_pct}%)"}
+        
+        # Max drawdown check
+        dd_pct = self.max_drawdown / self.peak_equity * 100 if self.peak_equity > 0 else 0
+        if dd_pct >= max_dd_pct:
+            return {"allowed": False, "reason": f"Max drawdown hit ({dd_pct:.1f}% >= {max_dd_pct}%)"}
+        
+        # News trading check
+        if not firm["can_trade_news"]:
+            # Simple proxy: if it's market open hour, allow (real check would need news calendar)
+            pass
+        
+        return {"allowed": True, "reason": "Within prop firm rules"}
+    
+    def execute(self, signal: dict) -> dict:
+        """Execute a trade from a signal."""
+        self._reset_daily_if_needed()
+        
+        symbol = signal.get("symbol", "UNKNOWN")
+        direction = signal.get("direction", "LONG")
+        price = signal.get("entry_price", 0)
+        stop = signal.get("stop_loss")
+        tp = signal.get("take_profit")
+        quantity = signal.get("quantity", 1)
+        engine_id = signal.get("engine_id", "gann")
+        score = signal.get("score", 0)
+        
+        # Prop firm rule check
+        rule_check = self._check_prop_firm_rules(signal)
+        if not rule_check["allowed"]:
+            return {"status": "rejected", "reason": rule_check["reason"]}
+        
+        # Calculate fees
+        fee = price * quantity * (self.fees_pct / 100)
+        
+        # Close existing position if any
+        if symbol in self.positions:
+            close_result = self._close_position(symbol, price)
+            self.trades.append(close_result)
+        
+        # Open new position
+        self.positions[symbol] = {
+            "side": direction,
+            "quantity": quantity,
+            "entry_price": price,
+            "stop_loss": stop,
+            "take_profit": tp,
+            "engine_id": engine_id,
+            "signal_score": score,
+            "opened_at": datetime.now().isoformat(),
+            "fees_paid": fee,
+        }
+        
+        self.balance -= fee
+        
+        return {
+            "status": "opened",
+            "symbol": symbol,
+            "side": direction,
+            "quantity": quantity,
+            "entry_price": price,
+            "stop_loss": stop,
+            "take_profit": tp,
+            "fee": round(fee, 2),
+            "account_balance": round(self.balance, 2),
+        }
+    
+    def _close_position(self, symbol: str, exit_price: float) -> dict:
+        """Close an existing position and calculate P&L."""
+        pos = self.positions.get(symbol)
+        if not pos:
+            return {"status": "no_position", "symbol": symbol}
+        
+        entry = pos["entry_price"]
+        qty = pos["quantity"]
+        side = pos["side"]
+        fee = exit_price * qty * (self.fees_pct / 100)
+        
+        if side == "LONG":
+            pnl = (exit_price - entry) * qty - fee - pos.get("fees_paid", 0)
+        else:
+            pnl = (entry - exit_price) * qty - fee - pos.get("fees_paid", 0)
+        
+        # R-multiple
+        risk = abs(entry - (pos.get("stop_loss") or entry * 0.98))
+        r_multiple = round(pnl / risk, 2) if risk > 0 else 0
+        
+        self.balance += entry * qty * (-1 if side == "LONG" else 1) + exit_price * qty * (1 if side == "LONG" else -1)
+        self.equity = self.balance
+        self.daily_pnl += pnl
+        
+        # Track peak and drawdown
+        if self.equity > self.peak_equity:
+            self.peak_equity = self.equity
+        dd = (self.peak_equity - self.equity) / self.peak_equity * 100
+        if dd > self.max_drawdown:
+            self.max_drawdown = dd
+        
+        del self.positions[symbol]
+        
+        return {
+            "status": "closed",
+            "symbol": symbol,
+            "side": side,
+            "entry_price": round(entry, 2),
+            "exit_price": round(exit_price, 2),
+            "quantity": qty,
+            "pnl": round(pnl, 2),
+            "fees": round(fee + pos.get("fees_paid", 0), 2),
+            "r_multiple": r_multiple,
+            "engine_id": pos["engine_id"],
+            "opened_at": pos["opened_at"],
+            "closed_at": datetime.now().isoformat(),
+        }
+    
+    def check_stops(self, current_prices: dict, trail_config: dict = None) -> list:
+        """Check all open positions for stop/take-profit hits with auto-trailing.
+        current_prices: {symbol: price}
+        trail_config: {symbol: {trail_start: float, trail_amount: float, entry_type: str}}
+        Returns list of closed trades.
+        
+        Reece style: Trail SL immediately when at least 00 in profit.
+        Move stop to breakeven + small profit, then trail by trail_amount.
+        """
+        closed = []
+        for symbol, pos in list(self.positions.items()):
+            if symbol not in current_prices:
+                continue
+            price = current_prices[symbol]
+            
+            # Auto-trail stop loss (Reece style)
+            if trail_config and symbol in trail_config:
+                tc = trail_config[symbol]
+                trail_start = tc.get('trail_start', 100)  # 00 profit to start trailing
+                trail_amount = tc.get('trail_amount', 0.5)  # Trail amount in points
+                
+                if pos['side'] == 'LONG':
+                    unrealized_profit = (price - pos['entry_price']) * pos['quantity']
+                    if unrealized_profit >= trail_start:
+                        # Trail: move stop to (current_price - trail_amount) or breakeven+1, whichever is higher
+                        new_stop = max(pos['stop_loss'] or 0, pos['entry_price'] + 1, price - trail_amount)
+                        if pos['stop_loss'] is None or new_stop > pos['stop_loss']:
+                            pos['stop_loss'] = round(new_stop, 2)
+                elif pos['side'] == 'SHORT':
+                    unrealized_profit = (pos['entry_price'] - price) * pos['quantity']
+                    if unrealized_profit >= trail_start:
+                        # Trail: move stop down to (current_price + trail_amount) or breakeven-1
+                        new_stop = min(pos['stop_loss'] or float('inf'), pos['entry_price'] - 1, price + trail_amount)
+                        if pos['stop_loss'] is None or new_stop < pos['stop_loss']:
+                            pos['stop_loss'] = round(new_stop, 2)
+            
+            # Check stop loss
+            if pos['stop_loss']:
+                if pos['side'] == 'LONG' and price <= pos['stop_loss']:
+                    close = self._close_position(symbol, pos['stop_loss'])
+                    closed.append(close)
+                elif pos['side'] == 'SHORT' and price >= pos['stop_loss']:
+                    close = self._close_position(symbol, pos['stop_loss'])
+                    closed.append(close)
+            
+            # Check take profit
+            if symbol in self.positions and pos.get('take_profit'):
+                pos = self.positions[symbol]
+                if pos['side'] == 'LONG' and price >= pos['take_profit']:
+                    close = self._close_position(symbol, pos['take_profit'])
+                    closed.append(close)
+                elif pos['side'] == 'SHORT' and price <= pos['take_profit']:
+                    close = self._close_position(symbol, pos['take_profit'])
+                    closed.append(close)
+        
+        self.trades.extend(closed)
+        return closed
+    
+    def get_stats(self) -> dict:
+        """Calculate trading statistics."""
+        all_trades = self.trades
+        if not all_trades:
+            return {
+                "total_trades": 0,
+                "wins": 0,
+                "losses": 0,
+                "win_rate": 0,
+                "profit_factor": 0,
+                "gross_profit": 0,
+                "gross_loss": 0,
+                "total_pnl": 0,
+                "avg_r": 0,
+                "max_drawdown": self.max_drawdown,
+                "sharpe_estimate": 0,
+                "daily_pnl": self.daily_pnl,
+                "balance": self.balance,
+                "equity": self.equity,
+                "open_positions": len(self.positions),
+                "return_pct": round((self.equity / self.initial_balance - 1) * 100, 2),
+            }
+        
+        wins = [t for t in all_trades if t.get("pnl", 0) > 0]
+        losses = [t for t in all_trades if t.get("pnl", 0) <= 0]
+        
+        gross_profit = sum(t["pnl"] for t in wins)
+        gross_loss = abs(sum(t["pnl"] for t in losses))
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
+        
+        avg_r = sum(t.get("r_multiple", 0) for t in all_trades) / len(all_trades)
+        
+        win_rate = len(wins) / len(all_trades) * 100
+        
+        # Sharpe estimate (rough)
+        pnls = [t["pnl"] for t in all_trades]
+        avg_pnl = sum(pnls) / len(pnls)
+        std_pnl = (sum((p - avg_pnl)**2 for p in pnls) / len(pnls)) ** 0.5
+        sharpe = (avg_pnl / std_pnl * (252 ** 0.5)) if std_pnl > 0 else 0
+        
+        return {
+            "total_trades": len(all_trades),
+            "wins": len(wins),
+            "losses": len(losses),
+            "win_rate": round(win_rate, 1),
+            "profit_factor": round(profit_factor, 2),
+            "gross_profit": round(gross_profit, 2),
+            "gross_loss": round(gross_loss, 2),
+            "total_pnl": round(sum(pnls), 2),
+            "avg_r": round(avg_r, 2),
+            "max_drawdown": round(self.max_drawdown, 2),
+            "sharpe_estimate": round(sharpe, 2),
+            "daily_pnl": round(self.daily_pnl, 2),
+            "balance": round(self.balance, 2),
+            "equity": round(self.equity, 2),
+            "open_positions": len(self.positions),
+            "return_pct": round((self.equity / self.initial_balance - 1) * 100, 2),
+        }
+
+
+# ── Tradovate API Client ──────────────────────────────────────────────
+
+class TradovateClient:
+    """Tradovate REST API client for futures trading.
+    Used by: Apex, Breakout, Upcomers, Klein Funding
+    """
+    
+    def __init__(self, username: str = None, password: str = None,
+                 app_id: str = "TradingCommandCenter", app_version: str = "1.0",
+                 use_testnet: bool = True):
+        self.base_url = "https://demo.tradovateapi.com" if use_testnet else "https://live.tradovateapi.com"
+        self.username = username
+        self.password = password
+        self.app_id = app_id
+        self.app_version = app_version
+        self.access_token = None
+        self.token_expiry = None
+        self.account_id = None
+    
+    async def authenticate(self) -> bool:
+        """Authenticate and get access token."""
+        import httpx
+        url = f"{self.base_url}/auth/accesstokenrequest"
+        payload = {
+            "name": self.username,
+            "password": self.password,
+            "appid": self.app_id,
+            "appVersion": self.app_version,
+            "cid": 0,  # Custom app
+            "sec": ""
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                self.access_token = data.get("accessToken")
+                self.token_expiry = data.get("expiryTime")
+                self.account_id = data.get("accounts", [{}])[0].get("id") if data.get("accounts") else None
+                return True
+        return False
+    
+    async def place_order(self, symbol: str, side: str, quantity: float,
+                          order_type: str = "Market", stop_price: float = None,
+                          limit_price: float = None, bracket: dict = None) -> dict:
+        """Place an order on Tradovate.
+        bracket: {"stopLoss": price, "takeProfit": price}
+        """
+        if not self.access_token:
+            return {"error": "Not authenticated"}
+        
+        import httpx
+        url = f"{self.base_url}/order/placeorder"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        
+        payload = {
+            "accountId": self.account_id,
+            "symbol": symbol,
+            "action": "Buy" if side.upper() == "LONG" else "Sell",
+            "orderQty": int(quantity),
+            "orderType": order_type,
+        }
+        
+        if order_type == "Stop" and stop_price:
+            payload["stopPrice"] = stop_price
+        if order_type == "Limit" and limit_price:
+            payload["price"] = limit_price
+        if bracket:
+            payload["bracket1"] = bracket.get("stopLoss")
+            payload["bracket2"] = bracket.get("takeProfit")
+        
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+            return {"error": f"HTTP {resp.status_code}", "detail": resp.text[:200]}
+
+
+# ── Binance API Client ────────────────────────────────────────────────
+
+class BinanceClient:
+    """Binance API client — spot + futures."""
+    
+    def __init__(self, api_key: str = None, api_secret: str = None,
+                 use_testnet: bool = True):
+        self.base_url = "https://testnet.binancefuture.com" if use_testnet else "https://api.binance.com"
+        self.api_key = api_key
+        self.api_secret = api_secret
+    
+    def _sign(self, params: dict) -> str:
+        """HMAC signature for Binance API."""
+        import hmac, hashlib, urllib.parse
+        query = urllib.parse.urlencode(params)
+        return hmac.new(self.api_secret.encode(), query.encode(), hashlib.sha256).hexdigest()
+    
+    async def place_order(self, symbol: str, side: str, quantity: float,
+                          order_type: str = "MARKET", stop_price: float = None,
+                          take_profit: float = None) -> dict:
+        """Place order on Binance."""
+        import httpx, time
+        url = f"{self.base_url}/fapi/v1/order"
+        params = {
+            "symbol": symbol,
+            "side": "BUY" if side.upper() == "LONG" else "SELL",
+            "type": order_type,
+            "quantity": quantity,
+            "timestamp": int(time.time() * 1000),
+        }
+        if self.api_key and self.api_secret:
+            params["signature"] = self._sign(params)
+        
+        headers = {"X-MBX-APIKEY": self.api_key} if self.api_key else {}
+        
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, params=params, headers=headers)
+            return resp.json() if resp.status_code == 200 else {"error": resp.text[:200]}
+
+
+# ── TradingView Integration ───────────────────────────────────────────
+
+class TradingViewBridge:
+    """Bridge between our engines and TradingView.
+    
+    NOTE: TradingView does NOT have a public trading API.
+    Users cannot "login to TradingView" via our app to trade.
+    
+    What we CAN do:
+    1. EXPORT Pine Script (user copies to their TV account)
+    2. IMPORT Pine Script (user pastes from TV to test here)
+    3. Webhook alerts (TV sends signals to our server)
+    4. Chart image OCR (future: read levels from TV screenshots)
+    5. Paper trading on TV (user does manually, we track here)
+    """
+    
+    @staticmethod
+    def export_pine_script(engine_id: str, analysis: dict) -> str:
+        """Generate Pine Script from engine analysis for TradingView."""
+        engine_id = analysis.get("engine", engine_id)
+        score = analysis.get("score", 0)
+        bias = analysis.get("bias", "NEUTRAL")
+        levels = analysis.get("keyLevels", [])
+        ticker = analysis.get("ticker", "BTCUSD")
+        
+        # Engine-specific indicator overlays
+        indicator_map = {
+            "dtr": "// DTR 4-Stage Stochastic\nstoch1 = ta.stoch(close, high, low, 9)\nstoch1_d = ta.sma(stoch1, 3)\nstoch2 = ta.stoch(close, high, low, 14)\nstoch2_d = ta.sma(stoch2, 3)\nstoch3 = ta.stoch(close, high, low, 44)\nstoch3_d = ta.sma(stoch3, 3)\nstoch4 = ta.stoch(close, high, low, 60)\nstoch4_d = ta.sma(stoch4, 10)\nplot(stoch1_d, \"Fast 9-3\", color=color.red)\nplot(stoch2_d, \"Mid 14-3\", color=color.orange)\nplot(stoch3_d, \"Slow 44-3\", color=color.blue)\nplot(stoch4_d, \"Slowest 60-10\", color=color.purple)\nquad_os = stoch1_d < 20 and stoch2_d < 20 and stoch3_d < 20 and stoch4_d < 20\nquad_ob = stoch1_d > 80 and stoch2_d > 80 and stoch3_d > 80 and stoch4_d > 80\nplotshape(quad_os, \"Holy Grail Buy\", shape.triangleup, location.below, color.green, size=size.small)\nplotshape(quad_ob, \"Quad OB Sell\", shape.triangledown, location.above, color.red, size=size.small)",
+            "rumors": "// Rumors VWAP + Box Theory\nvwap = ta.vwap(hlc3)\nbox_top = ta.highest(high, 20)\nbox_bot = ta.lowest(low, 20)\nplot(vwap, \"VWAP\", color=color.salmon, linewidth=2)\nplot(box_top, \"Box Top\", color=color.red, style=plot.style_circles)\nplot(box_bot, \"Box Bottom\", color=color.green, style=plot.style_circles)",
+            "tori": "// Tori Action/Safety Lines\nhh = ta.highest(high, 10)\nll = ta.lowest(low, 10)\naction_line = hh - (hh - ll) * 0.382\nsafety_line = hh - (hh - ll) * 0.618\nplot(action_line, \"Action\", color=color.teal, linewidth=2)\nplot(safety_line, \"Safety\", color=color.orange, linewidth=2)",
+            "geo": "// Geo PO3 + USDT.D\nusdtd = request.security(\"USDT.D\", timeframe.period, close)\nplot(usdtd, \"USDT.D\", color=color.yellow, linewidth=2)\nhline(4.5, \"PO3 Accumulation\", color=color.green, linestyle=hline.style_dotted)\nhline(5.5, \"PO3 Distribution\", color=color.red, linestyle=hline.style_dotted)",
+            "casper": "// Casper Fib Golden Pocket\nfib_high = ta.highest(high, 100)\nfib_low = ta.lowest(low, 100)\nrange_val = fib_high - fib_low\ngolden_low = fib_low + range_val * 0.618\ngolden_high = fib_low + range_val * 0.786\nplot(golden_low, \"Golden Pocket Low\", color=color.teal, linewidth=2)\nplot(golden_high, \"Golden Pocket High\", color=color.lime, linewidth=2)",
+            "reece": "// Reece EMA Breakout + Trail SL\nema9 = ta.ema(close, 9)\nema20 = ta.ema(close, 20)\nema50 = ta.ema(close, 50)\nema200 = ta.ema(close, 200)\nplot(ema9, \"EMA9\", color=color.yellow, linewidth=1)\nplot(ema20, \"EMA20\", color=color.blue, linewidth=1)\nplot(ema50, \"EMA50\", color=color.orange, linewidth=1)\nplot(ema200, \"EMA200\", color=color.red, linewidth=2)\nema_cross_bull = ta.crossover(ema9, ema20)\nema_cross_bear = ta.crossunder(ema9, ema20)\nplotshape(ema_cross_bull, \"EMA Cross Buy\", shape.triangleup, location.below, color.green, size=size.small)\nplotshape(ema_cross_bear, \"EMA Cross Sell\", shape.triangledown, location.above, color.red, size=size.small)",
+"ict": "// ICT Kill Zones\n[session_high, session_low] = request.security(syminfo.tickerid, \"D\", [high, low])\nlondon = time(timeframe.period, \"0300-1200\")\nny = time(timeframe.period, \"1200-2100\")\nasia = time(timeframe.period, \"2000-0300\")\nbgcolor(london ? color.new(color.blue, 90) : na, title=\"London\")\nbgcolor(ny ? color.new(color.red, 90) : na, title=\"NY\")\nbgcolor(asia ? color.new(color.yellow, 90) : na, title=\"Asia\")",
+        }
+        
+        engine_indicators = indicator_map.get(engine_id, f"// {engine_id} analysis (score: {score})")
+        
+        # Build key level lines
+        level_lines = []
+        for lvl in levels:
+            name = lvl.get("name", "Level").replace(" ", "_").replace("(", "").replace(")", "")
+            px = lvl.get("price", 0)
+            ltype = lvl.get("type", "decision")
+            color = "green" if ltype == "support" else "red" if ltype == "resistance" else "blue"
+            style = "hline.style_solid" if ltype == "decision" else "hline.style_dotted"
+            level_lines.append(f'hline({px}, "{name}", color=color.{color}, linestyle={style})')
+        
+        level_str = "\n".join(level_lines)
+        
+        pine = f"""//@version=5
+indicator("TCC {engine_id.upper()} Analysis", overlay=true)
+
+// Engine: {engine_id} | Score: {score} | Bias: {bias}
+{engine_indicators}
+
+// Key Levels from Analysis
+{level_str}
+
+// Alert conditions
+alertcondition(ta.crossover(close, {levels[0]['price'] if levels else 0}), "Bull Cross", "Price crossed above {levels[0]['name'] if levels else 'level'}")
+"""
+        return pine.strip()
+    
+    @staticmethod
+    def import_pine_script(script: str) -> dict:
+        """Parse an imported Pine Script to extract indicators and levels.
+        This is a basic parser — full Pine parsing requires a proper grammar.
+        """
+        indicators = []
+        levels = []
+        
+        import re
+        
+        # Find indicator name
+        name_match = re.search(r'indicator\("([^"]+)"', script)
+        name = name_match.group(1) if name_match else "Imported Script"
+        
+        # Find hline() calls -> key levels
+        for m in re.finditer(r'hline\(([^,]+),\s*"([^"]+)"', script):
+            price = m.group(1).strip()
+            label = m.group(2)
+            try:
+                px = float(price)
+                levels.append({"name": label, "price": px})
+            except ValueError:
+                pass
+        
+        # Find plot() calls -> indicators
+        for m in re.finditer(r'plot\([^,]+,\s*"([^"]+)"', script):
+            indicators.append(m.group(1))
+        
+        return {
+            "name": name,
+            "indicators": indicators,
+            "levels": levels,
+            "valid": True,
+        }
+    
+    @staticmethod
+    def generate_webhook_url(base_url: str = "http://localhost:7799") -> str:
+        """Generate instructions for setting up TradingView webhook alerts.
+        TV can POST to a webhook URL when an alert fires.
+        """
+        return {
+            "url": f"{base_url}/api/trading/webhook",
+            "method": "POST",
+            "payload_template": {
+                "engine": "tradingview",
+                "direction": "{{strategy.order.action}}",
+                "price": "{{close}}",
+                "ticker": "{{ticker}}",
+                "time": "{{timenow}}",
+            },
+            "instructions": "In TradingView: Create Alert > Webhook URL > Paste above URL. Set message to the JSON template.",
+        }
+
+
+# ── Initialize ────────────────────────────────────────────────────────
+
+init_db()
+
+# Create default paper accounts (one per prop firm tier)
+def create_default_accounts():
+    conn = get_db()
+    c = conn.cursor()
+    # Check if accounts already exist
+    c.execute("SELECT COUNT(*) FROM accounts")
+    count = c.fetchone()[0]
+    if count > 0:
+        conn.close()
+        return
+    
+    accounts = [
+        ("Paper Default", "paper", "paper", 100000, None),
+        ("Paper - Apex $50K", "paper", "paper", 50000, "apex"),
+        ("Paper - Apex $100K", "paper", "paper", 100000, "apex"),
+        ("Paper - Breakout $50K", "paper", "paper", 50000, "breakout"),
+        ("Paper - Upcomers $50K", "paper", "paper", 50000, "upcomers"),
+        ("Paper - Klein $50K", "paper", "paper", 50000, "klein"),
+        ("Paper - TopStep $50K", "paper", "paper", 50000, "topstep"),
+        ("Paper - FTMO $100K", "paper", "paper", 100000, "ftmo"),
+        ("Paper - FundedNext $50K", "paper", "paper", 50000, "fundednext"),
+        ("Paper - Wealth Charts $50K", "paper", "paper", 50000, "wealth_charts"),
+    ]
+    for name, exchange, mode, balance, prop in accounts:
+        c.execute("INSERT INTO accounts (name, exchange, mode, balance, equity, prop_firm) VALUES (?,?,?,?,?,?)",
+                  [name, exchange, mode, balance, balance, prop])
+    conn.commit()
+    conn.close()
+
+create_default_accounts()
+
+print("[trading_engine] Initialized: PaperEngine, 10 accounts, 12 engines, 9 prop firms")
