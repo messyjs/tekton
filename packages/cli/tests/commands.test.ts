@@ -222,7 +222,7 @@ describe("Command Registry", () => {
 
 // ── Full Command Registry ─────────────────────────────────────────────
 
-describe("Full Command Registry (all 26 commands)", () => {
+describe("Full Command Registry (all 30 commands)", () => {
   it("registers all built-in commands", () => {
     const registry = createFullCommandRegistry();
     const commands = registry.list();
@@ -254,6 +254,10 @@ describe("Full Command Registry (all 26 commands)", () => {
       "tekton:forge",
       "tekton:context",
       "tekton:knowledge",
+      "tekton:ableton",
+      "tekton:flstudio",
+      "tekton:browse",
+      "tekton:pi",
     ];
 
     expect(commands.length).toBe(expectedNames.length);

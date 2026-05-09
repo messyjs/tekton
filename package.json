@@ -11,10 +11,7 @@
     "packages/dashboard",
     "packages/ml-ops",
     "packages/cli",
-    "packages/docling-service",
-    "packages/browser-use-service",
-    "packages/ableton-service",
-    "packages/flstudio-service",
+    "packages/pi-agent-service",
     "packages/forge"
   ],
   "engines": {
@@ -26,12 +23,20 @@
     "build:cli": "npm run build -w @tekton/cli",
     "build:forge": "npm run build -w @tekton/forge",
     "test": "vitest run",
+    "pi-agent": "node packages/pi-agent-service/dist/cli.js --mode http --port 7706",
     "clean": "rm -rf packages/*/dist"
   },
   "devDependencies": {
-    "@sinclair/typebox": "^0.34.0",
+    "@sinclair/typebox": "^0.34.49",
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
+    "node-pty": "^1.1.0",
     "typescript": "^5.7.0",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "^0.72.1",
+    "koffi": "^2.16.1",
+    "midi": "^2.0.0"
   }
 }

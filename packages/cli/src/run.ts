@@ -90,7 +90,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     mode: "interactive",
     provider: null,
     model: null,
-    thinking: null,
+    thinking: "medium",
     tools: [],
     noSession: false,
     session: null,

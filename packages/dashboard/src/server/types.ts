@@ -8,6 +8,8 @@ export interface DashboardConfig {
   autoStart: boolean;
   refreshIntervalMs: number;
   theme: "dark" | "light";
+  wsPort?: number;
+  authEnabled?: boolean;
 }
 
 export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
@@ -16,6 +18,8 @@ export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
   autoStart: false,
   refreshIntervalMs: 5000,
   theme: "dark",
+  wsPort: undefined,
+  authEnabled: false,
 };
 
 export interface StatusResponse {
@@ -141,6 +145,27 @@ export interface MemoryResponse {
   }>;
 }
 
+export interface TradingData {
+  traders: Array<{
+    id: string; name: string; emoji: string; strategy: string;
+    pnl: number; pnl_pct: number; dd: number; positions: number;
+  }>;
+  positions: Array<{
+    trader_id: string; trader_name: string; symbol: string;
+    side: string; qty: number; entry: number; mark: number;
+    tp: number | string; sl: number | string; pnl: number;
+  }>;
+  total_pnl: number;
+  trades_placed: number;
+  closed: Array<{
+    trader_id: string; trader_name: string; symbol: string;
+    side: string; status: string;
+  }>;
+  remaining_seconds: number;
+  progress: number;
+  log: Array<{ text: string; type: string }>;
+}
+
 export interface TrainingStatusResponse {
   running: boolean;
   jobs: Array<{
@@ -155,9 +180,14 @@ export interface TrainingStatusResponse {
 }
 
 export type DashboardPage =
+  | "chat"
   | "status"
   | "sessions"
   | "skills"
+  | "terminal"
+  | "files"
+  | "kanban"
+  | "swarm"
   | "routing"
   | "analytics"
   | "scp-traffic"
@@ -166,19 +196,30 @@ export type DashboardPage =
   | "memory"
   | "gateway"
   | "documents"
-  | "forge";
+  | "forge"
+  | "trading"
+  | "conductor"
+  | "models";
 
 export const DASHBOARD_PAGES: Array<{ id: DashboardPage; label: string; icon: string }> = [
-  { id: "status", label: "Status", icon: "⚡" },
-  { id: "sessions", label: "Sessions", icon: "💬" },
-  { id: "skills", label: "Skills", icon: "🎯" },
-  { id: "routing", label: "Routing", icon: "🔀" },
-  { id: "analytics", label: "Analytics", icon: "📊" },
-  { id: "scp-traffic", label: "SCP Traffic", icon: "📡" },
-  { id: "config", label: "Config", icon: "⚙️" },
-  { id: "training", label: "Training", icon: "🧠" },
-  { id: "memory", label: "Memory", icon: "📌" },
-  { id: "gateway", label: "Gateway", icon: "🌐" },
-  { id: "documents", label: "Documents", icon: "📄" },
-  { id: "forge", label: "Forge", icon: "🔨" },
+  { id: "chat", label: "Chat", icon: "chat" },
+  { id: "status", label: "Status", icon: "status" },
+  { id: "sessions", label: "Sessions", icon: "sessions" },
+  { id: "skills", label: "Skills", icon: "skills" },
+  { id: "terminal", label: "Terminal", icon: "terminal" },
+  { id: "files", label: "Files", icon: "files" },
+  { id: "kanban", label: "Kanban", icon: "kanban" },
+  { id: "swarm", label: "Swarm", icon: "swarm" },
+  { id: "routing", label: "Routing", icon: "routing" },
+  { id: "analytics", label: "Analytics", icon: "analytics" },
+  { id: "scp-traffic", label: "SCP Traffic", icon: "scp-traffic" },
+  { id: "config", label: "Config", icon: "config" },
+  { id: "training", label: "Training", icon: "training" },
+  { id: "memory", label: "Memory", icon: "memory" },
+  { id: "gateway", label: "Gateway", icon: "gateway" },
+  { id: "documents", label: "Documents", icon: "documents" },
+  { id: "forge", label: "Forge", icon: "forge" },
+  { id: "trading", label: "Trading", icon: "trading" },
+  { id: "conductor", label: "Conductor", icon: "conductor" },
+  { id: "models", label: "Models", icon: "routing" },
 ];

@@ -64,6 +64,13 @@ export function createOnResponseHook(config: HookConfig): ExtensionFactory {
       } catch {
         // Learning loop failures should not crash the session
       }
+      // Play pizza.wav notification sound
+      try {
+        const { exec } = require("child_process");
+        exec('powershell -Command "(New-Object System.Media.SoundPlayer \\"C:\Users\Massi\Desktop\Car horns all\Pizza.wav\\").PlaySync()"', (err: any) => { if (err) console.error("Sound error:", err.message); });
+      } catch (e) {
+        // Sound failures should not crash
+      }
     });
   };
 }

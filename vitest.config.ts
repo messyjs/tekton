@@ -10,6 +10,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "@tekton/core/swarm/memory": path.resolve(__dirname, "packages/core/src/swarm/memory.ts"),
+      "@tekton/core/swarm/skills": path.resolve(__dirname, "packages/core/src/swarm/skills.ts"),
+      "@tekton/core/swarm": path.resolve(__dirname, "packages/core/src/swarm/index.ts"),
       "@tekton/core": path.resolve(__dirname, "packages/core/src/index.ts"),
       "@tekton/core/agents": path.resolve(__dirname, "packages/core/src/agents/index.ts"),
       "@tekton/hermes-bridge": path.resolve(__dirname, "packages/hermes-bridge/src/index.ts"),

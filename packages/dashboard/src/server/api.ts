@@ -11,7 +11,9 @@ import type {
   ConfigResponse,
   DashboardConfig,
 } from "./types.js";
-import { DEFAULT_CONFIG } from "@tekton/core";
+import { DEFAULT_CONFIG, SwarmRosterManager, SwarmDispatcher, SwarmCheckpointValidator, getSwarmRoster, getSwarmDispatcher, EXPANDED_PROVIDERS } from "@tekton/core";
+
+type ContextHandler = (c: Context) => any;
 
 export class DashboardAPI {
   private startTime = Date.now();
@@ -28,9 +30,28 @@ export class DashboardAPI {
   private telemetryDb: any = null;
   private memoryManager: any = null;
   private skillManager: any = null;
+  // Swarm subsystems
+  private _swarmRoster: SwarmRosterManager | null = null;
+  private _swarmDispatcher: SwarmDispatcher | null = null;
+  private _checkpointValidator: SwarmCheckpointValidator | null = null;
   private agentPool: any = null;
   private hermesBridge: any = null;
   private gatewayRunner: any = null;
+
+  get swarmRoster(): SwarmRosterManager {
+    if (!this._swarmRoster) this._swarmRoster = getSwarmRoster();
+    return this._swarmRoster;
+  }
+
+  get swarmDispatcher(): SwarmDispatcher {
+    if (!this._swarmDispatcher) this._swarmDispatcher = getSwarmDispatcher();
+    return this._swarmDispatcher;
+  }
+
+  get checkpointValidator(): SwarmCheckpointValidator {
+    if (!this._checkpointValidator) this._checkpointValidator = new SwarmCheckpointValidator(this.swarmRoster);
+    return this._checkpointValidator;
+  }
   private voiceManager: any = null;
 
   constructor(config?: Partial<DashboardConfig>) {
@@ -430,6 +451,30 @@ export class DashboardAPI {
     return c.json({ enabled: false, stt: "local", tts: "edge" });
   };
 
+  // ── Models Catalog ─────────────────────────────────────────────────
+
+  getModels = (c: Context): Response => {
+    const providers: any[] = [];
+    for (const [id, p] of Object.entries(EXPANDED_PROVIDERS)) {
+      providers.push({
+        id: p.id,
+        name: p.name,
+        local: (p as any).local ?? false,
+        apiMode: (p as any).apiMode ?? "chat_completions",
+        models: p.models.map(m => ({
+          id: m.id,
+          name: m.name,
+          type: m.type,
+          costTier: m.costTier,
+          contextWindow: m.contextWindow,
+          maxOutputTokens: m.maxOutputTokens,
+          latencyRange: m.latencyRange,
+        })),
+      });
+    }
+    return c.json({ providers, totalModels: providers.reduce((sum, p) => sum + p.models.length, 0) });
+  };
+
   // ── Docling Document Intelligence ──────────────────────────────────────────
 
   private doclingRecent: Array<{ source: string; status: string; pages: number; format: string; timestamp: number }> = [];
@@ -729,5 +774,212 @@ export class DashboardAPI {
     }
     const id = c.req.param("id");
     return c.json({ message: `Document ${id} removed (stub)` });
+  };
+
+  // ── Trading API ─────────────────────────────────────────────────
+  // Proxies requests to the trading hub running on :8888
+  private tradingHubUrl = process.env.TRADING_HUB_URL || "http://localhost:8888/api/data";
+
+  getTradingData = async (c: Context): Promise<Response> => {
+    try {
+      const resp = await fetch(this.tradingHubUrl);
+      if (!resp.ok) throw new Error(`Hub returned ${resp.status}`);
+      const data = await resp.json() as any;
+      return c.json(data);
+    } catch (err: any) {
+      return c.json({
+        traders: [], positions: [], total_pnl: 0, trades_placed: 0,
+        closed: [], remaining_seconds: 0, progress: 0, log: [],
+        error: err.message
+      });
+    }
+  };
+
+  getTradingPositions = async (c: Context): Promise<Response> => {
+    try {
+      const resp = await fetch(this.tradingHubUrl);
+      if (!resp.ok) throw new Error(`Hub returned ${resp.status}`);
+      const data = await resp.json() as any;
+      return c.json(data.positions || []);
+    } catch (err: any) {
+      return c.json([]);
+    }
+  };
+
+  // ── Agent Pool API ──────────────────────────────────────────────
+
+  getAgents = (c: Context): Response => {
+    if (!this.agentPool) {
+      return c.json({ agents: [], maxAgents: 0, activeAgents: 0 });
+    }
+    const status = this.agentPool.getStatus();
+    const agents = this.agentPool.getAgents();
+    return c.json({
+      agents: agents.map((a: any) => ({
+        id: a.id ?? a.agentId,
+        status: a.status,
+        task: a.currentTask?.description ?? a.task ?? null,
+        skillHint: a.skillHint ?? a.skill_hint ?? null,
+        createdAt: a.createdAt ?? a.spawnedAt,
+        model: a.model ?? null,
+      })),
+      maxAgents: status.maxAgents ?? 4,
+      activeAgents: status.activeAgents ?? agents.length,
+    });
+  };
+
+  spawnAgent = async (c: Context): Promise<Response> => {
+    if (!this.agentPool) {
+      return c.json({ error: "Agent pool not initialized" }, 400);
+    }
+    try {
+      const body = await c.req.json();
+      const agentId = await this.agentPool.spawn(body);
+      return c.json({ agentId, status: "spawning" });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  };
+
+  killAgent = async (c: Context): Promise<Response> => {
+    if (!this.agentPool) {
+      return c.json({ error: "Agent pool not initialized" }, 400);
+    }
+    const id = c.req.param("id");
+    try {
+      await this.agentPool.kill(id, "Killed via dashboard");
+      return c.json({ success: true, agentId: id });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  };
+
+  killAllAgents = async (c: Context): Promise<Response> => {
+    if (!this.agentPool) {
+      return c.json({ error: "Agent pool not initialized" }, 400);
+    }
+    try {
+      await this.agentPool.killAll("Killed all via dashboard");
+      return c.json({ success: true });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  };
+
+  delegateTasks = async (c: Context): Promise<Response> => {
+    if (!this.agentPool) {
+      return c.json({ error: "Agent pool not initialized" }, 400);
+    }
+    try {
+      const body = await c.req.json();
+      const { tasks, mode, context } = body;
+      if (!tasks || !Array.isArray(tasks)) {
+        return c.json({ error: "tasks must be an array" }, 400);
+      }
+      const results = await this.agentPool.submitBatch(tasks, { mode, context });
+      return c.json({ results });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  };
+
+  // ── Swarm API ─────────────────────────────────────────────────────
+
+  /** GET /api/swarm/roster — Worker roster configuration */
+  getSwarmRoster: ContextHandler = async (c) => {
+    const roster = this.swarmRoster;
+    return c.json({
+      workers: roster.getWorkers(),
+      runtimes: roster.getRuntimes(),
+    });
+  };
+
+  /** GET /api/swarm/runtime — Worker runtime state */
+  getSwarmRuntime: ContextHandler = async (c) => {
+    return c.json(this.swarmRoster.getRuntimes());
+  };
+
+  /** GET /api/swarm/health — Swarm health summary */
+  getSwarmHealth: ContextHandler = async (c) => {
+    return c.json(this.swarmRoster.getHealth());
+  };
+
+  /** GET /api/swarm/missions — All missions */
+  getSwarmMissions: ContextHandler = async (c) => {
+    return c.json(this.swarmDispatcher.getMissions());
+  };
+
+  /** POST /api/swarm/dispatch — Dispatch work to swarm */
+  dispatchSwarm: ContextHandler = async (c) => {
+    try {
+      const body = await c.req.json();
+      const result = this.swarmDispatcher.dispatch({
+        intent: body.intent,
+        workerId: body.workerId,
+        role: body.role,
+        priority: body.priority,
+        scope: body.scope,
+        context: body.context,
+      });
+      return c.json(result);
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  };
+
+  /** POST /api/swarm/checkpoint — Receive checkpoint from worker */
+  receiveCheckpoint: ContextHandler = async (c) => {
+    try {
+      const body = await c.req.json();
+      const checkpoint: import("@tekton/core").SwarmCheckpoint = {
+        workerId: body.workerId,
+        briefId: body.briefId,
+        state: body.state,
+        filesChanged: body.filesChanged ?? [],
+        commandsRun: body.commandsRun ?? [],
+        proof: body.proof ?? "",
+        blocker: body.blocker ?? null,
+        nextAction: body.nextAction ?? null,
+        timestamp: Date.now(),
+      };
+      // Validate checkpoint
+      const validation = this.checkpointValidator.validate(checkpoint);
+      if (!validation.valid) {
+        return c.json({ error: "Checkpoint validation failed", issues: validation.issues }, 400);
+      }
+      const mission = this.swarmDispatcher.receiveCheckpoint(checkpoint);
+      return c.json({ mission, checkpoint, validation });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  };
+
+  /** POST /api/swarm/worker/:id/start — Start (mark as idle) a worker */
+  startSwarmWorker: ContextHandler = async (c) => {
+    const id = c.req.param("id")!;
+    this.swarmRoster.markIdle(id);
+    return c.json({ ok: true, workerId: id, state: "idle" });
+  };
+
+  /** POST /api/swarm/worker/:id/kill — Kill a worker */
+  killSwarmWorker: ContextHandler = async (c) => {
+    const id = c.req.param("id")!;
+    const reason = c.req.query("reason") ?? "killed via API";
+    this.swarmRoster.killWorker(id, reason);
+    return c.json({ ok: true, workerId: id, state: "offline" });
+  };
+
+  /** GET /api/swarm/briefs — All briefs */
+  getSwarmBriefs: ContextHandler = async (c) => {
+    return c.json(this.swarmRoster.getBriefs());
+  };
+
+  /** GET /api/swarm/checkpoints — All checkpoints for a brief */
+  getSwarmCheckpoint: ContextHandler = async (c) => {
+    const briefId = c.req.query("briefId");
+    if (briefId) {
+      return c.json(this.swarmDispatcher.getCheckpoints(briefId));
+    }
+    return c.json([]);
   };
 }

@@ -57,10 +57,26 @@ cp bridge/tekton_flstudio_bridge.py ~/Documents/Image-Line/FL\ Studio/Settings/H
 
 ### 3. Enable in FL Studio
 
-1. Open FL Studio
-2. Go to **Options → MIDI Settings**
-3. Under **Input**, find and select the **Tekton FL Studio Bridge** controller
-4. The bridge starts a TCP server on port 7705 automatically
+1. **Close FL Studio completely** (scripts are only scanned at startup)
+2. Run the install script: `powershell -ExecutionPolicy Bypass -File install-bridge.ps1`
+3. Reopen FL Studio
+4. Go to **OPTIONS → MIDI Settings** (Ctrl+Alt+M)
+5. In the controller dropdown, select **Tekton FL Studio Bridge**
+6. **CRITICAL**: In the input list, find the row for the controller
+   and **click the port number** until it highlights/changes color (gray = disabled)
+7. Check `C:\Users\Massi\tekton_bridge_log.txt` — if it exists, the bridge is running
+
+> ⚠️ **The most common issue**: FL Studio finds the script but never calls `OnInit()`
+> because the **port number is not enabled**. The port number must be clicked/toggled ON
+> (highlighted) for the controller script to initialize. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
+### 4. Diagnose with the Canary Script
+
+A minimal diagnostic script is included (`tekton_canary.py`) that logs to
+`C:\Users\Massi\tekton_canary_log.txt` at both import time and `OnInit()` time.
+Select **"Tekton Canary"** in MIDI Settings to test if scripts can initialize at all.
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for the full diagnosis guide.
 
 ### 4. Start the sidecar
 

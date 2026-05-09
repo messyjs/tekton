@@ -41,7 +41,7 @@ export function createHelpCommand(registry: CommandRegistry): CommandRegistratio
         "tekton:route", "tekton:models", "tekton:skills", "tekton:compress",
         "tekton:tokens", "tekton:memory", "tekton:agents", "tekton:config",
         "tekton:learn", "tekton:train", "tekton:gpu", "tekton:cron",
-        "tekton:voice", "tekton:personality", "tekton:soul",
+        "tekton:voice", "tekton:personality", "tekton:soul", "tekton:play", "tekton:pause",
       ];
       return commands.filter(c => c.startsWith(prefix) || c.replace("tekton:", "").startsWith(prefix))
         .map(c => ({ value: c, label: c, description: `Help for /${c}` }));

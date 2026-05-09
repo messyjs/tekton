@@ -258,7 +258,7 @@ export function createForgeCommand(): CommandRegistration {
         }
 
         try {
-          const result = await forge.checkDomain(domain as forge.ProductDomain);
+          const result = await forge.checkDomain(domain as any);
 
           const lines = [
             `Domain: ${domain}`,

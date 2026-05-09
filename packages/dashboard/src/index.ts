@@ -1,5 +1,15 @@
 export { DashboardServer } from "./server/server.js";
 export { DashboardAPI } from "./server/api.js";
+export { ChatManager } from "./server/chat.js";
+export { TerminalManager } from "./server/terminal.js";
+export { FileManager } from "./server/files.js";
+export { KanbanManager } from "./server/kanban.js";
+export type { TerminalSession, TerminalConfig } from "./server/terminal.js";
+export type { FileEntry, FileContent, FileWriteResult, FileOperationResult } from "./server/files.js";
+export type { KanbanCard, KanbanBoard, KanbanLane } from "./server/kanban.js";
+export { AuthManager } from "./server/auth.js";
+export type { AuthConfig, Session, AuthResult } from "./server/auth.js";
+export type { ChatMessage, ChatConversation, ChatConfig, StreamEvent } from "./server/chat.js";
 export { generateDashboardHTML } from "./server/spa.js";
 export type { DashboardConfig, DashboardPage, StatusResponse, SessionListResponse, SkillListResponse, RoutingLogEntry, RoutingRulesResponse, AnalyticsTokensResponse, AnalyticsCompressionResponse, AnalyticsCostResponse, SCPTrafficEntry, ConfigResponse, MemoryResponse, TrainingStatusResponse } from "./server/types.js";
 export { DEFAULT_DASHBOARD_CONFIG, DASHBOARD_PAGES } from "./server/types.js";

@@ -1,4 +1,12 @@
 {
+  "tekton-pi-agent": {
+    "command": "node",
+    "args": ["D:/AI Drive/pi-agent/tekton/packages/pi-agent-service/dist/tekton-pi-agent/server.js", "--mode", "mcp"],
+    "description": "PI Agent trading intelligence — Gann, Fibonacci, trade signals, GLM",
+    "auto_start": false,
+    "health_check": "http://localhost:7706/health",
+    "install_hint": "cd packages/pi-agent-service && npm run build"
+  },
   "tekton-docling": {
     "command": "tekton-docling",
     "args": ["--mode", "mcp"],
@@ -6,5 +14,21 @@
     "auto_start": false,
     "health_check": "http://localhost:7701/health",
     "install_hint": "pip install tekton-docling"
+  },
+  "tekton-ableton": {
+    "command": "python",
+    "args": ["-m", "tekton_ableton", "--mode", "mcp"],
+    "description": "Ableton Live DAW control via AbletonOSC",
+    "auto_start": false,
+    "health_check": "http://localhost:7703/health",
+    "install_hint": "pip install tekton-ableton"
+  },
+  "tekton-flstudio": {
+    "command": "python",
+    "args": ["-m", "tekton_flstudio", "--mode", "mcp"],
+    "description": "FL Studio DAW control via TCP bridge",
+    "auto_start": false,
+    "health_check": "http://localhost:7704/health",
+    "install_hint": "pip install tekton-flstudio"
   }
 }

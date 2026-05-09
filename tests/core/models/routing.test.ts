@@ -17,7 +17,7 @@ import { CostTracker } from "@tekton/core";
 
 function makeRouterConfig() {
   return {
-    fastModel: "gemma3:12b",
+    fastModel: "gemma4:e4b",
     fastProvider: "ollama",
     deepModel: "claude-3.5-sonnet",
     deepProvider: "anthropic",
@@ -74,7 +74,7 @@ describe("Expanded Providers", () => {
   });
 
   it("finds provider for local model", () => {
-    const provider = findProviderForModel("gemma3:27b");
+    const provider = findProviderForModel("gemma4:26b");
     expect(provider).not.toBeNull();
     expect(provider!.id).toBe("ollama");
   });
@@ -385,7 +385,7 @@ describe("CostTracker", () => {
   });
 
   it("estimates zero cost for local models", () => {
-    const cost = tracker.estimateCost("gemma3:27b", 1000, 500);
+    const cost = tracker.estimateCost("gemma4:26b", 1000, 500);
     expect(cost).toBe(0);
   });
 
@@ -473,7 +473,7 @@ describe("CostTracker", () => {
   it("calculates cost savings with local routing", () => {
     tracker.record({
       timestamp: new Date(),
-      model: "gemma3:12b", // Local (free)
+      model: "gemma4:e4b", // Local (free)
       provider: "ollama",
       inputTokens: 1000,
       outputTokens: 500,

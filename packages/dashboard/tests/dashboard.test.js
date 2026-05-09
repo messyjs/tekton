@@ -162,14 +162,14 @@ describe("SPA Generation", () => {
     });
     it("includes React and Tailwind CDN", () => {
         const html = generateDashboardHTML(DEFAULT_DASHBOARD_CONFIG);
-        expect(html).toContain("react@19");
-        expect(html).toContain("react-dom@19");
+        expect(html).toContain("react@18");
+        expect(html).toContain("react-dom@18");
         expect(html).toContain("tailwindcss");
     });
     it("has dark theme styling", () => {
         const html = generateDashboardHTML(DEFAULT_DASHBOARD_CONFIG);
-        expect(html).toContain("#0f172a");
-        expect(html).toContain("#1e293b");
+        expect(html).toContain("#0a0f1a");
+        expect(html).toContain("#161b22");
     });
 });
 // ── Dashboard Server Integration ──────────────────────────────────────

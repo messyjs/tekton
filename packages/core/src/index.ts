@@ -65,3 +65,54 @@ export type {
   KnowledgeConfig,
 } from "./knowledge/types.js";
 export { DEFAULT_KNOWLEDGE_CONFIG } from "./knowledge/types.js";
+
+// PI Agent — trading intelligence pillar
+export { PiAgent, defaultPiAgent } from "./pi/index.js";
+export type {
+  PiAgentConfig,
+  Pivot,
+  GannAnalysis,
+  GannLevels,
+  FibAnalysis,
+  TradeSignal,
+  TVQuote,
+  TVPosition,
+  ServiceStatus as PiAgentStatus,
+} from "./pi/index.js";
+
+// Swarm — multi-agent orchestration
+export {
+  SwarmRosterManager, getSwarmRoster, initSwarmRoster,
+  SwarmDispatcher, getSwarmDispatcher,
+  SwarmCheckpointValidator, RequireProof, RequireFilesChanged,
+  RequireBlockerDetail, NotAdjectives,
+  requiresApproval, createApprovalCheckpoint,
+  SwarmMemoryManager, SwarmSkillManager, getSwarmSkillManager,
+} from "./swarm/index.js";
+export type {
+  WorkerRole, WorkerState, WorkerCapabilities, WorkerConfig, WorkerRuntime,
+  SwarmBrief, BriefState, CheckpointState, SwarmCheckpoint,
+  SwarmMission, MissionState,
+  DispatchRequest, DispatchResult, DispatchStrategy,
+  SwarmRoster, SwarmHealth, SwarmEvent,
+  ValidationRule, GatekeeperAction,
+  WorkerMemory, MemoryEntry, LearnedPattern, SkillScoreMemory,
+  SkillDefinition, SkillRecommendation,
+} from "./swarm/index.js";
+
+// App Driver — universal software control layer
+export { AppDriver, ConnectedApp, getAppDriver } from "./app-driver/driver.js";
+export {
+  discoverApps, scanProcesses, scanCDPPorts, scanOSCPorts,
+  identifyApp, determineProtocol, getCDPTargets,
+  CDPDriver,
+  UIADriver, listWindows, findWindow, focusWindow, getControls,
+  focusWindowByTitle, sendHotkey, sendHotkeyToWindow, typeTextSlow, pasteText, pressKey,
+  toSendKeys, COMMON_SHORTCUTS,
+  DEFAULT_KNOWN_APPS, DEFAULT_APP_DRIVER_CONFIG,
+} from "./app-driver/index.js";
+export type {
+  ProtocolLayer, AppProcess, DiscoveredApp,
+  ControlAction, ControlResult, SurfaceControl, SurfaceMap,
+  AppDriverConfig, AppPattern,
+} from "./app-driver/index.js";

@@ -6,13 +6,13 @@ describe("Config Loader", () => {
   it("returns defaults when no config files exist", () => {
     const config = loadConfig("/nonexistent/path");
     expect(config.identity.name).toBe("tekton");
-    expect(config.models.fast.model).toBe("gemma3:12b");
+    expect(config.models.fast.model).toBe("gemma4:e4b");
     expect(config.routing.mode).toBe("auto");
   });
 
   it("has sensible defaults", () => {
     const config = loadConfig();
-    expect(config.identity.soul).toBe("Tekton — adaptive coding agent");
+    expect(config.identity.soul).toBe("Tekton Agent — adaptive coding agent that learns");
     expect(config.compression.enabled).toBe(true);
     expect(config.compression.defaultTier).toBe("full");
     expect(config.telemetry.enabled).toBe(true);

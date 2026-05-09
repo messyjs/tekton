@@ -23,12 +23,23 @@ export { todoTool, clarifyTool, executeCodeTool, mixtureOfAgentsTool } from "./t
 export { sendMessageTool } from "./toolsets/messaging/index.js";
 export { cronjobTool } from "./toolsets/cron/index.js";
 export { haListEntitiesTool, haGetStateTool, haCallServiceTool, haListServicesTool } from "./toolsets/homeassistant/index.js";
-export { mcpDiscoverTool, mcpCallTool, mcpListServersTool } from "./toolsets/mcp/index.js";
+export { mcpDiscoverTool, mcpCallTool, mcpListServersTool, mcpConnectTool, mcpDisconnectTool } from "./toolsets/mcp/index.js";
+export { appDiscoverTool, appControlTool, appLearnTool, appConnectTool, appSurfaceTool, appScreenshotTool, appShortcutTool, appTypeTool, appSendNoteTool, appSendCCTool, appSendPatchTool, appSendOSCMessageTool } from "./toolsets/app-driver/index.js";
+export {
+  piGannAnalyzeTool, piGannLevelsTool, piGannPlanetaryTool, piGannRangeTool,
+  piFibAnalyzeTool, piTradeSignalTool, piGlmAskTool,
+  piQuoteTool, piDataTool, piExecuteTradeTool,
+  piPositionsTool, piTradeHistoryTool, piStatusTool,
+} from "./toolsets/pi/index.js";
 export {
   rlListEnvironments, rlSelectEnvironment, rlGetCurrentConfig,
   rlEditConfig, rlStartTraining, rlStopTraining,
   rlCheckStatus, rlListRuns, rlGetResults, rlTestInference,
 } from "./toolsets/rl/index.js";
+export {
+  tradingAnalyzeTool, tradingHistoryTool,
+  tradingStatusTool, tradingModelsTool,
+} from "./toolsets/trading-agents/index.js";
 
 export { TOOLSET_PRESETS } from "./presets.js";
 
@@ -52,12 +63,23 @@ import { todoTool, clarifyTool, executeCodeTool, mixtureOfAgentsTool } from "./t
 import { sendMessageTool } from "./toolsets/messaging/index.js";
 import { cronjobTool } from "./toolsets/cron/index.js";
 import { haListEntitiesTool, haGetStateTool, haCallServiceTool, haListServicesTool } from "./toolsets/homeassistant/index.js";
-import { mcpDiscoverTool, mcpCallTool, mcpListServersTool } from "./toolsets/mcp/index.js";
+import { mcpDiscoverTool, mcpCallTool, mcpListServersTool, mcpConnectTool, mcpDisconnectTool } from "./toolsets/mcp/index.js";
+import { appDiscoverTool, appConnectTool, appControlTool, appLearnTool, appSurfaceTool, appScreenshotTool, appShortcutTool, appTypeTool, appSendNoteTool, appSendCCTool, appSendPatchTool, appSendOSCMessageTool } from "./toolsets/app-driver/index.js";
+import {
+  piGannAnalyzeTool, piGannLevelsTool, piGannPlanetaryTool, piGannRangeTool,
+  piFibAnalyzeTool, piTradeSignalTool, piGlmAskTool,
+  piQuoteTool, piDataTool, piExecuteTradeTool,
+  piPositionsTool, piTradeHistoryTool, piStatusTool,
+} from "./toolsets/pi/index.js";
 import {
   rlListEnvironments, rlSelectEnvironment, rlGetCurrentConfig,
   rlEditConfig, rlStartTraining, rlStopTraining,
   rlCheckStatus, rlListRuns, rlGetResults, rlTestInference,
 } from "./toolsets/rl/index.js";
+import {
+  tradingAnalyzeTool, tradingHistoryTool,
+  tradingStatusTool, tradingModelsTool,
+} from "./toolsets/trading-agents/index.js";
 
 export function registerAllTools(): void {
   registry.register(terminalTool);
@@ -104,6 +126,34 @@ export function registerAllTools(): void {
   registry.register(mcpDiscoverTool);
   registry.register(mcpCallTool);
   registry.register(mcpListServersTool);
+  if (mcpConnectTool) registry.register(mcpConnectTool);
+  if (mcpDisconnectTool) registry.register(mcpDisconnectTool);
+  if (appDiscoverTool) registry.register(appDiscoverTool);
+  if (appConnectTool) registry.register(appConnectTool);
+  if (appControlTool) registry.register(appControlTool);
+  if (appSurfaceTool) registry.register(appSurfaceTool);
+  if (appScreenshotTool) registry.register(appScreenshotTool);
+  if (appLearnTool) registry.register(appLearnTool);
+  if (appShortcutTool) registry.register(appShortcutTool);
+  if (appTypeTool) registry.register(appTypeTool);
+  if (appSendNoteTool) registry.register(appSendNoteTool);
+  if (appSendCCTool) registry.register(appSendCCTool);
+  if (appSendPatchTool) registry.register(appSendPatchTool);
+  if (appSendOSCMessageTool) registry.register(appSendOSCMessageTool);
+  // PI Agent — built-in trading intelligence (always available)
+  registry.register(piGannAnalyzeTool);
+  registry.register(piGannLevelsTool);
+  registry.register(piGannPlanetaryTool);
+  registry.register(piGannRangeTool);
+  registry.register(piFibAnalyzeTool);
+  registry.register(piTradeSignalTool);
+  registry.register(piGlmAskTool);
+  registry.register(piQuoteTool);
+  registry.register(piDataTool);
+  registry.register(piExecuteTradeTool);
+  registry.register(piPositionsTool);
+  registry.register(piTradeHistoryTool);
+  registry.register(piStatusTool);
   registry.register(rlListEnvironments);
   registry.register(rlSelectEnvironment);
   registry.register(rlGetCurrentConfig);
@@ -114,4 +164,9 @@ export function registerAllTools(): void {
   registry.register(rlListRuns);
   registry.register(rlGetResults);
   registry.register(rlTestInference);
+  // TradingAgents — multi-agent trading analysis (subprocess bridge)
+  registry.register(tradingAnalyzeTool);
+  registry.register(tradingHistoryTool);
+  registry.register(tradingStatusTool);
+  registry.register(tradingModelsTool);
 }

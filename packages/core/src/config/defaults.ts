@@ -11,11 +11,11 @@ export const DEFAULT_CONFIG = {
   },
   models: {
     fast: {
-      model: "gemma3:12b",
+      model: "gemma4:e4b",
       provider: "ollama",
     },
     deep: {
-      model: "gemma3:27b",
+      model: "gemma4:26b",
       provider: "ollama",
     },
     fallbackChain: [] as Array<{ model: string; provider: string }>,

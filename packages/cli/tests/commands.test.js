@@ -190,7 +190,7 @@ describe("Command Registry", () => {
     });
 });
 // ── Full Command Registry ─────────────────────────────────────────────
-describe("Full Command Registry (all 24 commands)", () => {
+describe("Full Command Registry (all 29 commands)", () => {
     it("registers all built-in commands", () => {
         const registry = createFullCommandRegistry();
         const commands = registry.list();
@@ -219,6 +219,11 @@ describe("Full Command Registry (all 24 commands)", () => {
             "tekton:gateway",
             "tekton:docling",
             "tekton:forge",
+            "tekton:context",
+            "tekton:knowledge",
+            "tekton:ableton",
+            "tekton:flstudio",
+            "tekton:browse",
         ];
         expect(commands.length).toBe(expectedNames.length);
         for (const name of expectedNames) {
