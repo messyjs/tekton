@@ -1,4 +1,4 @@
-import type { ExtensionFactory, ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionFactory, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { HermesBridge } from "@tekton/hermes-bridge";
 import type { ModelRouter, SoulManager, PersonalityManager, MemoryManager, TelemetryTracker, TektonConfig } from "@tekton/core";
 

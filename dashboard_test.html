@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tekton Dashboard</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0f1a; color: #c9d1d9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #161b22; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    .app-layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 200px; min-width: 200px;
+      background: #0d1117; border-right: 1px solid #1b2332;
+      display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 10;
+    }
+    .sidebar-brand {
+      padding: 16px 20px; border-bottom: 1px solid #1b2332;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-brand-icon {
+      width: 28px; height: 28px; background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: white;
+    }
+    .sidebar-brand-text { font-size: 15px; font-weight: 700; color: #e6edf3; letter-spacing: -0.3px; }
+    .sidebar-brand-ver { font-size: 10px; color: #484f58; margin-left: 4px; }
+    .sidebar-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+    .sidebar-section { padding: 8px 12px 4px; font-size: 10px; font-weight: 600; color: #484f58; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 16px 7px 20px; color: #8b949e; cursor: pointer;
+      font-size: 13px; transition: all 0.12s; border-left: 2px solid transparent;
+    }
+    .sidebar-item:hover { background: #161b22; color: #c9d1d9; }
+    .sidebar-item.active { background: #161b22; color: #e6edf3; border-left-color: #3b82f6; }
+    .sidebar-item svg { width: 15px; height: 15px; opacity: 0.6; flex-shrink: 0; }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-footer { padding: 12px 20px; border-top: 1px solid #1b2332; font-size: 11px; color: #484f58; }
+
+    /* Main */
+    .main-content { margin-left: 200px; flex: 1; min-width: 0; }
+    .page-header {
+      padding: 20px 28px 16px; border-bottom: 1px solid #1b2332;
+      background: linear-gradient(180deg, #0d1117 0%, transparent 100%);
+    }
+    .page-title { font-size: 18px; font-weight: 600; color: #e6edf3; }
+    .page-subtitle { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .page-body { padding: 20px 28px; }
+
+    /* Cards */
+    .card { background: #161b22; border: 1px solid #1b2332; border-radius: 8px; }
+    .card-header { padding: 12px 16px; border-bottom: 1px solid #1b2332; display: flex; align-items: center; justify-content: between; }
+    .card-title { font-size: 13px; font-weight: 600; color: #e6edf3; }
+    .card-body { padding: 16px; }
+
+    /* Stats */
+    .stat-grid { display: grid; gap: 12px; }
+    .stat-card { background: #161b22; border: 1px solid #1b2332; border-radius: 8px; padding: 14px 16px; }
+    .stat-label { font-size: 11px; font-weight: 500; color: #8b949e; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: #e6edf3; font-variant-numeric: tabular-nums; }
+    .stat-detail { font-size: 11px; color: #484f58; margin-top: 2px; }
+    .stat-change { font-size: 11px; margin-top: 4px; }
+    .stat-change.up { color: #3fb950; }
+    .stat-change.down { color: #f85149; }
+
+    /* Status indicators */
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; vertical-align: middle; }
+    .status-dot.green { background: #3fb950; box-shadow: 0 0 6px rgba(63,185,80,0.4); }
+    .status-dot.yellow { background: #d29922; box-shadow: 0 0 6px rgba(210,153,34,0.4); }
+    .status-dot.red { background: #f85149; box-shadow: 0 0 6px rgba(248,81,73,0.4); }
+    .status-dot.gray { background: #484f58; }
+    .status-dot.pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #1b2332; }
+    .data-table td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #0d1117; color: #c9d1d9; }
+    .data-table tr:hover td { background: #161b22; }
+    .data-table .mono { font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+
+    /* Tags / Badges */
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+    .badge-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+    .badge-red { background: rgba(248,81,73,0.15); color: #f85149; }
+    .badge-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+    .badge-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+    .badge-gray { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+    /* Code blocks */
+    .code-block { background: #0d1117; border: 1px solid #1b2332; border-radius: 6px; padding: 14px; overflow-x: auto; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: #c9d1d9; white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
+
+    /* Progress bar */
+    .progress-bar { height: 4px; background: #21262d; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 2px; transition: width 0.3s; }
+
+    /* Responsive */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    @media (max-width: 1200px) { .grid-4 { grid-template-columns: 1fr 1fr; } .grid-5 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 900px) { .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; } .sidebar { width: 180px; min-width: 180px; } .main-content { margin-left: 180px; } }
+    .mt-4 { margin-top: 16px; }
+    .mt-3 { margin-top: 12px; }
+    .mb-2 { margin-bottom: 8px; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .text-right { text-align: right; }
+    .w-full { width: 100%; }
+    .flex-1 { flex: 1; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Loading */
+    .loading-skeleton { background: linear-gradient(90deg, #161b22 25%, #1b2332 50%, #161b22 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: #484f58; }
+    .empty-state-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state-title { font-size: 14px; color: #8b949e; margin-bottom: 4px; }
+    .empty-state-desc { font-size: 12px; }
+
+    /* Chat */
+    .chat-layout { display: flex; flex-direction: column; height: calc(100vh - 0px); margin: -20px -28px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px 28px; scroll-beavior: smooth; }
+    .chat-input-area { padding: 16px 28px 20px; border-top: 1px solid #1b2332; background: #0d1117; }
+    .chat-input-wrap { display: flex; gap: 8px; align-items: flex-end; }
+    .chat-input { flex: 1; background: #161b22; border: 1px solid #1b2332; border-radius: 8px; padding: 10px 14px; color: #e6edf3; font-family: 'Inter', sans-serif; font-size: 13px; resize: none; outline: none; min-height: 42px; max-height: 180px; line-height: 1.5; }
+    .chat-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+    .chat-input::placeholder { color: #484f58; }
+    .chat-send-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; border-radius: 8px; padding: 10px 16px; color: white; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; gap: 6px; }
+    .chat-send-btn:hover { opacity: 0.9; }
+    .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .msg-row { margin-bottom: 16px; display: flex; gap: 10px; }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-avatar { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .msg-avatar.assistant { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+    .msg-avatar.user { background: #21262d; color: #8b949e; }
+    .msg-bubble { max-width: 70%; padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.6; word-wrap: break-word; }
+    .msg-bubble.assistant { background: #161b22; border: 1px solid #1b2332; color: #c9d1d9; }
+    .msg-bubble.user { background: #1c3a5e; border: 1px solid #1e4a7e; color: #e6edf3; }
+    .msg-meta { font-size: 10px; color: #484f58; margin-top: 4px; display: flex; gap: 8px; align-items: center; }
+    .msg-meta-left { display: flex; align-items: center; gap: 6px; }
+    .msg-content pre { background: #0d1117; border: 1px solid #1b2332; border-radius: 6px; padding: 12px; overflow-x: auto; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; margin: 8px 0; }
+    .msg-content code { background: #0d1117; padding: 2px 6px; border-radius: 3px; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+    .msg-content p { margin-bottom: 8px; }
+    .msg-content p:last-child { margin-bottom: 0; }
+    .msg-content ul, .msg-content ol { margin: 8px 0; padding-left: 20px; }
+    .msg-content li { margin-bottom: 4px; }
+    .chat-header-bar { padding: 12px 28px; border-bottom: 1px solid #1b2332; display: flex; align-items: center; gap: 12px; background: #0d1117; }
+    .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 4px 0; }
+    .typing-indicator span { width: 6px; height: 6px; background: #484f58; border-radius: 50%; animation: typing 1.2s infinite; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+    .conv-list { padding: 8px; }
+    .conv-item { padding: 8px 12px; border-radius: 6px; cursor: pointer; color: #8b949e; font-size: 12px; transition: background 0.1s; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-item:hover { background: #161b22; color: #c9d1d9; }
+    .conv-item.active { background: #1c3a5e; color: #e6edf3; }
+    .conv-new-btn { width: 100%; padding: 8px; border-radius: 6px; border: 1px dashed #1b2332; background: transparent; color: #8b949e; cursor: pointer; font-size: 12px; margin-bottom: 8px; transition: all 0.15s; }
+    .conv-new-btn:hover { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.05); }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#484f58;font-family:Inter,system-ui,sans-serif">
+      <div style="text-align:center">
+        <div style="width:32px;height:32px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:6px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:white">T</div>
+        <p style="font-size:14px;color:#8b949e">Loading Tekton Dashboard...</p>
+      </div>
+    </div>
+  </div>
+  <script>
+const e = React.createElement;
+const { useState, useEffect, useCallback } = React;
+const PAGES = [{"id":"chat","label":"Chat","icon":"chat"},{"id":"status","label":"Status","icon":"status"},{"id":"sessions","label":"Sessions","icon":"sessions"},{"id":"skills","label":"Skills","icon":"skills"},{"id":"routing","label":"Routing","icon":"routing"},{"id":"analytics","label":"Analytics","icon":"analytics"},{"id":"scp-traffic","label":"SCP Traffic","icon":"scp-traffic"},{"id":"config","label":"Config","icon":"config"},{"id":"training","label":"Training","icon":"training"},{"id":"memory","label":"Memory","icon":"memory"},{"id":"gateway","label":"Gateway","icon":"gateway"},{"id":"documents","label":"Documents","icon":"documents"},{"id":"forge","label":"Forge","icon":"forge"}];
+const REFRESH_MS = 5000;
+
+// SVG Icons (simple, no emoji)
+var icons = {
+  status: '<path d="M13 10V3L4 14h7v7l9-11h-7z" fill="currentColor"/>',
+  sessions: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2"/>',
+  skills: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2"/>',
+  routing: '<path d="M16 3h5v5M4 20L21 3M21 3v5M21 3h-5" fill="none" stroke="currentColor" stroke-width="2"/>',
+  analytics: '<path d="M18 20V10M12 20V4M6 20v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  'scp-traffic': '<path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  config: '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2"/>',
+  training: '<path d="M12 2a7 7 0 0 1 7 7c0 3-2 5.5-4 7.5L12 22l-3-5.5C7 14.5 5 12 5 9a7 7 0 0 1 7-7z" fill="none" stroke="currentColor" stroke-width="2"/>',
+  memory: '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2"/>',
+  gateway: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none" stroke="currentColor" stroke-width="2"/>',
+  documents: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="2"/>',
+  forge: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="none" stroke="currentColor" stroke-width="2"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2"/>'
+};
+
+function svgIcon(name, size) {
+  var s = size || 15;
+  return e('svg', { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg', dangerouslySetInnerHTML: { __html: icons[name] || '' } });
+}
+
+function formatNum(n) {
+  if (n === null || n === undefined) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+
+function formatUptime(ms) {
+  if (!ms) return '0s';
+  var s = Math.floor(ms / 1000);
+  var d = Math.floor(s / 86400);
+  var h = Math.floor((s % 86400) / 3600);
+  var m = Math.floor((s % 3600) / 60);
+  var sec = s % 60;
+  if (d > 0) return d + 'd ' + h + 'h ' + m + 'm';
+  if (h > 0) return h + 'h ' + m + 'm ' + sec + 's';
+  if (m > 0) return m + 'm ' + sec + 's';
+  return sec + 's';
+}
+
+function formatTime(iso) {
+  if (!iso) return '--';
+  try { return new Date(iso).toLocaleString(); }
+  catch (e) { return iso; }
+}
+
+async function api(path) {
+  try { var res = await fetch('/api' + path); return await res.json(); }
+  catch(err) { console.error('API error:', path, err); return null; }
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────
+
+function Sidebar(props) {
+  var page = props.page;
+  var setPage = props.setPage;
+  var sections = {
+    'Overview': ['chat', 'status', 'sessions'],
+    'Intelligence': ['skills', 'routing', 'scp-traffic', 'memory'],
+    'Infrastructure': ['config', 'gateway', 'training', 'forge']
+  };
+  return e('aside', { className: 'sidebar' },
+    e('div', { className: 'sidebar-brand' },
+      e('div', { className: 'sidebar-brand-icon' }, 'T'),
+      e('div', null,
+        e('span', { className: 'sidebar-brand-text' }, 'Tekton'),
+        e('span', { className: 'sidebar-brand-ver' }, '0.1.0')
+      )
+    ),
+    e('nav', { className: 'sidebar-nav' },
+      Object.entries(sections).map(function(entry) {
+        var sectionName = entry[0];
+        var pageIds = entry[1];
+        return e('div', { key: sectionName },
+          e('div', { className: 'sidebar-section' }, sectionName),
+          pageIds.map(function(pid) {
+            var pageObj = PAGES.find(function(p) { return p.id === pid; });
+            if (!pageObj) return null;
+            return e('div', {
+              key: pid,
+              className: 'sidebar-item' + (page === pid ? ' active' : ''),
+              onClick: function() { setPage(pid); }
+            },
+              svgIcon(pid),
+              e('span', null, pageObj.label)
+            );
+          })
+        );
+      })
+    ),
+    e('div', { className: 'sidebar-footer' }, 'Autorefresh: ' + (REFRESH_MS / 1000) + 's')
+  );
+}
+
+// ─── Chat Page ────────────────────────────────────────────────────
+
+function ChatPage(props) {
+  var page = props.page;
+  var setPage = props.setPage;
+
+  var convsState = useState([]);
+  var conversations = convsState[0]; var setConversations = convsState[1];
+  var activeState = useState(null);
+  var activeId = activeState[0]; var setActiveId = activeState[1];
+  var msgsState = useState([]);
+  var messages = msgsState[0]; var setMessages = msgsState[1];
+  var inputState = useState('');
+  var inputText = inputState[0]; var setInputText = inputState[1];
+  var loadingState = useState(false);
+  var isLoading = loadingState[0]; var setLoading = loadingState[1];
+  var configState = useState(null);
+  var chatConfig = configState[0]; var setChatConfig = configState[1];
+  var healthState = useState(null);
+  var health = healthState[0]; var setHealth = healthState[1];
+  var messagesEndRef = React.useRef(null);
+
+  // Load config and health on mount
+  useEffect(function() {
+    api('/chat/config').then(setChatConfig);
+    api('/chat/health').then(function(h) {
+      setHealth(h);
+    });
+  }, []);
+
+  // Load conversations on mount
+  useEffect(function() {
+    api('/chat/conversations').then(function(data) {
+      if (data && data.conversations) {
+        setConversations(data.conversations);
+        if (data.conversations.length > 0) {
+          setActiveId(data.conversations[0].id);
+          api('/chat/conversations/' + data.conversations[0].id).then(function(conv) {
+            if (conv && conv.messages) setMessages(conv.messages);
+          });
+        }
+      }
+    });
+  }, []);
+
+  // Auto-scroll to bottom
+  useEffect(function() {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  // Create new conversation
+  function handleNewChat() {
+    api('/chat/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      .then(function(conv) {
+        if (conv && conv.id) {
+          setConversations(function(prev) { return [conv].concat(prev); });
+          setActiveId(conv.id);
+          setMessages([]);
+        }
+      });
+  }
+
+  // Select conversation
+  function handleSelectConv(id) {
+    setActiveId(id);
+    api('/chat/conversations/' + id).then(function(conv) {
+      if (conv && conv.messages) setMessages(conv.messages);
+      else setMessages([]);
+    });
+  }
+
+  // Delete conversation
+  function handleDeleteConv(id) {
+    fetch('/api/chat/conversations/' + id, { method: 'DELETE' })
+      .then(function() { return api('/chat/conversations'); })
+      .then(function(data) {
+        if (data && data.conversations) setConversations(data.conversations);
+        if (activeId === id) {
+          setActiveId(null);
+          setMessages([]);
+        }
+      });
+  }
+
+  // Send message
+  function handleSend() {
+    var text = inputText.trim();
+    if (!text || isLoading) return;
+
+    if (!activeId) {
+      api('/chat/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+        .then(function(conv) {
+          if (conv && conv.id) {
+            setConversations(function(prev) { return [conv].concat(prev); });
+            setActiveId(conv.id);
+            sendMessage(conv.id, text);
+          }
+        });
+      setInputText('');
+      return;
+    }
+
+    sendMessage(activeId, text);
+    setInputText('');
+  }
+
+  function sendMessage(convId, text) {
+    var userMsg = { id: 'temp-' + Date.now(), role: 'user', content: text, timestamp: Date.now() };
+    setMessages(function(prev) { return prev.concat([userMsg]); });
+    setInputText('');
+    setLoading(true);
+
+    fetch('/api/chat/conversations/' + convId + '/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      setLoading(false);
+      if (data.error) {
+        var errMsg = { id: 'err-' + Date.now(), role: 'assistant', content: '**Error:** ' + data.error, timestamp: Date.now(), model: 'system' };
+        setMessages(function(prev) { return prev.concat([errMsg]); });
+      } else {
+        api('/chat/conversations/' + convId).then(function(conv) {
+          if (conv && conv.messages) setMessages(conv.messages);
+        });
+        api('/chat/conversations').then(function(d) {
+          if (d && d.conversations) setConversations(d.conversations);
+        });
+      }
+    })
+    .catch(function(err) {
+      setLoading(false);
+      var errMsg = { id: 'err-' + Date.now(), role: 'assistant', content: '**Error:** Failed to connect. ' + (err.message || String(err)), timestamp: Date.now(), model: 'system' };
+      setMessages(function(prev) { return prev.concat([errMsg]); });
+    });
+  }
+
+  // Handle Enter key
+  function handleKeyDown(evt) {
+    if (evt.key === 'Enter' && !evt.shiftKey) {
+      evt.preventDefault();
+      handleSend();
+    }
+  }
+
+  // Render message content with basic formatting (React elements only)
+  function renderContent(text) {
+    if (!text) return e('span', null, '');
+    var TB = String.fromCharCode(96);
+    var NL = String.fromCharCode(10);
+    var parts = [];
+    var remaining = text;
+    var key = 0;
+    while (remaining.length > 0) {
+      var tripleTB = TB + TB + TB;
+      var codeStart = remaining.indexOf(tripleTB);
+      if (codeStart === -1) {
+        var lines = remaining.split(NL);
+        for (var li = 0; li < lines.length; li++) {
+          if (li > 0) parts.push(e('br', { key: 'br-' + (key++) }));
+          var boldParts = lines[li].split('**');
+          for (var bi = 0; bi < boldParts.length; bi++) {
+            if (bi % 2 === 1) {
+              parts.push(e('strong', { key: 'b-' + (key++) }, boldParts[bi]));
+            } else if (boldParts[bi]) {
+              var codeParts = boldParts[bi].split(TB);
+              for (var ci = 0; ci < codeParts.length; ci++) {
+                if (ci % 2 === 1 && codeParts[ci]) {
+                  parts.push(e('code', { key: 'ic-' + (key++) }, codeParts[ci]));
+                } else if (codeParts[ci]) {
+                  parts.push(e('span', { key: 't-' + (key++) }, codeParts[ci]));
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+      if (codeStart > 0) {
+        var before = remaining.slice(0, codeStart);
+        var lines = before.split(NL);
+        for (var li = 0; li < lines.length; li++) {
+          if (li > 0) parts.push(e('br', { key: 'br2-' + (key++) }));
+          parts.push(e('span', { key: 'pt-' + (key++) }, lines[li]));
+        }
+      }
+      var codeEnd = remaining.indexOf(tripleTB, codeStart + 3);
+      if (codeEnd === -1) codeEnd = remaining.length; else codeEnd += 3;
+      var codeBlock = remaining.slice(codeStart + 3, codeEnd - 3);
+      var firstNewline = codeBlock.indexOf(NL);
+      if (firstNewline > 0 && firstNewline < 20) codeBlock = codeBlock.slice(firstNewline + 1);
+      parts.push(e('pre', { key: 'cb-' + (key++) }, e('code', null, codeBlock)));
+      remaining = remaining.slice(codeEnd);
+    }
+    return e('div', { className: 'msg-content' }, parts);
+  }
+
+  var modelLabel = chatConfig ? chatConfig.model + ' / ' + chatConfig.provider : 'connecting...';
+  var isHealthy = health && health.ok;
+  var healthWarning = health && health.error ? health.error : null;
+
+  // Conversation list items
+  var convItems = conversations.map(function(c) {
+    return e('div', {
+      key: c.id,
+      className: 'conv-item' + (activeId === c.id ? ' active' : ''),
+      onClick: function() { handleSelectConv(c.id); },
+      title: c.title
+    },
+      e('span', { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' } }, c.title),
+      e('button', {
+        onClick: function(evt) { evt.stopPropagation(); handleDeleteConv(c.id); },
+        style: { background: 'none', border: 'none', color: '#484f58', cursor: 'pointer', fontSize: '12px', padding: '0 4px', marginLeft: '4px' },
+        title: 'Delete'
+      }, '×')
+    );
+  });
+
+  // Message bubbles
+  var msgBubbles = messages.map(function(m, i) {
+    var isUser = m.role === 'user';
+    return e('div', { key: m.id || i, className: 'msg-row ' + m.role },
+      isUser ? null : e('div', { className: 'msg-avatar assistant' }, 'T'),
+      e('div', { style: { flex: isUser ? '0 1 70%' : '0 1 70%' } },
+        e('div', { className: 'msg-bubble ' + m.role },
+          renderContent(m.content)
+        ),
+        e('div', { className: 'msg-meta' },
+          isUser ? null : e('span', { className: 'mono', style: { fontSize: '10px', color: '#3b82f6' } }, m.model || modelLabel),
+          m.tokens ? e('span', null, (m.tokens.input + m.tokens.output) + ' tok') : null,
+          m.durationMs ? e('span', null, (m.durationMs / 1000).toFixed(1) + 's') : null
+        )
+      ),
+      isUser ? e('div', { className: 'msg-avatar user' }, 'U') : null
+    );
+  });
+
+  // Typing indicator
+  var typingIndicator = isLoading ? e('div', { className: 'msg-row assistant' },
+    e('div', { className: 'msg-avatar assistant' }, 'T'),
+    e('div', { className: 'msg-bubble assistant' },
+      e('div', { className: 'typing-indicator' },
+        e('span'), e('span'), e('span')
+      )
+    )
+  ) : null;
+
+  // Welcome message if empty
+  var welcomeMsg;
+  if (messages.length === 0 && !isLoading) {
+    welcomeMsg = e('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#484f58' } },
+      e('div', {
+        style: {
+          width: '48px', height: '48px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+          borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 700, fontSize: '24px', color: 'white', marginBottom: '16px'
+        }
+      }, 'T'),
+      e('div', { style: { fontSize: '16px', fontWeight: 600, color: '#e6edf3', marginBottom: '8px' } }, 'Tekton Agent'),
+      e('div', { style: { fontSize: '13px', color: '#8b949e', marginBottom: '4px' } },
+        isHealthy ? 'Connected to ' + (chatConfig ? chatConfig.model : '...') : 'Starting...'
+      ),
+      healthWarning ? e('div', { style: { fontSize: '12px', color: '#d29922', marginTop: '8px', maxWidth: '400px', textAlign: 'center' } }, healthWarning) : null,
+      e('div', { style: { fontSize: '12px', color: '#484f58', marginTop: '12px' } }, 'Type a message below to start chatting')
+    );
+  }
+
+  return e('div', { className: 'chat-layout' },
+    // Top bar
+    e('div', { className: 'chat-header-bar' },
+      e('button', {
+        className: 'conv-new-btn',
+        style: { marginBottom: 0, width: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px' },
+        onClick: handleNewChat
+      }, '+ New Chat'),
+      e('div', { style: { flex: 1 } }),
+      e('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+        e('span', { className: 'status-dot ' + (isHealthy ? 'green pulse' : 'red') }),
+        e('span', { style: { fontSize: '12px', color: '#8b949e' } }, modelLabel),
+        healthWarning ? e('span', { style: { fontSize: '11px', color: '#d29922' } }, 'Warning') : null
+      ),
+      conversations.length > 1 ? e('span', { style: { fontSize: '11px', color: '#484f58' } }, conversations.length + ' convos') : null
+    ),
+    // Main area
+    e('div', { style: { display: 'flex', flex: 1, overflow: 'hidden' } },
+      // Conversation sidebar if multiple
+      conversations.length > 1 ? e('div', { style: { width: '180px', borderRight: '1px solid #1b2332', overflowY: 'auto', background: '#0d1117' } },
+        e('div', { className: 'conv-list' }, convItems)
+      ) : null,
+      // Chat area
+      e('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } },
+        e('div', { className: 'chat-messages' },
+          welcomeMsg || e('div', null, msgBubbles, typingIndicator, e('div', { ref: function(el) { messagesEndRef.current = el; } }))
+        ),
+        // Input area
+        e('div', { className: 'chat-input-area' },
+          e('div', { className: 'chat-input-wrap' },
+            e('textarea', {
+              className: 'chat-input',
+              value: inputText,
+              onChange: function(evt) { setInputText(evt.target.value); },
+              onKeyDown: handleKeyDown,
+              placeholder: isHealthy ? 'Message Tekton...' : 'Connecting to model...',
+              disabled: !isHealthy && !isLoading,
+              rows: 1,
+              style: { height: Math.min(42 + (inputText.split('
+').length - 1) * 20, 180) + 'px' }
+            }),
+            e('button', {
+              className: 'chat-send-btn',
+              onClick: handleSend,
+              disabled: !inputText.trim() || isLoading || !isHealthy
+            },
+              isLoading ? 'Thinking...' : 'Send'
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+// ─── Status Page ────────────────────────────────────────────────
+
+function StatusPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() {
+    api('/status').then(setData);
+    var iv = setInterval(function() { api('/status').then(setData); }, REFRESH_MS);
+    return function() { clearInterval(iv); };
+  }, []);
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-grid grid-3' },
+    [1,2,3].map(function(i) { return e('div', { key: i, className: 'stat-card loading-skeleton', style: { height: '80px' } }); })
+  ));
+
+  var tokens = data.tokens || {};
+  var comp = data.compression || {};
+  var skills = data.skills || {};
+  var agents = data.agents || {};
+  var model = data.model || {};
+  var voice = data.voice || {};
+  var gateway = data.gateway || {};
+  var gatewayEntries = Object.entries(gateway);
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'System Status'),
+      e('div', { className: 'page-subtitle' }, 'Real-time overview of all Tekton subsystems')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'stat-grid grid-5' },
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Uptime'),
+          e('div', { className: 'stat-value' }, formatUptime(data.uptimeMs))
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Total Tokens'),
+          e('div', { className: 'stat-value' }, formatNum(tokens.total || 0)),
+          e('div', { className: 'stat-detail' }, (tokens.input || 0).toLocaleString() + ' in / ' + (tokens.output || 0).toLocaleString() + ' out')
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Compression'),
+          e('div', { className: 'stat-value' }, (comp.ratio || 0).toFixed(2) + 'x'),
+          e('div', { className: 'stat-detail' }, formatNum(comp.tokensSaved || 0) + ' tokens saved')
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Skills'),
+          e('div', { className: 'stat-value' }, String(skills.total || 0)),
+          e('div', { className: 'stat-detail' }, (skills.topUsed || []).slice(0, 3).join(', ') || 'none loaded')
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Agents'),
+          e('div', { className: 'stat-value' }, (agents.active || 0) + ' / ' + (agents.max || 4)),
+          agents.active > 0
+            ? e('div', { className: 'stat-change up' }, 'Active')
+            : e('div', { className: 'stat-detail' }, 'Idle')
+        )
+      ),
+      e('div', { className: 'grid-3 mt-4' },
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Model'),
+          e('div', { className: 'stat-value', style: { fontSize: '15px' } }, model.current || 'unknown'),
+          e('div', { className: 'stat-detail' }, model.provider || '--')
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Voice'),
+          e('div', { className: 'flex items-center gap-2' },
+            e('span', { className: 'status-dot ' + (voice.enabled ? 'green' : 'gray') }),
+            e('span', { style: { fontSize: '14px', fontWeight: 600 } }, voice.enabled ? 'Enabled' : 'Disabled')
+          ),
+          e('div', { className: 'stat-detail' }, 'STT: ' + (voice.sttProvider || 'local') + '  |  TTS: ' + (voice.ttsProvider || 'edge'))
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Learning'),
+          e('div', { className: 'flex items-center gap-2' },
+            e('span', { className: 'status-dot ' + (data.learning && data.learning.enabled ? 'green pulse' : 'gray') }),
+            e('span', { style: { fontSize: '14px', fontWeight: 600 } }, data.learning && data.learning.enabled ? 'Active' : 'Off')
+          ),
+          data.learning && data.learning.totalEvaluations > 0
+            ? e('div', { className: 'stat-detail' }, data.learning.totalEvaluations + ' evaluations  |  avg confidence: ' + ((data.learning.avgConfidence || 0) * 100).toFixed(0) + '%')
+            : null
+        )
+      ),
+      gatewayEntries.length > 0 ? e('div', { className: 'card mt-4' },
+        e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'Gateway Platforms')),
+        e('div', { className: 'card-body' },
+          e('table', { className: 'data-table' },
+            e('thead', null, e('tr', null,
+              e('th', null, 'Platform'),
+              e('th', null, 'Status'),
+              e('th', { className: 'text-right' }, 'Messages In'),
+              e('th', { className: 'text-right' }, 'Messages Out')
+            )),
+            e('tbody', null, gatewayEntries.map(function(entry) {
+              var name = entry[0]; var p = entry[1];
+              return e('tr', { key: name },
+                e('td', { className: 'mono' }, name),
+                e('td', null, e('span', { className: 'status-dot ' + (p.connected ? 'green' : 'gray') }), ' ', p.connected ? 'Connected' : 'Disconnected'),
+                e('td', { className: 'text-right mono' }, formatNum(p.messagesIn || 0)),
+                e('td', { className: 'text-right mono' }, formatNum(p.messagesOut || 0))
+              );
+            }))
+          )
+        )
+      ) : null
+    )
+  );
+}
+
+// ─── Sessions Page ─────────────────────────────────────────────
+
+function SessionsPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() {
+    api('/sessions').then(setData);
+    var iv = setInterval(function() { api('/sessions').then(setData); }, REFRESH_MS);
+    return function() { clearInterval(iv); };
+  }, []);
+
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+
+  var sessions = data.sessions || [];
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Sessions'),
+      e('div', { className: 'page-subtitle' }, sessions.length + ' active session' + (sessions.length !== 1 ? 's' : ''))
+    ),
+    e('div', { className: 'page-body' },
+      sessions.length === 0
+        ? e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No active sessions'), e('div', { className: 'empty-state-desc' }, 'Sessions will appear here when agents are running'))
+        : e('div', { className: 'card' },
+            e('div', { className: 'card-body', style: { padding: 0 } },
+              e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'ID'), e('th', null, 'Name'), e('th', null, 'State'),
+                  e('th', { className: 'text-right' }, 'Tokens'), e('th', { className: 'text-right' }, 'Tasks'),
+                  e('th', null, 'Last Activity')
+                )),
+                e('tbody', null, sessions.map(function(s, i) {
+                  return e('tr', { key: i },
+                    e('td', { className: 'mono' }, s.id.slice(0, 8)),
+                    e('td', null, s.name || '--'),
+                    e('td', null, e('span', { className: 'badge ' + (s.state === 'running' ? 'badge-green' : s.state === 'error' ? 'badge-red' : 'badge-gray') }, s.state)),
+                    e('td', { className: 'text-right mono' }, formatNum(s.tokensUsed || 0)),
+                    e('td', { className: 'text-right' }, String(s.tasksCompleted || 0)),
+                    e('td', null, formatTime(s.lastActivityAt))
+                  );
+                }))
+              )
+            )
+          )
+    )
+  );
+}
+
+// ─── Skills Page ───────────────────────────────────────────────
+
+function SkillsPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() { api('/skills').then(setData); }, []);
+
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+
+  var skills = data.skills || [];
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Skills'),
+      e('div', { className: 'page-subtitle' }, skills.length + ' registered skill' + (skills.length !== 1 ? 's' : ''))
+    ),
+    e('div', { className: 'page-body' },
+      skills.length === 0
+        ? e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No skills loaded'), e('div', { className: 'empty-state-desc' }, 'Skills are extracted and registered as you use the agent'))
+        : e('div', { className: 'card' },
+            e('div', { className: 'card-body', style: { padding: 0 } },
+              e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'Name'), e('th', null, 'Category'),
+                  e('th', null, 'Confidence'), e('th', { className: 'text-right' }, 'Usage'), e('th', null, 'Status')
+                )),
+                e('tbody', null, skills.map(function(s, i) {
+                  return e('tr', { key: i },
+                    e('td', { className: 'mono' }, s.name),
+                    e('td', null, s.category || '--'),
+                    e('td', null,
+                      e('div', { className: 'flex items-center gap-2' },
+                        e('div', { className: 'progress-bar', style: { width: '60px' } },
+                          e('div', { className: 'progress-fill', style: { width: ((s.confidence || 0) * 100) + '%' } })
+                        ),
+                        e('span', null, ((s.confidence || 0) * 100).toFixed(0) + '%')
+                      )
+                    ),
+                    e('td', { className: 'text-right mono' }, String(s.usageCount || 0)),
+                    e('td', null, e('span', { className: 'badge ' + (s.enabled ? 'badge-green' : 'badge-red') }, s.enabled ? 'Active' : 'Disabled'))
+                  );
+                }))
+              )
+            )
+          )
+    )
+  );
+}
+
+// ─── Routing Page ──────────────────────────────────────────────
+
+function RoutingPage() {
+  var logArr = useState(null);
+  var rulesArr = useState(null);
+  var log = logArr[0]; var setLog = logArr[1];
+  var rules = rulesArr[0]; var setRules = rulesArr[1];
+  useEffect(function() { api('/routing/log').then(setLog); api('/routing/rules').then(setRules); }, []);
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Routing'),
+      e('div', { className: 'page-subtitle' }, 'Adaptive model routing decisions and rules')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'card mb-2' },
+        e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'Recent Decisions')),
+        e('div', { className: 'card-body', style: { padding: 0 } },
+          log && log.entries && log.entries.length > 0
+            ? e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'Time'), e('th', null, 'Model'), e('th', null, 'Provider'),
+                  e('th', null, 'Outcome'), e('th', { className: 'text-right' }, 'Latency'), e('th', { className: 'text-right' }, 'Cost')
+                )),
+                e('tbody', null, log.entries.map(function(r, i) {
+                  return e('tr', { key: i },
+                    e('td', { className: 'mono', style: { fontSize: '11px' } }, r.timestamp || '--'),
+                    e('td', { className: 'mono' }, r.modelChosen || '--'),
+                    e('td', null, r.provider || '--'),
+                    e('td', null, e('span', { className: 'badge ' + (r.outcome === 'success' ? 'badge-green' : r.outcome === 'error' ? 'badge-red' : 'badge-yellow') }, r.outcome || '--')),
+                    e('td', { className: 'text-right mono' }, (r.latencyMs || 0) + 'ms'),
+                    e('td', { className: 'text-right mono' }, '$' + (r.costEstimate || 0).toFixed(6))
+                  );
+                }))
+              )
+            : e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No routing data'), e('div', { className: 'empty-state-desc' }, 'Routing decisions will appear as the agent processes prompts'))
+        )
+      ),
+      e('div', { className: 'card mt-4' },
+        e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'Routing Rules')),
+        e('div', { className: 'card-body', style: { padding: 0 } },
+          rules && rules.rules && rules.rules.length > 0
+            ? e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'Priority'), e('th', null, 'Name'), e('th', null, 'Status'),
+                  e('th', null, 'Condition'), e('th', null, 'Action')
+                )),
+                e('tbody', null, rules.rules.map(function(r, i) {
+                  return e('tr', { key: i },
+                    e('td', { className: 'text-right' }, String(r.priority)),
+                    e('td', { className: 'mono' }, r.name),
+                    e('td', null, e('span', { className: 'badge ' + (r.enabled ? 'badge-green' : 'badge-red') }, r.enabled ? 'On' : 'Off')),
+                    e('td', { className: 'mono', style: { fontSize: '11px', maxWidth: '200px' } }, (r.condition || '').slice(0, 80)),
+                    e('td', { className: 'mono', style: { fontSize: '11px', maxWidth: '200px' } }, (r.action || '').slice(0, 80))
+                  );
+                }))
+              )
+            : e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No rules configured'))
+        )
+      )
+    )
+  );
+}
+
+// ─── Analytics Page ────────────────────────────────────────────
+
+function AnalyticsPage() {
+  var tArr = useState(null); var cArr = useState(null); var compArr = useState(null);
+  var tokens = tArr[0]; var setTokens = tArr[1];
+  var cost = cArr[0]; var setCost = cArr[1];
+  var comp = compArr[0]; var setComp = compArr[1];
+  useEffect(function() { api('/analytics/tokens').then(setTokens); api('/analytics/cost').then(setCost); api('/analytics/compression').then(setComp); }, []);
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Analytics'),
+      e('div', { className: 'page-subtitle' }, 'Token usage, costs, and compression metrics')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'stat-grid grid-3' },
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Total Tokens'),
+          e('div', { className: 'stat-value' }, formatNum(tokens && tokens.totalTokens ? tokens.totalTokens : 0))
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Total Cost'),
+          e('div', { className: 'stat-value' }, '$' + (cost && cost.totalCost ? cost.totalCost.toFixed(4) : '0.0000'))
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Tokens Saved (Compression)'),
+          e('div', { className: 'stat-value' }, formatNum(comp && comp.totalTokensSaved ? comp.totalTokensSaved : 0)),
+          comp && comp.avgRatio > 0 ? e('div', { className: 'stat-detail' }, 'Avg ratio: ' + comp.avgRatio.toFixed(2) + 'x') : null
+        )
+      ),
+      tokens && tokens.entries && tokens.entries.length > 0
+        ? e('div', { className: 'card mt-4' },
+            e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'Token Usage by Model')),
+            e('div', { className: 'card-body', style: { padding: 0 } },
+              e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'Time'), e('th', null, 'Model'), e('th', { className: 'text-right' }, 'Input'),
+                  e('th', { className: 'text-right' }, 'Output'), e('th', { className: 'text-right' }, 'Cost')
+                )),
+                e('tbody', null, tokens.entries.slice(0, 50).map(function(t, i) {
+                  return e('tr', { key: i },
+                    e('td', { className: 'mono', style: { fontSize: '11px' } }, t.timestamp || '--'),
+                    e('td', { className: 'mono' }, t.model || '--'),
+                    e('td', { className: 'text-right mono' }, formatNum(t.inputTokens || 0)),
+                    e('td', { className: 'text-right mono' }, formatNum(t.outputTokens || 0)),
+                    e('td', { className: 'text-right mono' }, '$' + (t.cost || 0).toFixed(6))
+                  );
+                }))
+              )
+            )
+          )
+        : e('div', { className: 'card mt-4' },
+            e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No token data yet'), e('div', { className: 'empty-state-desc' }, 'Data will populate as the agent processes prompts'))
+          )
+    )
+  );
+}
+
+// ─── SCP Traffic ───────────────────────────────────────────────
+
+function SCPTrafficPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() {
+    api('/scp/traffic').then(setData);
+    var iv = setInterval(function() { api('/scp/traffic').then(setData); }, REFRESH_MS);
+    return function() { clearInterval(iv); };
+  }, []);
+
+  var entries = data && data.entries ? data.entries : [];
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'SCP Traffic'),
+      e('div', { className: 'page-subtitle' }, 'Structured Caveman Protocol inter-agent messages')
+    ),
+    e('div', { className: 'page-body' },
+      entries.length > 0
+        ? e('div', { className: 'card' },
+            e('div', { className: 'card-body', style: { padding: 0 } },
+              e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'Time'), e('th', null, 'From'), e('th', null, 'To'),
+                  e('th', null, 'Type'), e('th', null, 'Status')
+                )),
+                e('tbody', null, entries.map(function(t, i) {
+                  return e('tr', { key: i },
+                    e('td', { className: 'mono', style: { fontSize: '11px' } }, t.timestamp || '--'),
+                    e('td', { className: 'mono' }, t.from || '--'),
+                    e('td', { className: 'mono' }, t.to || '--'),
+                    e('td', null, t.taskType || '--'),
+                    e('td', null, e('span', { className: 'badge ' + (t.status === 'completed' ? 'badge-green' : t.status === 'error' ? 'badge-red' : 'badge-blue') }, t.status || '--'))
+                  );
+                }))
+              )
+            )
+          )
+        : e('div', { className: 'card' }, e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No SCP traffic'), e('div', { className: 'empty-state-desc' }, 'Messages between agents will appear here')))
+    )
+  );
+}
+
+// ─── Config Page ───────────────────────────────────────────────
+
+function ConfigPage() {
+  var stateArr = useState(null);
+  var config = stateArr[0]; var setConfig = stateArr[1];
+  useEffect(function() { api('/config').then(setConfig); }, []);
+
+  if (!config) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Configuration'),
+      e('div', { className: 'page-subtitle' }, 'Current runtime configuration (read-only)')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'code-block' }, JSON.stringify(config.config, null, 2))
+    )
+  );
+}
+
+// ─── Training Page ─────────────────────────────────────────────
+
+function TrainingPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() { api('/training/status').then(setData); }, []);
+
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Training'),
+      e('div', { className: 'page-subtitle' }, 'ML-Ops training orchestration status')
+    ),
+    e('div', { className: 'page-body' },
+      data.running
+        ? e('div', { className: 'card' },
+            e('div', { className: 'card-body' },
+              e('div', { className: 'flex items-center gap-2' },
+                e('span', { className: 'status-dot green pulse' }),
+                e('span', { style: { fontWeight: 600 } }, 'Training in progress')
+              ),
+              data.jobs && data.jobs.length > 0
+                ? e('table', { className: 'data-table mt-3' },
+                    e('thead', null, e('tr', null, e('th', null, 'Job'), e('th', null, 'Method'), e('th', null, 'Progress'), e('th', null, 'Loss'))),
+                    e('tbody', null, data.jobs.map(function(j, i) {
+                      return e('tr', { key: i },
+                        e('td', { className: 'mono' }, j.name || '--'),
+                        e('td', null, j.method || '--'),
+                        e('td', null, e('div', { className: 'progress-bar', style: { width: '100px' } }, e('div', { className: 'progress-fill', style: { width: ((j.progress || 0) * 100) + '%' } }))),
+                        e('td', { className: 'mono' }, (j.loss || 0).toFixed(4))
+                      );
+                    }))
+                  )
+                : null
+            )
+          )
+        : e('div', { className: 'card' }, e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No training jobs running'), e('div', { className: 'empty-state-desc' }, 'Use the CLI to start a QLoRA or GRPO training job')))
+    )
+  );
+}
+
+// ─── Memory Page ───────────────────────────────────────────────
+
+function MemoryPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() { api('/memory').then(setData); }, []);
+
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+
+  var memoryText = data.memory || 'No memory content yet.';
+  var userModelText = data.userModel || 'No user model yet.';
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Memory'),
+      e('div', { className: 'page-subtitle' }, 'Persistent memory and user model files')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'grid-2' },
+        e('div', { className: 'card' },
+          e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'MEMORY.md')),
+          e('div', { className: 'card-body' },
+            e('div', { className: 'code-block', style: { maxHeight: '400px' } }, memoryText)
+          )
+        ),
+        e('div', { className: 'card' },
+          e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'USER.md')),
+          e('div', { className: 'card-body' },
+            e('div', { className: 'code-block', style: { maxHeight: '400px' } }, userModelText)
+          )
+        )
+      )
+    )
+  );
+}
+
+// ─── Gateway Page ──────────────────────────────────────────────
+
+function GatewayPage() {
+  var stateArr = useState(null);
+  var data = stateArr[0]; var setData = stateArr[1];
+  useEffect(function() {
+    api('/gateway/status').then(setData);
+    var iv = setInterval(function() { api('/gateway/status').then(setData); }, REFRESH_MS);
+    return function() { clearInterval(iv); };
+  }, []);
+
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+
+  var platforms = data.platforms ? Object.entries(data.platforms) : [];
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Gateway'),
+      e('div', { className: 'page-subtitle' }, 'Multi-platform message routing status')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'stat-grid grid-3 mb-2' },
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Status'),
+          e('div', { className: 'flex items-center gap-2 mt-2' },
+            e('span', { className: 'status-dot ' + (data.running ? 'green pulse' : 'gray') }),
+            e('span', { style: { fontSize: '14px', fontWeight: 600 } }, data.running ? 'Running' : 'Stopped')
+          )
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Messages In'),
+          e('div', { className: 'stat-value' }, formatNum(data.totalMessagesIn || 0))
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Messages Out'),
+          e('div', { className: 'stat-value' }, formatNum(data.totalMessagesOut || 0))
+        )
+      ),
+      platforms.length > 0
+        ? e('div', { className: 'card' },
+            e('div', { className: 'card-header' }, e('div', { className: 'card-title' }, 'Platforms')),
+            e('div', { className: 'card-body', style: { padding: 0 } },
+              e('table', { className: 'data-table' },
+                e('thead', null, e('tr', null,
+                  e('th', null, 'Platform'), e('th', null, 'Status'),
+                  e('th', { className: 'text-right' }, 'In'), e('th', { className: 'text-right' }, 'Out'), e('th', { className: 'text-right' }, 'Errors')
+                )),
+                e('tbody', null, platforms.map(function(entry) {
+                  var name = entry[0]; var p = entry[1];
+                  return e('tr', { key: name },
+                    e('td', { className: 'mono' }, name),
+                    e('td', null, e('span', { className: 'status-dot ' + (p.connected ? 'green' : 'gray') }), ' ', p.connected ? 'Connected' : 'Disconnected'),
+                    e('td', { className: 'text-right mono' }, formatNum(p.messagesIn || 0)),
+                    e('td', { className: 'text-right mono' }, formatNum(p.messagesOut || 0)),
+                    e('td', { className: 'text-right mono' }, String(p.errors || 0))
+                  );
+                }))
+              )
+            )
+          )
+        : e('div', { className: 'card' }, e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No platforms configured'), e('div', { className: 'empty-state-desc' }, 'Connect messaging platforms via the gateway configuration')))
+    )
+  );
+}
+
+// ─── Forge Page ─────────────────────────────────────────────────
+
+function ForgePage() {
+  var dArr = useState(null); var pArr = useState(null);
+  var data = dArr[0]; var setData = dArr[1];
+  var projects = pArr[0]; var setProjects = pArr[1];
+  useEffect(function() {
+    api('/forge/status').then(function(d) {
+      setData(d);
+      if (d && d.projects) setProjects(d.projects);
+    });
+  }, []);
+
+  if (!data) return e('div', { className: 'page-body' }, e('div', { className: 'stat-card loading-skeleton', style: { height: '200px' } }));
+  if (data.error) return e('div', { className: 'page-body' },
+    e('div', { className: 'card' },
+      e('div', { className: 'card-body' },
+        e('div', { className: 'empty-state' },
+          e('div', { className: 'empty-state-title' }, 'Forge Not Enabled'),
+          e('div', { className: 'empty-state-desc' }, data.error)
+        )
+      )
+    )
+  );
+
+  var projectTable;
+  if (projects && projects.length > 0) {
+    var projectRows = projects.map(function(p, i) {
+      return e('tr', { key: i },
+        e('td', { className: 'mono' }, p.id),
+        e('td', null, p.title || '--'),
+        e('td', null, e('span', { className: 'badge badge-blue' }, p.status || p.phase || '--')),
+        e('td', null, p.error ? e('span', { className: 'badge badge-red' }, p.error) : e('span', { className: 'badge badge-green' }, 'OK'))
+      );
+    });
+    projectTable = e('div', { className: 'card mt-4' },
+      e('div', { className: 'card-body', style: { padding: 0 } },
+        e('table', { className: 'data-table' },
+          e('thead', null, e('tr', null, e('th', null, 'ID'), e('th', null, 'Title'), e('th', null, 'Phase'), e('th', null, 'Status'))),
+          e('tbody', null, projectRows)
+        )
+      )
+    );
+  } else {
+    projectTable = e('div', { className: 'card mt-4' }, e('div', { className: 'empty-state' }, e('div', { className: 'empty-state-title' }, 'No projects yet'), e('div', { className: 'empty-state-desc' }, 'Use /tekton:forge new to start a project')));
+  }
+
+  return e('div', null,
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Forge'),
+      e('div', { className: 'page-subtitle' }, 'Multi-agent product engineering pipeline')
+    ),
+    e('div', { className: 'page-body' },
+      e('div', { className: 'stat-grid grid-3' },
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Status'),
+          e('div', { className: 'flex items-center gap-2 mt-2' },
+            e('span', { className: 'status-dot ' + (data.enabled ? 'green pulse' : 'gray') }),
+            e('span', { style: { fontSize: '14px', fontWeight: 600 } }, data.enabled ? 'Active' : 'Disabled')
+          )
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Projects'),
+          e('div', { className: 'stat-value' }, String(data.projectCount || 0))
+        ),
+        e('div', { className: 'stat-card' },
+          e('div', { className: 'stat-label' }, 'Phases'),
+          e('div', { className: 'stat-detail mt-2' }, 'Ideation / Architecture / Code / Review')
+        )
+      ),
+      projectTable
+    )
+  );
+}
+
+// ─── App ───────────────────────────────────────────────────────
+
+function App() {
+  var pageArr = useState('chat');
+  var page = pageArr[0]; var setPage = pageArr[1];
+
+  function renderPage() {
+    switch(page) {
+      case 'chat': return e(ChatPage, { page: page, setPage: setPage });
+      case 'status': return e(StatusPage);
+      case 'sessions': return e(SessionsPage);
+      case 'skills': return e(SkillsPage);
+      case 'routing': return e(RoutingPage);
+      case 'analytics': return e(AnalyticsPage);
+      case 'scp-traffic': return e(SCPTrafficPage);
+      case 'config': return e(ConfigPage);
+      case 'training': return e(TrainingPage);
+      case 'memory': return e(MemoryPage);
+      case 'gateway': return e(GatewayPage);
+      case 'forge': return e(ForgePage);
+      default: return e(StatusPage);
+    }
+  }
+
+  return e('div', { className: 'app-layout' },
+    e(Sidebar, { page: page, setPage: setPage }),
+    e('div', { className: 'main-content' }, renderPage())
+  );
+}
+
+var rootEl = document.getElementById('root');
+if (typeof ReactDOM.createRoot === 'function') {
+  ReactDOM.createRoot(rootEl).render(e(App));
+} else {
+  ReactDOM.render(e(App), rootEl);
+}
+  </script>
+</body>
+</html>

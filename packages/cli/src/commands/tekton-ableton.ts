@@ -12,7 +12,7 @@
  */
 
 import type { CommandRegistration, CommandContext, ParsedArgs, AutocompleteEntry } from "./types.js";
-import type { ExtensionAPI, ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { execSync } from "node:child_process";
 import { spawn } from "node:child_process";
 

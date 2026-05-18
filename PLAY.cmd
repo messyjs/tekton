@@ -14,7 +14,7 @@ echo.
 
 REM Step 1: Play notification sound
 echo [1/4] Playing notification sound...
-powershell -NoProfile -Command "(New-Object System.Media.SoundPlayer 'C:\Users\Massi\Desktop\Car horns all\Pizza.wav').PlaySync()"
+powershell -NoProfile -Command "(New-Object System.Media.SoundPlayer 'D:\AI Drive\audio\Pizza.wav').PlaySync()"
 
 REM Step 2: Start Dashboard
 echo [2/4] Starting Dashboard on port 7700...

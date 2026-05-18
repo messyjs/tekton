@@ -1,4 +1,4 @@
-import type { ExtensionFactory, ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionFactory, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { HookConfig } from "./on-prompt.js";
 
 // ── on-tool-call hook ───────────────────────────────────────────────

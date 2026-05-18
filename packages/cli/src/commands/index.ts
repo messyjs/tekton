@@ -69,7 +69,7 @@ import { createFLStudioCommand } from "./tekton-flstudio.js";
 import { createPiCommand } from "./tekton-pi.js";
 import { createPlayCommand, createPauseCommand } from "./tekton-play.js";
 import type { CommandContext } from "./types.js";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { AgentPool } from "@tekton/core";
 
 // Global pool reference — set during runtime initialization

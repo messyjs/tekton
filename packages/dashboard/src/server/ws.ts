@@ -136,6 +136,7 @@ export class DashboardWS {
         console.log(`[DashboardWS] WebSocket server listening on ws://${this.config.host}:${this.config.port}`);
         this.startHeartbeat();
         this.startPoolListener();
+        this.startPIAgentPoller();
         resolve();
       });
 
@@ -403,6 +404,34 @@ export class DashboardWS {
         lastEventIndex = events.length;
       }
     }, 1000);
+  }
+
+  /** Listen to PI Agent events and broadcast */
+  private piAgentUrl = process.env.PI_AGENT_URL || "http://localhost:7706";
+  private piLastSignalCount = 0;
+  private piInterval: ReturnType<typeof setInterval> | null = null;
+
+  private startPIAgentPoller(): void {
+    // Poll PI Agent for new trade signals every 15 seconds
+    this.piInterval = setInterval(async () => {
+      try {
+        const resp = await fetch(`${this.piAgentUrl}/health`, { signal: AbortSignal.timeout(3000) });
+        if (!resp.ok) return;
+        const health = await resp.json();
+        this.broadcast({
+          type: "pi_health",
+          timestamp: new Date().toISOString(),
+          data: health,
+        });
+      } catch {
+        // PI Agent offline — broadcast offline status periodically
+        this.broadcast({
+          type: "pi_health",
+          timestamp: new Date().toISOString(),
+          data: { status: "offline" },
+        });
+      }
+    }, 15000);
   }
 
   /** Get server stats */

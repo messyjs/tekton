@@ -7,7 +7,7 @@ import {
   type CreateAgentSessionServicesOptions,
   type CreateAgentSessionFromServicesOptions,
   getAgentDir,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import {
   ModelRouter,
   type RoutingMode,
@@ -257,7 +257,7 @@ export async function createTektonRuntime(
   config: TektonConfig,
   tektonHome: string,
 ): Promise<AgentSessionRuntime> {
-  const { createAgentSessionRuntime } = await import("@mariozechner/pi-coding-agent");
+  const { createAgentSessionRuntime } = await import("@earendil-works/pi-coding-agent");
 
   const factory = createTektonRuntimeFactory(parsedArgs, config, tektonHome);
 

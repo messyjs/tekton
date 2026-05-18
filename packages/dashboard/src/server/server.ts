@@ -16,6 +16,7 @@ import { AuthManager } from "./auth.js";
 import { generateConductorHTML } from "./conductor.js";
 import type { DashboardConfig } from "./types.js";
 import { DEFAULT_DASHBOARD_CONFIG } from "./types.js";
+import { SwarmMemoryManager, SwarmSkillManager, AgentPool } from "@tekton/core";
 
 export class DashboardServer {
   readonly config: DashboardConfig;
@@ -25,8 +26,7 @@ export class DashboardServer {
   get swarmMemory(): any {
     if (!this._swarmMemory) {
       try {
-        const core = require("@tekton/core");
-        this._swarmMemory = new core.SwarmMemoryManager();
+        this._swarmMemory = new SwarmMemoryManager();
       } catch {
         // Fallback stub when @tekton/core can't be loaded
         const mem = new Map();
@@ -53,8 +53,7 @@ export class DashboardServer {
   get swarmSkills(): any {
     if (!this._swarmSkills) {
       try {
-        const core = require("@tekton/core");
-        this._swarmSkills = new core.SwarmSkillManager(this.swarmMemory);
+        this._swarmSkills = new SwarmSkillManager(this.swarmMemory);
       } catch {
         this._swarmSkills = {
           listSkills: () => [],
@@ -164,6 +163,12 @@ export class DashboardServer {
     // ── Trading ──────────────────────────────────────────────────────────
     this.app.get("/api/trading/data", this.api.getTradingData);
     this.app.get("/api/trading/positions", this.api.getTradingPositions);
+
+    // -- PI Agent --
+    this.app.get("/api/pi/signals", this.api.getPISignals);
+    this.app.get("/api/pi/engines", this.api.getPIEngines);
+    this.app.get("/api/pi/quote/:symbol", this.api.getPIQuote);
+    this.app.post("/api/pi/analyze", this.api.postPIAnalyze);
 
     // ── Agent Pool ────────────────────────────────────────────────
     this.app.get("/api/agents", this.api.getAgents);

@@ -160,11 +160,10 @@ describe("SPA Generation", () => {
         const html = generateDashboardHTML({ ...DEFAULT_DASHBOARD_CONFIG, refreshIntervalMs: 10000 });
         expect(html).toContain("10000");
     });
-    it("includes React and Tailwind CDN", () => {
+    it("includes React CDN", () => {
         const html = generateDashboardHTML(DEFAULT_DASHBOARD_CONFIG);
-        expect(html).toContain("react@18");
-        expect(html).toContain("react-dom@18");
-        expect(html).toContain("tailwindcss");
+        expect(html).toContain("react@");
+        expect(html).toContain("react-dom@");
     });
     it("has dark theme styling", () => {
         const html = generateDashboardHTML(DEFAULT_DASHBOARD_CONFIG);

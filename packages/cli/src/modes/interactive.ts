@@ -4,7 +4,7 @@ import {
   SessionManager,
   createAgentSessionRuntime,
   getAgentDir,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import type { TektonConfig } from "@tekton/core";
 import type { ParsedArgs } from "../run.js";
 import { getTektonHome } from "../run.js";

@@ -4,7 +4,7 @@ import {
   type ResourceLoader,
   type LoadExtensionsResult,
   type Skill as PiSkill,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import type { HermesBridge } from "@tekton/hermes-bridge";
 import { ModelRouter, type SoulManager, type PersonalityManager, type MemoryManager, type TelemetryTracker, type TektonConfig } from "@tekton/core";
 import type { ParsedArgs } from "./run.js";

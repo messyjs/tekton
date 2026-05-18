@@ -199,7 +199,8 @@ export type DashboardPage =
   | "forge"
   | "trading"
   | "conductor"
-  | "models";
+  | "models"
+  | "pi";
 
 export const DASHBOARD_PAGES: Array<{ id: DashboardPage; label: string; icon: string }> = [
   { id: "chat", label: "Chat", icon: "chat" },
@@ -220,6 +221,7 @@ export const DASHBOARD_PAGES: Array<{ id: DashboardPage; label: string; icon: st
   { id: "documents", label: "Documents", icon: "documents" },
   { id: "forge", label: "Forge", icon: "forge" },
   { id: "trading", label: "Trading", icon: "trading" },
+  { id: "pi", label: "PI Agent", icon: "pi" },
   { id: "conductor", label: "Conductor", icon: "conductor" },
   { id: "models", label: "Models", icon: "routing" },
 ];

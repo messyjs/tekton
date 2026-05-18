@@ -89,11 +89,31 @@ API Endpoints: GET/POST /api/swarm/* (roster, runtime, health, missions, briefs,
 Dashboard: Conductor page shows live worker grid, dispatch bar, mission list, state colors
 
 Pattern: Workers return checkpoints with evidence. Bad checkpoints contain adjectives. Good checkpoints contain commands, file paths, test results.
-PI Agent is one of the **three pillars** of Tekton Agent (PI + Hermes + OpenMythos).
-PI Agent runs **in-process** — no separate sidecar needed:
-- `@tekton/core` → `PiAgent` class + `defaultPiAgent` singleton (always available)
-- `@tekton/tools` → 13 PI tools registered directly: pi_gann_analyze, pi_fib_analyze, pi_trade_signal, etc.
-- CLI: `/tekton:pi signal|gann|fib|quote|positions|glm|trade|close` — works without starting anything
-- Optional HTTP sidecar: `/tekton:pi http-start` → http://localhost:7706 (for external bots/consumers)
 
-Pattern: PI Agent ≠ Ableton sidecar. Ableton/FL Studio are **external apps** that need sidecars. PI Agent's engines are **pure JS math** that runs in-process, just like ModelRouter and SkillManager.
+## PI Agent
+
+PI Agent is one of the **three pillars** of Tekton Agent (PI + Hermes + OpenMythos).
+PI Agent runs **in-process** \u2014 no separate sidecar needed:
+- `@tekton/core` \u2192 `PiAgent` class + `defaultPiAgent` singleton (always available)
+- `@tekton/tools` \u2192 13 PI tools registered directly: pi_gann_analyze, pi_fib_analyze, pi_trade_signal, etc.
+- CLI: `/tekton:pi signal|gann|fib|quote|positions|glm|trade|close` \u2014 works without starting anything
+- Optional HTTP sidecar: `/tekton:pi http-start` \u2192 http://localhost:7706 (for external bots/consumers)
+
+Pattern: PI Agent \u2260 Ableton sidecar. Ableton/FL Studio are **external apps** that need sidecars. PI Agent's engines are **pure JS math** that runs in-process, just like ModelRouter and SkillManager.
+
+## Dashboard
+
+21-page SPA with real-time WebSocket updates:
+- **Core**: Chat (SSE streaming), Status, Sessions, Terminal (xterm.js)
+- **Workspace**: Files (browser + editor), Kanban, Documents (Docling)
+- **Intelligence**: PI Agent, Trading, Models
+- **Swarm**: Swarm grid, Conductor (live worker grid + dispatch)
+- **System**: Skills, Routing, Analytics, Memory, Gateway, Config, Forge, Training
+
+Built with React 19 (CDN), no build step. Backend: Hono HTTP + WebSocket.
+
+## Dependencies
+
+- `@earendil-works/pi-coding-agent` \u2265 0.75.0 (runtime scaffold, session management, model registry)
+- Node.js \u2265 22.19.0
+- `@mariozechner/pi-coding-agent` is **deprecated** \u2014 use `@earendil-works` scope

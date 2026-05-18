@@ -1,5 +1,8 @@
-import type { ExtensionFactory, ExtensionAPI, AgentEndEvent } from "@mariozechner/pi-coding-agent";
+import type { ExtensionFactory, ExtensionAPI, AgentEndEvent } from "@earendil-works/pi-coding-agent";
 import type { HookConfig } from "./on-prompt.js";
+import { exec } from "node:child_process";
+import { existsSync } from "node:fs";
+import { platform } from "node:os";
 
 // ── on-response hook ────────────────────────────────────────────────
 
@@ -64,11 +67,19 @@ export function createOnResponseHook(config: HookConfig): ExtensionFactory {
       } catch {
         // Learning loop failures should not crash the session
       }
-      // Play pizza.wav notification sound
+
+      // 3. Play notification sound (cross-platform)
       try {
-        const { exec } = require("child_process");
-        exec('powershell -Command "(New-Object System.Media.SoundPlayer \\"C:\Users\Massi\Desktop\Car horns all\Pizza.wav\\").PlaySync()"', (err: any) => { if (err) console.error("Sound error:", err.message); });
-      } catch (e) {
+        const soundPath = "D:/AI Drive/audio/Pizza.wav";
+        if (existsSync(soundPath)) {
+          if (platform() === "win32") {
+            const cmd = `powershell -Command "(New-Object System.Media.SoundPlayer '${soundPath}').PlaySync()"`;
+            exec(cmd, (err) => { if (err) console.error("Sound error:", err.message); });
+          } else {
+            exec(`aplay "${soundPath}" 2>/dev/null`, (err) => { /* silence */ });
+          }
+        }
+      } catch {
         // Sound failures should not crash
       }
     });

@@ -806,7 +806,87 @@ export class DashboardAPI {
     }
   };
 
-  // ── Agent Pool API ──────────────────────────────────────────────
+  // -- PI Agent API -----------------------------------------------------------
+  private piAgentUrl = process.env.PI_AGENT_URL || "http://localhost:7706";
+
+  getPIEngines = async (c: Context): Promise<Response> => {
+    try {
+      const resp = await fetch(`${this.piAgentUrl}/health`, { signal: AbortSignal.timeout(3000) });
+      if (!resp.ok) throw new Error(`PI Agent returned ${resp.status}`);
+      const data = await resp.json() as any;
+      return c.json({
+        gann: data.engines?.gann ?? 'unknown',
+        fibonacci: data.engines?.fibonacci ?? 'unknown',
+        glm: data.engines?.glm ?? 'unknown',
+        tradingView: data.engines?.tradingview ?? 'unknown',
+        ollama: data.engines?.ollama ?? 'unknown',
+        status: data.status ?? 'unknown',
+        uptime: data.uptime ?? 0,
+      });
+    } catch {
+      return c.json({
+        gann: 'offline',
+        fibonacci: 'offline',
+        glm: 'offline',
+        tradingView: 'offline',
+        ollama: 'offline',
+        status: 'offline',
+        uptime: 0,
+        error: 'PI Agent service not reachable at ' + this.piAgentUrl,
+      });
+    }
+  };
+
+  getPISignals = async (c: Context): Promise<Response> => {
+    try {
+      const resp = await fetch(`${this.piAgentUrl}/gann/recent-signals`, { signal: AbortSignal.timeout(5000) });
+      if (!resp.ok) {
+        // Try alternate endpoint
+        const resp2 = await fetch(`${this.piAgentUrl}/api/signals`, { signal: AbortSignal.timeout(5000) });
+        if (resp2.ok) {
+          const data = await resp2.json() as any;
+          return c.json({ signals: Array.isArray(data) ? data : data.signals || [] });
+        }
+        throw new Error(`PI Agent returned ${resp.status}`);
+      }
+      const data = await resp.json() as any;
+      return c.json({ signals: Array.isArray(data) ? data : data.signals || [] });
+    } catch {
+      // Return empty signals list instead of error
+      return c.json({ signals: [] });
+    }
+  };
+
+  getPIQuote = async (c: Context): Promise<Response> => {
+    const symbol = c.req.param("symbol") || "BTCUSD";
+    try {
+      const resp = await fetch(`${this.piAgentUrl}/quote/${symbol}`, { signal: AbortSignal.timeout(5000) });
+      if (!resp.ok) throw new Error(`PI Agent returned ${resp.status}`);
+      const data = await resp.json() as any;
+      return c.json(data);
+    } catch (err: any) {
+      return c.json({ error: err.message, symbol });
+    }
+  };
+
+  postPIAnalyze = async (c: Context): Promise<Response> => {
+    try {
+      const body = await c.req.json();
+      const resp = await fetch(`${this.piAgentUrl}/master-bridge/trade`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!resp.ok) throw new Error(`PI Agent returned ${resp.status}`);
+      const data = await resp.json() as any;
+      return c.json(data);
+    } catch (err: any) {
+      return c.json({ error: err.message });
+    }
+  };
+
+  // -- Agent Pool API ---------------------------------------------------------
 
   getAgents = (c: Context): Response => {
     if (!this.agentPool) {

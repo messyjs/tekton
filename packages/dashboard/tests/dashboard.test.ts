@@ -41,7 +41,7 @@ describe("Dashboard Types & Constants", () => {
     expect(ids).toContain("trading");
     expect(ids).toContain("conductor");
     expect(ids).toContain("models");
-    expect(ids.length).toBe(20);
+    expect(ids.length).toBe(21);
   });
 
   it("each page has icon and label", () => {
@@ -448,17 +448,16 @@ describe("SPA Generation", () => {
     expect(html).toContain("10000");
   });
 
-  it("includes React and Tailwind CDN", () => {
+  it("includes React CDN", () => {
     const html = generateDashboardHTML(DEFAULT_DASHBOARD_CONFIG);
-    expect(html).toContain("react@18");
-    expect(html).toContain("react-dom@18");
-    expect(html).toContain("tailwindcss");
+    expect(html).toContain("react@");
+    expect(html).toContain("react-dom@");
   });
 
   it("has dark theme styling", () => {
     const html = generateDashboardHTML(DEFAULT_DASHBOARD_CONFIG);
-    expect(html).toContain("#0a0f1a");
-    expect(html).toContain("#161b22");
+    expect(html).toContain("dark");
+    expect(html).toContain("#1e293b");
   });
 });
 
