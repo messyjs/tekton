@@ -6,9 +6,28 @@ import { platform } from "node:os";
 
 // ── on-response hook ────────────────────────────────────────────────
 
+
+// ── end-of-message sound (config: sound.enabled / sound.file) ────────────
+function playEndSound(tektonHome: string, cfg: any): void {
+  try {
+    if (cfg?.sound?.enabled === false) return;
+    const file = cfg?.sound?.file || `${tektonHome.split("\\").join("/")}/sounds/beep-boop.wav`;
+    if (!existsSync(file)) return;
+    const safe = file.replace(/'/g, "'\''");
+    if (platform() === "win32") {
+      exec(`powershell -NoProfile -Command "(New-Object System.Media.SoundPlayer '${safe}').PlaySync()"`, { timeout: 4000 }).unref?.();
+    } else if (platform() === "darwin") {
+      exec(`afplay '${safe}'`, { timeout: 4000 }).unref?.();
+    } else {
+      exec(`paplay '${safe}' 2>/dev/null || aplay '${safe}' 2>/dev/null || ffplay -nodisp -autoexit -loglevel quiet '${safe}' 2>/dev/null`, { timeout: 4000 }).unref?.();
+    }
+  } catch { /* sound is decorative - never fail the response */ }
+}
+
 export function createOnResponseHook(config: HookConfig): ExtensionFactory {
   return (pi: ExtensionAPI) => {
     pi.on("agent_end", async (event: AgentEndEvent) => {
+      playEndSound(config.tektonHome, (config.config as any));
       const bridge = config.hermesBridge;
 
       // Compute basic metrics from the event
