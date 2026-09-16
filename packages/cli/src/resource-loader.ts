@@ -82,7 +82,7 @@ export function createTektonResourceLoaderOptions(config: TektonResourceLoaderCo
       agentsFiles: [
         ...current.agentsFiles,
         {
-          path: `${config.tektonHome}/AGENTS.md`,
+          path: `${config.tektonHome}/tekton.md`,
           content: getTektonAgentsContext(config),
         },
       ],
@@ -148,7 +148,7 @@ export function createTektonResourceLoader(config: TektonResourceLoaderConfig): 
       agentsFiles: [
         ...current.agentsFiles,
         {
-          path: `${config.tektonHome}/AGENTS.md`,
+          path: `${config.tektonHome}/tekton.md`,
           content: getTektonAgentsContext(config),
         },
       ],

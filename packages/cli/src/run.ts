@@ -256,6 +256,10 @@ export function initTektonHome(tektonHome: string): void {
     fs.writeFileSync(soulPath, DEFAULT_SOUL, "utf-8");
   }
 
+    const tektonMdPath = path.join(tektonHome, "tekton.md");
+  if (!fs.existsSync(tektonMdPath)) {
+      fs.writeFileSync(tektonMdPath, "# tekton.md\n\nTekton Agent context root.\n", "utf-8");
+  }
   const memoryPath = path.join(tektonHome, "MEMORY.md");
   if (!fs.existsSync(memoryPath)) {
     fs.writeFileSync(memoryPath, "", "utf-8");
