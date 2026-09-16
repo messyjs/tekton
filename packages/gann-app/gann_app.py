@@ -28,11 +28,11 @@ from trading_engine import (PaperEngine, generate_signal, SUPPORTED_EXCHANGES, P
 
 # ── Config ────────────────────────────────────────────────────────────
 
-ENGINES_DIR = "D:/AI Drive/pi-agent/engines"
-ENGINE_DIR = Path("D:/AI Drive/library/engines")
+ENGINES_DIR = "E:/AI Drive/pi-agent/engines"
+ENGINE_DIR = Path("E:/AI Drive/library/engines")
 NODE = "node"
 OLLAMA_URL = "http://localhost:11434"
-OLLAMA_WS_URL = "http://192.168.68.60:11434"  # Workstation Ollama for large models
+OLLAMA_WS_URL = "http://localhost:11434"  # Workstation Ollama for large models
 OLLAMA_MODEL = "deepseek-v4-flash:cloud"  # Cloud model with active subscription
 OLLAMA_FALLBACK_MODELS = ["glm-5.1:cloud", "qwen3:1.7b", "deepseek-r1:1.5b"]  # Fallbacks
 
@@ -2976,8 +2976,8 @@ async def health():
 # ── MessyHedge Endpoints ──
 import subprocess
 
-BRIDGE_SCRIPT = "D:/AI Drive/pi-agent/tekton/scripts/trading_bridge.py"
-TRADINGAGENTS_DIR = "D:/AI Drive/pi-agent/TradingAgents"
+BRIDGE_SCRIPT = "E:/AI Drive/pi-agent/tekton/scripts/trading_bridge.py"
+TRADINGAGENTS_DIR = "E:/AI Drive/pi-agent/TradingAgents"
 
 def _call_bridge(params: dict, timeout: int = 600) -> dict:
     """Call trading_bridge.py with JSON stdin/stdout"""

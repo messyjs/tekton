@@ -34,6 +34,8 @@ export { createBrowseCommand } from "./tekton-browse.js";
 export { createAbletonCommand } from "./tekton-ableton.js";
 export { createFLStudioCommand } from "./tekton-flstudio.js";
 export { createPiCommand } from "./tekton-pi.js";
+export { createFusionCommand } from "./tekton-fusion.js";
+export { createDoctorCommand } from "./tekton-doctor.js";
 
 // Convenience: register all commands with a registry
 import { CommandRegistry } from "./registry.js";
@@ -67,6 +69,8 @@ import { createBrowseCommand } from "./tekton-browse.js";
 import { createAbletonCommand } from "./tekton-ableton.js";
 import { createFLStudioCommand } from "./tekton-flstudio.js";
 import { createPiCommand } from "./tekton-pi.js";
+import { createFusionCommand } from "./tekton-fusion.js";
+import { createDoctorCommand } from "./tekton-doctor.js";
 import { createPlayCommand, createPauseCommand } from "./tekton-play.js";
 import type { CommandContext } from "./types.js";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -119,6 +123,8 @@ export function createFullCommandRegistry(): CommandRegistry {
   registry.register(createAbletonCommand());
   registry.register(createFLStudioCommand());
   registry.register(createPiCommand());
+  registry.register(createFusionCommand());
+  registry.register(createDoctorCommand());
   registry.register(createPlayCommand());
   registry.register(createPauseCommand());
 

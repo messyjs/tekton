@@ -13,6 +13,7 @@ export interface ProviderConfig {
   supportsTools?: boolean;
   supportsVision?: boolean;
   apiMode?: "chat_completions" | "anthropic_messages" | "embeddings";
+  supportsFusion?: boolean;
   local?: boolean;
 }
 
@@ -30,7 +31,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
   ollama: {
     id: "ollama",
     name: "Ollama (Workstation)",
-    baseUrl: "http://192.168.68.60:11434",
+    baseUrl: "http://192.168.68.70:11434",
     priority: 0,
     models: [
       {

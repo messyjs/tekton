@@ -1,4 +1,5 @@
 import { scoreComplexity } from "./complexity.js";
+import type { FusionEngine, FusionMode } from "./fusion.js";
 import { RoutingRulesEngine, DEFAULT_ROUTING_RULES, type RoutingRule } from "./rules-engine.js";
 import { CostTracker } from "./cost.js";
 import { MODEL_PRICING } from "./providers-expanded.js";
@@ -30,9 +31,13 @@ export interface RoutingDecision {
   estimatedCost: number;
   /** Whether this decision was made by a routing rule */
   ruleMatch?: string;
+  /** Whether fusion should be used for this request */
+  useFusion?: boolean;
+  /** Fusion strategy to use */
+  fusionStrategy?: FusionMode;
 }
 
-export type RoutingMode = "auto" | "fast" | "deep" | "rules";
+export type RoutingMode = "auto" | "fast" | "deep" | "rules" | "fusion";
 
 export class ModelRouter {
   private config: RoutingConfig;
@@ -41,6 +46,7 @@ export class ModelRouter {
   private maxHistory = 100;
   private rulesEngine: RoutingRulesEngine;
   private costTracker: CostTracker;
+  private fusionEngine: FusionEngine | null = null;
 
   constructor(config: RoutingConfig, options?: { rules?: RoutingRule[] }) {
     this.config = config;
@@ -104,6 +110,22 @@ export class ModelRouter {
           return decision;
         }
       }
+    }
+
+    // Fusion mode: route through fusion engine
+    if (this.mode === "fusion" || (this.isFusionActive() && this.mode !== "fast" && this.mode !== "deep")) {
+      const fusionStrategy = this.fusionEngine?.getMode() ?? "parallel";
+      const decision: RoutingDecision = {
+        model: this.config.fastModel,
+        provider: this.config.fastProvider,
+        reason: "fusion",
+        complexityScore: complexity,
+        estimatedCost: this.costTracker.estimateCost(this.config.fastModel, context.tokenCount, context.tokenCount * 2),
+        useFusion: true,
+        fusionStrategy,
+      };
+      this.recordDecision(decision);
+      return decision;
     }
 
     // Complexity-based routing
@@ -176,6 +198,21 @@ export class ModelRouter {
   /** Get the rules engine for direct rule manipulation */
   getRulesEngine(): RoutingRulesEngine {
     return this.rulesEngine;
+  }
+
+  /** Set the fusion engine for fusion-aware routing */
+  setFusionEngine(engine: FusionEngine): void {
+    this.fusionEngine = engine;
+  }
+
+  /** Get the fusion engine */
+  getFusionEngine(): FusionEngine | null {
+    return this.fusionEngine;
+  }
+
+  /** Check if fusion is active for routing */
+  isFusionActive(): boolean {
+    return this.fusionEngine !== null && this.fusionEngine.isEnabled() && this.fusionEngine.getMode() !== "off";
   }
 
   /** Get the cost tracker for cost reporting */

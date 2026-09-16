@@ -1,3 +1,4 @@
+import { FusionEngine, type FusionMode, FusionStrategy, type FusionRequest, type FusionResult } from "../models/fusion.js";
 /**
  * Agent LLM Bridge — Connects AgentSession to real LLM API calls.
  *
@@ -100,6 +101,7 @@ export class AgentLLMBridge {
   private modelRouter: ModelRouter;
   private toolExecutor: ToolExecutor | null;
   private fallbackChain: FallbackChain | null;
+  private fusionEngine: FusionEngine | null = null;
   private options: Required<AgentLLMBridgeOptions>;
 
   /**
@@ -129,6 +131,16 @@ export class AgentLLMBridge {
       temperature: options?.temperature ?? 0.3,
       stream: options?.stream ?? false,
     };
+  }
+
+  /** Set the fusion engine for multi-model fusion */
+  setFusionEngine(engine: FusionEngine): void {
+    this.fusionEngine = engine;
+  }
+
+  /** Get the fusion engine */
+  getFusionEngine(): FusionEngine | null {
+    return this.fusionEngine;
   }
 
   // ── Main execution loop ───────────────────────────────────────────
@@ -371,6 +383,12 @@ export class AgentLLMBridge {
       sessionComplexityHistory: [],
     };
 
+    // Check if fusion should be used
+    const routingDecision = this.modelRouter.route(routingContext);
+    if (routingDecision.useFusion && this.fusionEngine && this.fusionEngine.isEnabled()) {
+      return this.callFusion(messages, availableTools, routingDecision);
+    }
+
     // Determine model
     let decision: RoutingDecision;
     if (modelOverride) {
@@ -403,6 +421,54 @@ export class AgentLLMBridge {
       durationMs: Date.now() - startTime,
     };
   }
+
+  private async callFusion(
+    messages: BridgeMessage[],
+    availableTools: Array<{ name: string; description: string; parameters: unknown }>,
+    routingDecision: RoutingDecision,
+  ): Promise<LLMResponse> {
+    if (!this.fusionEngine) {
+      const prompt = messages.map(m => m.content).join("\n");
+      return {
+        content: `[stub] No LLM backend configured for ${routingDecision.model}/${routingDecision.provider}`,
+        toolCalls: [],
+        model: routingDecision.model,
+        provider: routingDecision.provider,
+        inputTokens: Math.ceil(prompt.length / 4),
+        outputTokens: 0,
+        durationMs: 0,
+      };
+    }
+
+    const prompt = messages.map(m => m.content).join("\n");
+    const systemMsg = messages.find(m => m.role === "system");
+
+    const fusionRequest: FusionRequest = {
+      prompt,
+      systemPrompt: systemMsg?.content,
+      messages: messages.map(m => ({ role: m.role as "system" | "user" | "assistant" | "tool", content: m.content })),
+      strategy: routingDecision.fusionStrategy as FusionStrategy | undefined,
+      maxTokens: this.options.maxTokens,
+      temperature: this.options.temperature,
+      tools: availableTools,
+    };
+
+    const fusionResult = await this.fusionEngine.fuse(fusionRequest);
+
+    const toolCalls: LLMToolCall[] = [];
+    const content = fusionResult.content;
+
+    return {
+      content,
+      toolCalls,
+      model: fusionResult.finalModel,
+      provider: fusionResult.wasFused ? "fusion" : (this.fusionEngine.getActiveModels()[0]?.provider ?? "unknown"),
+      inputTokens: fusionResult.totalInputTokens,
+      outputTokens: fusionResult.totalOutputTokens,
+      durationMs: fusionResult.durationMs,
+    };
+  }
+
 
   private async callLLMFallback(
     messages: BridgeMessage[],

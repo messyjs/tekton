@@ -1,6 +1,6 @@
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import type { HermesBridge } from "@tekton/hermes-bridge";
-import type { ModelRouter, SoulManager, PersonalityManager, MemoryManager, TelemetryTracker, TektonConfig } from "@tekton/core";
+import type { ModelRouter, SoulManager, PersonalityManager, MemoryManager, TelemetryTracker, TektonConfig, FusionEngine } from "@tekton/core";
 
 /**
  * Command context — all Tekton subsystems available to command handlers.
@@ -12,6 +12,7 @@ export interface CommandContext {
   personality: PersonalityManager;
   memory: MemoryManager;
   telemetry: TelemetryTracker;
+  fusionEngine?: FusionEngine;
   config: TektonConfig;
   tektonHome: string;
 }
@@ -35,6 +36,7 @@ export interface FeatureState {
   routing: boolean;
   learning: boolean;
   compression: boolean;
+  fusion: boolean;
 }
 
 /**

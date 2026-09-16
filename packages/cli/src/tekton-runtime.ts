@@ -231,7 +231,6 @@ export function createTektonRuntimeFactory(
     const services = await createAgentSessionServices({
       cwd,
       agentDir: getAgentDir(),
-      noTools: parsedArgs.tekton.noTools ? "all" : undefined,
       resourceLoaderOptions: createTektonResourceLoaderOptions(resourceLoaderConfig),
     });
 
@@ -247,6 +246,7 @@ export function createTektonRuntimeFactory(
       sessionManager,
       sessionStartEvent,
       customTools: parsedArgs.tekton.noTools ? [] : customTools,
+      noTools: parsedArgs.tekton.noTools ? "all" : undefined,
       model: modelSelection,
       thinkingLevel: parsedArgs.pi.thinking as any,
     });

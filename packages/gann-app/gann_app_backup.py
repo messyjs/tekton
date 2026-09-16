@@ -26,8 +26,8 @@ from trading_engine import (PaperEngine, generate_signal, SUPPORTED_EXCHANGES, P
 
 # ── Config ────────────────────────────────────────────────────────────
 
-ENGINES_DIR = "D:/AI Drive/pi-agent/engines"
-ENGINE_DIR = Path("D:/AI Drive/library/engines")
+ENGINES_DIR = "E:/AI Drive/pi-agent/engines"
+ENGINE_DIR = Path("E:/AI Drive/library/engines")
 NODE = "node"
 OLLAMA_URL = "http://localhost:11434"
 OLLAMA_MODEL = "deepseek-v4-flash:cloud"  # Cloud model with active subscription

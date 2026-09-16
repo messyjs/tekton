@@ -183,7 +183,7 @@ function GatewayPageEnhanced() {
       {name:'Command Center', url:'http://localhost:7799/api/engines', port:7799},
       {name:'WebSocket', url:null, port:7701},
       {name:'Ollama (Local)', url:'http://localhost:11434/api/version', port:11434},
-      {name:'Ollama (Workstation)', url:'http://192.168.68.60:11434/api/version', port:11434},
+      {name:'Ollama (Workstation)', url:'http://192.168.68.70:11434/api/version', port:11434},
       {name:'Gemini API', url:null, port:null}
     ];
     
@@ -211,7 +211,7 @@ function GatewayPageEnhanced() {
     {name:'Command Center', port:7799, desc:'13 trading engines, analysis, charts', icon:'\u2699', url:'http://localhost:7799'},
     {name:'WebSocket Relay', port:7701, desc:'Real-time event broadcast', icon:'\u26A1'},
     {name:'Ollama (Local)', port:11434, desc:'Local LLM inference', icon:'\u2726', host:'localhost'},
-    {name:'Ollama (Workstation)', port:11434, desc:'Dual Xeon E5-2670, 131GB RAM, 11 models', icon:'\u2726', host:'192.168.68.60'},
+    {name:'Ollama (Workstation)', port:11434, desc:'Dual Xeon E5-2670, 131GB RAM, 11 models', icon:'\u2726', host:'192.168.68.70'},
     {name:'Google Gemini', port:443, desc:'Cloud AI - 49 models via AI Studio', icon:'\u2605'}
   ];
   
@@ -257,7 +257,7 @@ function GatewayPageEnhanced() {
         '       \u2502        \u2514\u2500  Ollama Chat\n' +
         '       \u2502\n' +
         '       \u251C\u2500\u2500\u2500  :11434 Ollama (Local)\n' +
-        '       \u2514\u2500\u2500\u2500  192.168.68.60:11434\n' +
+        '       \u2514\u2500\u2500\u2500  192.168.68.70:11434\n' +
         '                    Ollama (Workstation)\n' +
         '                    11 Models, 24 threads'
       )

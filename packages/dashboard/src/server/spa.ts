@@ -15,31 +15,31 @@ export function generateDashboardHTML(config: DashboardConfig): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Tekton Dashboard</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0a0f1a">
-  <script src="https://unpkg.com/react@19/umd/react.production.min.js"><\/script>
-  <script src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"><\/script>
+  <meta name="theme-color" content="#000000">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5/css/xterm.css">
   <script src="https://cdn.jsdelivr.net/npm/xterm@5/lib/xterm.js"><\/script>
   <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0/lib/xterm-addon-fit.js"><\/script>
   <style>
     :root {
-      --bg-primary: #0a0f1a;
-      --bg-secondary: #111827;
-      --bg-tertiary: #1e293b;
-      --bg-card: #151c2c;
-      --border: #1e293b;
-      --border-hover: #334155;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --green: #22c55e;
-      --yellow: #eab308;
-      --red: #ef4444;
-      --purple: #a855f7;
-      --cyan: #06b6d4;
-      --orange: #f97316;
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0a;
+      --bg-tertiary: #141414;
+      --bg-card: #0d0d0d;
+      --border: #1a1a1a;
+      --border-hover: #2a2a2a;
+      --text-primary: #FFFFFF;
+      --text-secondary: #b0b0b0;
+      --text-muted: #808080;
+      --accent: #32CD32;
+      --accent-hover: #28a828;
+      --green: #32CD32;
+      --yellow: #cccc32;
+      --red: #CE2029;
+      --purple: #999999;
+      --cyan: #40cccc;
+      --orange: #cc8032;
       --sidebar-w: 220px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -275,14 +275,14 @@ const NAV_GROUPS = [
   { label: 'Workspace', pages: ['files', 'kanban', 'documents'] },
   { label: 'Intelligence', pages: ['pi', 'trading', 'models'] },
   { label: 'Swarm', pages: ['swarm', 'conductor'] },
-  { label: 'System', pages: ['skills', 'routing', 'analytics', 'memory', 'gateway', 'config', 'forge', 'training'] },
+  { label: 'System', pages: ['rules', 'skills', 'routing', 'analytics', 'memory', 'gateway', 'config', 'forge', 'training'] },
 ];
 
 function Sidebar({ page, setPage }) {
   const { connected } = useWebSocket();
   return e('div', { className: 'sidebar' },
     e('div', { className: 'sidebar-brand' },
-      e('span', { className: 'logo' }, '\\u26A1'),
+      e('span', { className: 'logo' }, 'T'),
       e('h1', null, 'Tekton')
     ),
     e('nav', { className: 'sidebar-nav' },
@@ -292,18 +292,19 @@ function Sidebar({ page, setPage }) {
           const pg = PAGES.find(p => p.id === pid);
           if (!pg) return null;
           const icons = {
-            chat: '\\uD83D\\uDCAC', status: '\\uD83D\\uDCCA', sessions: '\\uD83D\\uDCDD', terminal: '\\u2588',
-            files: '\\uD83D\\uDCC1', kanban: '\\uD83D\\uDCCB', documents: '\\uD83D\\uDCC4', pi: '\\u03C0',
-            trading: '\\uD83D\\uDCB0', models: '\\uD83E\\uDD16', swarm: '\\uD83C\\uDF3E', conductor: '\\uD83C\\uDF9B',
-            skills: '\\u2728', routing: '\\uD83D\\uDEE0', analytics: '\\uD83D\\uDCC8', memory: '\\uD83E\\uDDE0',
-            gateway: '\\uD83D\\uDD0C', config: '\\u2699', forge: '\\uD83D\\uDD28', training: '\\uD83C\\uDF93',
-            'scp-traffic': '\\uD83D\\uDEA6',
+            chat: 'Chat', status: 'Stat', sessions: 'Sess', terminal: 'Term',
+            files: 'Dir', kanban: 'Kbd', documents: 'Docs', pi: 'Pi',
+            trading: 'Trade', models: 'AI', swarm: 'Swrm', conductor: 'Cond',
+            skills: 'Skl', routing: 'Rte', analytics: 'Anlt', memory: 'Mem',
+            gateway: 'GW', config: 'Cfg', forge: 'Frg', training: 'Trn',
+            'scp-traffic': 'SCP',
+            rules: 'Rul',
           };
           return e('div', {
             key: pid, className: 'nav-item' + (page === pid ? ' active' : ''),
             onClick: () => setPage(pid),
           },
-            e('span', { className: 'nav-icon' }, icons[pid] || '\\u25CF'),
+            e('span', { className: 'nav-icon' }, icons[pid] || '...'),
             e('span', null, pg.label)
           );
         })
@@ -333,7 +334,7 @@ function StatusPage() {
   }, []);
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDCCA System Status')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'System Status')),
     e('div', { className: 'cards cards-4' },
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Uptime'), e('div', { className: 'stat-value' }, fmtTime(data.uptimeMs))),
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Total Tokens'), e('div', { className: 'stat-value' }, fmtNum(data.tokens?.total))),
@@ -479,7 +480,7 @@ function ChatPage() {
           activeConv ? e(React.Fragment, null,
             e('div', { className: 'chat-messages' },
               messages.map(m => e('div', { key: m.id, className: 'chat-msg ' + m.role },
-                e('div', { className: 'msg-avatar ' + (m.role === 'user' ? 'user-av' : 'ai-av') }, m.role === 'user' ? '\\uD83D\\uDC64' : '\\u26A1'),
+                e('div', { className: 'msg-avatar ' + (m.role === 'user' ? 'user-av' : 'ai-av') }, m.role === 'user' ? 'U' : 'T'),
                 e('div', { className: 'msg-body' },
                   e('div', { className: 'msg-header' },
                     e('span', { className: 'msg-name' }, m.role === 'user' ? 'You' : 'Tekton'),
@@ -489,7 +490,7 @@ function ChatPage() {
                 )
               )),
               streaming && streamText ? e('div', { className: 'chat-msg assistant' },
-                e('div', { className: 'msg-avatar ai-av' }, '\\u26A1'),
+                e('div', { className: 'msg-avatar ai-av' }, 'T'),
                 e('div', { className: 'msg-body' },
                   e('div', { className: 'msg-header' }, e('span', { className: 'msg-name' }, 'Tekton'), e('span', { className: 'badge badge-blue' }, 'streaming...')),
                   e('div', { className: 'msg-content' }, streamText)
@@ -504,12 +505,12 @@ function ChatPage() {
                   onChange: ev => setInput(ev.target.value), onKeyDown: handleKeyDown,
                   disabled: streaming, ref: inputRef
                 }),
-                e('button', { className: 'btn btn-primary', onClick: sendMessage, disabled: streaming || !input.trim() }, '\\u27A4')
+                e('button', { className: 'btn btn-primary', onClick: sendMessage, disabled: streaming || !input.trim() }, '\>')
               )
             )
           ) : e('div', { style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' },
             e('div', { style: { textAlign: 'center' } },
-              e('div', { style: { fontSize: 48, marginBottom: 16 } }, '\\uD83D\\uDCAC'),
+              e('div', { style: { fontSize: 48, marginBottom: 16 } }, 'Chat'),
               e('div', { style: { fontSize: 16, fontWeight: 600, marginBottom: 8 } }, 'Start a conversation'),
               e('button', { className: 'btn btn-primary', onClick: newConversation }, 'New Chat')
             )
@@ -554,7 +555,7 @@ function TerminalPage() {
     setTimeout(() => {
       if (!termRef.current) return;
       if (xtermRef.current) xtermRef.current.dispose();
-      const term = new Terminal({ theme: { background: '#0a0f1a', foreground: '#e2e8f0', cursor: '#3b82f6' }, fontSize: 13, fontFamily: 'SF Mono, Cascadia Code, monospace', cursorBlink: true });
+      const term = new Terminal({ theme: { background: '#000000', foreground: '#FFFFFF', cursor: '#32CD32' }, fontSize: 13, fontFamily: 'SF Mono, Cascadia Code, monospace', cursorBlink: true });
       const fit = new FitAddon.FitAddon();
       term.loadAddon(fit);
       term.open(termRef.current);
@@ -595,7 +596,7 @@ function TerminalPage() {
 
   return e('div', { className: 'page animate-in' },
     e('div', { className: 'page-header' },
-      e('div', { className: 'page-title' }, '\\u2588 Terminal'),
+      e('div', { className: 'page-title' }, '\Term Terminal'),
       e('div', { className: 'input-group' },
         e('button', { className: 'btn btn-primary', onClick: createSession }, '+ New Session'),
         activeId ? e('button', { className: 'btn btn-danger btn-sm', onClick: () => killSession(activeId) }, 'Kill') : null
@@ -618,7 +619,7 @@ function TerminalPage() {
           e('div', { className: 'term-body', ref: termRef })
         )
       : e('div', { className: 'card', style: { textAlign: 'center', padding: 60, color: 'var(--text-muted)' } },
-          e('div', { style: { fontSize: 36, marginBottom: 12 } }, '\\u2588'),
+          e('div', { style: { fontSize: 36, marginBottom: 12 } }, '\Term'),
           e('div', { style: { fontSize: 14, fontWeight: 600, marginBottom: 8 } }, 'No terminal session'),
           e('div', null, 'Click "+ New Session" to start')
         )
@@ -668,12 +669,12 @@ function FilesPage() {
   }
 
   const parts = path.split(/[\\/]/);
-  const fileIcons = { directory: '\\uD83D\\uDCC1', file: '\\uD83D\\uDCC4', symlink: '\\uD83D\\uDD17' };
-  const extIcons = { '.ts': '\\uD83D\\uDD35', '.js': '\\uD83D\\uDFE1', '.json': '\\u26AA', '.md': '\\uD83D\\uDCD6', '.py': '\\uD83D\\uDFE2', '.rs': '\\uD83D\\uDFE0' };
+  const fileIcons = { directory: 'DIR', file: 'FILE', symlink: 'SYM' };
+  const extIcons = { '.ts': 'TS', '.js': 'JS', '.json': '{ }', '.md': 'MD', '.py': 'PY', '.rs': 'RS' };
 
   return e('div', { className: 'page animate-in' },
     e('div', { className: 'page-header' },
-      e('div', { className: 'page-title' }, '\\uD83D\\uDCC1 Files'),
+      e('div', { className: 'page-title' }, 'Files'),
       !viewingDir && e('button', { className: 'btn btn-sm', onClick: () => loadDir(path) }, '\\u2190 Back')
     ),
     e('div', { className: 'file-breadcrumb' },
@@ -684,13 +685,13 @@ function FilesPage() {
     ),
     viewingDir ? e('div', { className: 'card' },
       path !== '.' && e('div', { className: 'file-entry', onClick: goUp, style: { color: 'var(--text-muted)' } },
-        e('span', { className: 'file-icon' }, '\\u2B06'),
+        e('span', { className: 'file-icon' }, '\..'),
         e('span', { className: 'file-name' }, '..'),
         e('span', null)
       ),
       entries.sort((a, b) => (a.type === 'directory' ? 0 : 1) - (b.type === 'directory' ? 0 : 1) || a.name.localeCompare(b.name)).map(entry =>
         e('div', { key: entry.name, className: 'file-entry', onClick: () => openEntry(entry) },
-          e('span', { className: 'file-icon' }, extIcons[entry.extension] || fileIcons[entry.type] || '\\uD83D\\uDCC4'),
+          e('span', { className: 'file-icon' }, extIcons[entry.extension] || fileIcons[entry.type] || 'FILE'),
           e('span', { className: 'file-name' }, entry.name),
           e('span', { className: 'file-size' }, entry.type === 'file' ? (entry.size > 1024 ? (entry.size / 1024).toFixed(1) + 'k' : entry.size + 'b') : ''),
           e('span', { className: 'file-modified' }, fmtRelative(entry.modified))
@@ -761,7 +762,7 @@ function KanbanPage() {
 
   return e('div', { className: 'page animate-in' },
     e('div', { className: 'page-header' },
-      e('div', { className: 'page-title' }, '\\uD83D\\uDCCB Kanban'),
+      e('div', { className: 'page-title' }, 'Kanban'),
       e('div', { className: 'input-group' },
         e('input', { className: 'input', style: { width: 200 }, placeholder: 'New board title', value: newTitle, onChange: ev => setNewTitle(ev.target.value), onKeyDown: ev => ev.key === 'Enter' && createBoard() }),
         e('button', { className: 'btn btn-primary', onClick: createBoard }, 'Create')
@@ -799,7 +800,7 @@ function KanbanPage() {
         )
       ))
     ) : e('div', { className: 'card', style: { textAlign: 'center', padding: 60, color: 'var(--text-muted)' } },
-        e('div', { style: { fontSize: 36, marginBottom: 12 } }, '\\uD83D\\uDCCB'),
+        e('div', { style: { fontSize: 36, marginBottom: 12 } }, 'Kbd'),
         e('div', { style: { fontSize: 14, fontWeight: 600, marginBottom: 8 } }, 'No board selected'),
         e('div', null, 'Create a board or select one above')
       )
@@ -833,7 +834,7 @@ function SwarmPage() {
 
   return e('div', { className: 'page animate-in' },
     e('div', { className: 'page-header' },
-      e('div', { className: 'page-title' }, '\\uD83C\\uDF3E Swarm'),
+      e('div', { className: 'page-title' }, 'Swarm'),
       e('div', { style: { display: 'flex', gap: 8 } },
         e('span', { className: 'badge badge-yellow' }, workerStats.spawned + ' spawning'),
         e('span', { className: 'badge badge-blue' }, workerStats.running + ' running'),
@@ -888,7 +889,7 @@ function DocumentsPage() {
   }, []);
 
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDCC4 Documents')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Documents')),
     e('div', { className: 'cards cards-3', style: { marginBottom: 16 } },
       e('div', { className: 'card stat-card' },
         e('div', { className: 'stat-label' }, 'Docling Service'),
@@ -922,7 +923,7 @@ function ModelsPage() {
   useEffect(() => { api('/models').then(d => { if (d) setModels(d.models || []); }); }, []);
 
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83E\\uDD16 Models')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Models')),
     models.length > 0 ? e('div', { className: 'card' },
       e('table', { className: 'data-table' },
         e('thead', null, e('tr', null, e('th', null, 'Model'), e('th', null, 'Provider'), e('th', null, 'Context'), e('th', null, 'Type'))),
@@ -946,7 +947,7 @@ function SessionsPage() {
   useEffect(() => { api('/sessions').then(setData); const iv = setInterval(() => api('/sessions').then(setData), REFRESH_MS); return () => clearInterval(iv); }, []);
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDCDD Sessions (' + data.total + ')')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Sessions (' + data.total + ')')),
     e('div', { className: 'card' },
       e('table', { className: 'data-table' },
         e('thead', null, e('tr', null, e('th', null, 'ID'), e('th', null, 'Name'), e('th', null, 'State'), e('th', null, 'Tokens'), e('th', null, 'Tasks'), e('th', null, 'Last Activity'))),
@@ -968,7 +969,7 @@ function SkillsPage() {
   useEffect(() => { api('/skills').then(setData); }, []);
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\u2728 Skills (' + data.total + ')')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\Skill Skills (' + data.total + ')')),
     e('div', { className: 'card' },
       e('table', { className: 'data-table' },
         e('thead', null, e('tr', null, e('th', null, 'Name'), e('th', null, 'Category'), e('th', null, 'Confidence'), e('th', null, 'Usage'), e('th', null, 'Status'))),
@@ -989,7 +990,7 @@ function RoutingPage() {
   const [rules, setRules] = useState(null);
   useEffect(() => { api('/routing/log').then(setLog); api('/routing/rules').then(setRules); }, []);
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDEE0\\uFE0F Routing')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Routing')),
     e('div', { className: 'card', style: { marginBottom: 16 } },
       e('div', { style: { fontWeight: 700, marginBottom: 12 } }, 'Recent Decisions'),
       log ? e('table', { className: 'data-table' },
@@ -1025,7 +1026,7 @@ function AnalyticsPage() {
   const [comp, setComp] = useState(null);
   useEffect(() => { api('/analytics/tokens').then(setTokens); api('/analytics/cost').then(setCost); api('/analytics/compression').then(setComp); }, []);
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDCC8 Analytics')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Analytics')),
     e('div', { className: 'cards cards-3' },
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Total Tokens'), e('div', { className: 'stat-value' }, fmtNum(tokens?.totalTokens))),
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Total Cost'), e('div', { className: 'stat-value' }, '$' + (cost?.totalCost??0).toFixed(4))),
@@ -1051,7 +1052,7 @@ function SCPTrafficPage() {
   const [data, setData] = useState(null);
   useEffect(() => { api('/scp/traffic').then(setData); const iv = setInterval(() => api('/scp/traffic').then(setData), REFRESH_MS); return () => clearInterval(iv); }, []);
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDEA6 SCP Traffic')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'SCP Traffic')),
     data?.entries?.length > 0 ? e('div', { className: 'card' },
       e('table', { className: 'data-table' },
         e('thead', null, e('tr', null, e('th', null, 'Time'), e('th', null, 'From'), e('th', null, 'To'), e('th', null, 'Type'), e('th', null, 'Status'))),
@@ -1072,7 +1073,7 @@ function ConfigPage() {
   useEffect(() => { api('/config').then(setConfig); }, []);
   if (!config) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\u2699\\uFE0F Configuration')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Configuration')),
     e('div', { className: 'code-block' }, JSON.stringify(config.config, null, 2))
   );
 }
@@ -1082,7 +1083,7 @@ function TrainingPage() {
   useEffect(() => { api('/training/status').then(setData); }, []);
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83C\\uDF93 Training')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Training')),
     data.running ? e('div', { className: 'card', style: { textAlign: 'center', padding: 30 } }, e('div', { className: 'loading-pulse' }, 'Training in progress...')) : e('div', { className: 'card', style: { textAlign: 'center', padding: 40, color: 'var(--text-muted)' } }, 'No training jobs running.')
   );
 }
@@ -1092,7 +1093,7 @@ function MemoryPage() {
   useEffect(() => { api('/memory').then(setData); }, []);
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83E\\uDDE0 Memory')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Memory')),
     e('div', { className: 'cards cards-2' },
       e('div', { className: 'card' }, e('div', { style: { fontWeight: 700, marginBottom: 8, fontSize: 13 } }, 'MEMORY.md'), e('pre', { style: { margin: 0, background: 'transparent', border: 'none', padding: 0 } }, data.memory || 'Empty')),
       e('div', { className: 'card' }, e('div', { style: { fontWeight: 700, marginBottom: 8, fontSize: 13 } }, 'USER.md'), e('pre', { style: { margin: 0, background: 'transparent', border: 'none', padding: 0 } }, data.userModel || 'Empty'))
@@ -1105,7 +1106,7 @@ function GatewayPage() {
   useEffect(() => { api('/gateway/status').then(setData); const iv = setInterval(() => api('/gateway/status').then(setData), REFRESH_MS); return () => clearInterval(iv); }, []);
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDD0C Gateway')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Gateway')),
     e('div', { className: 'card' },
       e('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 } },
         e('span', { className: 'dot ' + (data.running ? 'dot-green' : 'dot-red') }),
@@ -1132,7 +1133,7 @@ function TradingPage() {
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   if (data.error) return e('div', { className: 'page' }, e('div', { className: 'card', style: { color: 'var(--text-muted)' } }, data.error));
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDCB0 Trading')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Trading')),
     e('div', { className: 'cards cards-4' },
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Total PnL'), e('div', { className: 'stat-value', style: { color: data.total_pnl >= 0 ? 'var(--green)' : 'var(--red)' } }, '$' + (data.total_pnl||0).toFixed(2))),
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Trades'), e('div', { className: 'stat-value' }, data.trades_placed||0)),
@@ -1169,7 +1170,7 @@ function PIAgentPage() {
   }, []);
   const engineList = engines ? Object.entries(engines).filter(([k]) => !['status','uptime','error'].includes(k)).map(([name, status]) => ({ name, status })) : [];
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\u03C0 PI Agent')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\Pi PI Agent')),
     e('div', { className: 'cards cards-3' },
       ...engineList.map((eng, i) => e('div', { key: i, className: 'card stat-card' },
         e('div', { className: 'stat-label' }, eng.name),
@@ -1210,9 +1211,9 @@ function ForgePage() {
   if (!data) return e('div', { className: 'page loading-pulse' }, 'Loading...');
   if (data.error) return e('div', { className: 'page' }, e('div', { className: 'card', style: { color: 'var(--text-muted)' } }, data.error));
   return e('div', { className: 'page animate-in' },
-    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, '\\uD83D\\uDD28 Forge')),
+    e('div', { className: 'page-header' }, e('div', { className: 'page-title' }, 'Forge')),
     e('div', { className: 'cards cards-2', style: { marginBottom: 16 } },
-      e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Enabled'), e('div', { className: 'stat-value', style: { fontSize: 14 } }, data.enabled ? '\\u2705 Yes' : '\\u274C No')),
+      e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Enabled'), e('div', { className: 'stat-value', style: { fontSize: 14 } }, data.enabled ? '\Yes Yes' : '\No No')),
       e('div', { className: 'card stat-card' }, e('div', { className: 'stat-label' }, 'Projects'), e('div', { className: 'stat-value' }, data.projectCount ?? 0))
     ),
     data.projects && data.projects.length > 0 ? e('div', { className: 'card' },
@@ -1238,6 +1239,109 @@ function ConductorPage() {
     e('iframe', { src: '/conductor', style: { width: '100%', height: 'calc(100vh - 0px)', border: 'none' } })
   );
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// RULES PAGE (Manage Extension Rules)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function RulesPage() {
+  const [rules, setRules] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [log, setLog] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
+
+  useEffect(() => {
+    api('/rules').then(d => { if (d) { setRules(d); setEditContent(d.content || ''); } });
+    api('/files/read?path=' + encodeURIComponent('D:\\AI Drive\\scripts\\enforce_rules_log.txt')).then(d => { if (d && d.content) setLog(d.content); });
+  }, []);
+
+  async function saveRules() {
+    setSaveStatus('Saving...');
+    const result = await api('/rules', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: editContent })
+    });
+    if (result && result.success) {
+      setRules(prev => ({ ...prev, content: editContent }));
+      setEditing(false);
+      setSaveStatus('Saved');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } else {
+      setSaveStatus('Error saving: ' + (result?.error || 'Unknown'));
+    }
+  }
+
+  async function refreshLog() {
+    const d = await api('/files/read?path=' + encodeURIComponent('D:\\AI Drive\\scripts\\enforce_rules_log.txt'));
+    if (d && d.content) setLog(d.content);
+  }
+
+  return e('div', { className: 'page animate-in' },
+    e('div', { className: 'page-header' },
+      e('div', { className: 'page-title' }, 'Rules'),
+      e('div', { className: 'input-group' },
+        saveStatus && e('span', { style: { fontSize: 12, color: saveStatus === 'Saved' ? '#32CD32' : '#CE2029' } }, saveStatus),
+        editing
+          ? e(React.Fragment, null,
+              e('button', { className: 'btn btn-primary btn-sm', onClick: saveRules }, 'Save'),
+              e('button', { className: 'btn btn-sm', onClick: () => { setEditContent(rules?.content || ''); setEditing(false); } }, 'Cancel')
+            )
+          : e('button', { className: 'btn btn-primary btn-sm', onClick: () => setEditing(true) }, 'Edit Rules')
+      )
+    ),
+    e('div', { className: 'cards cards-2' },
+      e('div', { className: 'card' },
+        e('div', { style: { fontWeight: 700, marginBottom: 12, fontSize: 14 } }, 'Active Rules'),
+        e('div', { style: { fontSize: 13, lineHeight: 1.8, color: '#b0b0b0' } },
+          e('div', null, e('span', { style: { color: '#32CD32', fontWeight: 700 } }, 'RULE 1:'), ' Play Pizza.wav before every response'),
+          e('div', null, e('span', { style: { color: '#32CD32', fontWeight: 700 } }, 'RULE 2:'), ' All files must be saved to D:\\AI Drive (C: drive blocked)'),
+          e('div', null, e('span', { style: { color: '#32CD32', fontWeight: 700 } }, 'RULE 3:'), ' Edited files auto-opened in Notepad'),
+          e('div', null, e('span', { style: { color: '#32CD32', fontWeight: 700 } }, 'RULE 4:'), ' No emojis in code, UI, tables, or output'),
+          e('div', null, e('span', { style: { color: '#32CD32', fontWeight: 700 } }, 'RULE 5:'), ' Dark mode design system only')
+        )
+      ),
+      e('div', { className: 'card' },
+        e('div', { style: { fontWeight: 700, marginBottom: 12, fontSize: 14 } }, 'Design System'),
+        e('table', { className: 'data-table' },
+          e('thead', null, e('tr', null, e('th', null, 'Role'), e('th', null, 'Color'), e('th', null, 'Hex'))),
+          e('tbody', null,
+            e('tr', null, e('td', null, 'Background'), e('td', null, e('span', { style: { display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: '#000000', border: '1px solid #808080' } })), e('td', { style: { fontFamily: 'monospace' } }, '#000000')),
+            e('tr', null, e('td', null, 'Primary Text'), e('td', null, e('span', { style: { display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: '#FFFFFF' } })), e('td', { style: { fontFamily: 'monospace' } }, '#FFFFFF')),
+            e('tr', null, e('td', null, 'Green Accent'), e('td', null, e('span', { style: { display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: '#32CD32' } })), e('td', { style: { fontFamily: 'monospace' } }, '#32CD32')),
+            e('tr', null, e('td', null, 'Red Accent'), e('td', null, e('span', { style: { display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: '#CE2029' } })), e('td', { style: { fontFamily: 'monospace' } }, '#CE2029')),
+            e('tr', null, e('td', null, 'Grey Accent'), e('td', null, e('span', { style: { display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: '#808080' } })), e('td', { style: { fontFamily: 'monospace' } }, '#808080'))
+          )
+        )
+      )
+    ),
+    e('div', { className: 'card', style: { marginTop: 16 } },
+      e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 } },
+        e('div', { style: { fontWeight: 700, fontSize: 14 } }, 'Extension Source'),
+        editing
+          ? null
+          : e('button', { className: 'btn btn-sm', onClick: () => setEditing(true) }, 'Edit')
+      ),
+      editing
+        ? e('textarea', {
+            value: editContent,
+            onChange: ev => setEditContent(ev.target.value),
+            style: { width: '100%', minHeight: 300, background: '#000000', color: '#32CD32', border: '1px solid #1a1a1a', borderRadius: 6, padding: 12, fontFamily: 'SF Mono, Cascadia Code, monospace', fontSize: 12, resize: 'vertical' }
+          })
+        : e('pre', { style: { margin: 0, background: '#000000', border: '1px solid #1a1a1a', borderRadius: 6, padding: 12, maxHeight: 400, overflow: 'auto', color: '#32CD32', fontFamily: 'SF Mono, Cascadia Code, monospace', fontSize: 12, whiteSpace: 'pre-wrap' } }, rules?.content || 'Loading...')
+    ),
+    e('div', { className: 'card', style: { marginTop: 16 } },
+      e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 } },
+        e('div', { style: { fontWeight: 700, fontSize: 14 } }, 'Enforcement Log'),
+        e('button', { className: 'btn btn-sm', onClick: refreshLog }, 'Refresh')
+      ),
+      e('pre', { style: { margin: 0, background: '#000000', border: '1px solid #1a1a1a', borderRadius: 6, padding: 12, maxHeight: 300, overflow: 'auto', color: '#808080', fontFamily: 'SF Mono, Cascadia Code, monospace', fontSize: 11, whiteSpace: 'pre-wrap' } }, log || 'No log entries yet')
+    )
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // APP (router)
@@ -1268,6 +1372,7 @@ function App() {
       case 'conductor': return e(ConductorPage);
       case 'documents': return e(DocumentsPage);
       case 'models': return e(ModelsPage);
+      case 'rules': return e(RulesPage);
       default: return e(StatusPage);
     }
   };
@@ -1277,7 +1382,12 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+} catch(err) {
+  document.getElementById('root').innerHTML = '<div style="color:red;padding:40px;font-family:monospace;white-space:pre-wrap"><h2>Dashboard Error</h2>' + err.message + '\n\n' + err.stack + '</div>';
+  console.error('Dashboard render error:', err);
+}
 <\/script>
 </body>
 </html>`;

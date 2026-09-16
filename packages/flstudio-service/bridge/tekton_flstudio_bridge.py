@@ -1,16 +1,16 @@
-# name=Tekton FL Studio Bridge
+# name=Tekton Bridge v3
 # url=https://github.com/messyjs/tekton
-# receiveFrom=Maschine Plus Virtual
-# supportedDevices=Maschine Plus Virtual,BomeMIDI: Maschine Plus Virtual (1),Maschine Plus MIDI
 # version 2026.1
 
 import socket
 import json
+open(r"E:/Data/FL Studio/Settings/Hardware/Tekton Bridge v3/MODULE_LOADED.txt","w").write("Module imported OK")
+import importlib
 import threading
 import os
 import datetime
 
-LOG_FILE = r"C:\Users\Massi\tekton_bridge_log.txt"
+LOG_FILE = r"E:/Data/FL Studio/Settings/Hardware/Tekton Bridge v3/bridge_log.txt"
 
 def _log(msg):
     try:
@@ -20,31 +20,18 @@ def _log(msg):
     except Exception:
         pass
 
-# ── Module-level import log (runs when FL Studio imports this file) ──
+# -- Module-level import log (runs when FL Studio imports this file) --
 _log("IMPORT: tekton_flstudio_bridge.py loaded by Python process")
-_log("IMPORT: receiveFrom=Maschine Plus Virtual")
+_log("IMPORT: receiveFrom=VMidi 1")
 
 HOST = "0.0.0.0"
 PORT = 7705
 _running = False
 _server_socket = None
 
-try:
-    import general
-    import transport
-    import channels
-    import mixer
-    import patterns
-    import playlist
-    import arrangement
-    import plugins
-    import device
-    import ui
-    FL_API = True
-    _log("IMPORT: FL Studio API modules loaded successfully")
-except ImportError as e:
-    FL_API = False
-    _log("IMPORT: FL Studio API not available (%s)" % str(e))
+FL_API = False
+MCPTools = None
+_log("IMPORT: FL API imports deferred to OnInit()")
 
 
 def execute_command(cmd):
@@ -278,6 +265,39 @@ def execute_command(cmd):
                 return {"success": True, "result": str(result)}
         except Exception as e:
             return {"success": False, "error": str(e)}
+    # MCP Tools support
+    if action == "mcp.call":
+        if MCPTools is None:
+            return {"success": False, "error": "MCPTools not loaded"}
+        func_name = params.get("function", "")
+        func_args = params.get("args", [])
+        try:
+            func = getattr(MCPTools, func_name)
+            result = func(*func_args)
+            return {"success": True, "result": result}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    if action == "mcp.run_piano_roll_script":
+        if MCPTools is None:
+            return {"success": False, "error": "MCPTools not loaded"}
+        source = params.get("source", "")
+        try:
+            MCPTools.run_piano_roll_script(source)
+            return {"success": True, "result": "Piano roll script executed"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    if action == "mcp.open_piano_roll":
+        if MCPTools is None:
+            return {"success": False, "error": "MCPTools not loaded"}
+        channel = params.get("channel", "")
+        try:
+            MCPTools.open_piano_roll_for_channel(channel)
+            return {"success": True, "result": "Piano roll opened for " + str(channel)}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
     return {"success": False, "error": "Unknown action: " + action}
 
 
@@ -318,56 +338,148 @@ def handle_client(client_socket, addr):
             pass
 
 
-def _serve():
-    global _server_socket, _running
+import subprocess
+import os
+
+SCRIPT_DIR = r"E:/Data/FL Studio/Settings/Hardware/Tekton Bridge v3"
+HELPER_SCRIPT = SCRIPT_DIR + "/tcp_helper.py"
+COMMAND_FILE = SCRIPT_DIR + "/cmd.json"
+RESPONSE_FILE = SCRIPT_DIR + "/resp.json"
+_helper_proc = None
+
+def _start_server():
+    global _helper_proc
     try:
-        _server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        _server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        _server_socket.bind((HOST, PORT))
-        _server_socket.listen(5)
-        _server_socket.settimeout(1.0)
-        _log("TCP server listening on %s:%d" % (HOST, PORT))
-        while _running:
-            try:
-                client, addr = _server_socket.accept()
-                _log("Client connected from %s:%d" % addr)
-                client.settimeout(30.0)
-                threading.Thread(target=handle_client, args=(client, addr), daemon=True).start()
-            except socket.timeout:
-                continue
-            except OSError:
-                break
+        _helper_proc = subprocess.Popen(
+            ["C:/Program Files (x86)/Image-Line/FL Studio 2026/Shared/Python/python.exe", HELPER_SCRIPT],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        _log("TCP helper process started (PID: %s)" % str(_helper_proc.pid))
+        return True
     except Exception as e:
-        _log("Server error: " + str(e))
+        _log("Helper start error: " + str(e))
+        return False
+
+def _poll_server():
+    """Check for commands from the TCP helper - called from OnRefresh"""
+    if os.path.exists(COMMAND_FILE):
+        try:
+            with open(COMMAND_FILE, "r") as f:
+                cmd = json.load(f)
+            try:
+                os.remove(COMMAND_FILE)
+            except:
+                pass
+            result = execute_command(cmd)
+            with open(RESPONSE_FILE, "w") as f:
+                json.dump(result, f)
+            _log("Command executed: %s" % str(cmd.get("action", cmd.get("module", "?"))))
+        except Exception as e:
+            _log("Poll error: " + str(e))
 
 
 def OnInit():
-    global _running, _server_socket
+    global _running, _server_socket, FL_API
     _running = True
-    _log("OnInit() called — starting TCP server on port %d" % PORT)
-    t = threading.Thread(target=_serve, daemon=True)
-    t.start()
+    _log(">>> OnInit() CALLED! <<<")
+    
+    # Marker to prove OnInit was called
+    try:
+        open(r"E:/Data/FL Studio/Settings/Hardware/Tekton Bridge v3/INIT_CALLED.txt", "w").write("OnInit executed")
+    except:
+        pass
+    
+    # Import FL Studio API modules inside OnInit
+    try:
+        global general, transport, channels, mixer, patterns, playlist
+        global arrangement, plugins, device, ui
+        import general
+        import transport
+        import channels
+        import mixer
+        import patterns
+        import playlist
+        import arrangement
+        import plugins
+        import device
+        import ui
+        FL_API = True
+        _log("OnInit: FL API loaded - version: " + str(general.getVersion()))
+        _log("OnInit: FL API loaded")
+        
+        # Import MCPTools (FL Studio's official MCP tool)
+        global MCPTools
+        MCPTools = None
+        try:
+            import sys as _sys
+            _mcp_path = r"C:/Program Files (x86)/Image-Line/FL Studio 2026/System/Tools/MCP"
+            if _mcp_path not in _sys.path:
+                _sys.path.insert(0, _mcp_path)
+            import MCPTools as _mcp
+            MCPTools = _mcp
+            _log("OnInit: MCPTools loaded successfully!")
+        except Exception as e:
+            _log("OnInit: MCPTools error: " + str(e))
+    except ImportError as e:
+        FL_API = False
+        _log("OnInit: FL API not available: " + str(e))
+    
+    # TCP helper runs externally (started via SSH)
+    _log("OnInit: Bridge ready - starting poll loop")
+    
+    # Start refresh thread (FL Studio's own thread mechanism)
+    try:
+        device.createRefreshThread()
+    except:
+        pass
+    
     if FL_API:
         try:
-            ui.setHintMsg("Tekton Bridge v3 ready on :" + str(PORT))
-            _log("Hint message set in FL Studio UI")
+            ui.setHintMsg("Tekton Bridge v3 ready on :7705")
+        except:
+            pass
+    
+    # 300-second burst loop - quick check if preset is loaded
+    import time
+    _log("OnInit: Starting 300-second burst")
+    start = time.time()
+    loop_count = 0
+    while time.time() - start < 300:
+        try:
+            _poll_server()
+            loop_count += 1
+            if loop_count == 1:
+                _log("OnInit: Burst running!")
+            time.sleep(0.1)
         except Exception as e:
-            _log("setHintMsg failed: " + str(e))
+            if loop_count < 5:
+                _log("Burst error: " + str(e))
+            time.sleep(0.5)
+    _log("OnInit: 300s burst done, returning")
 
+
+def OnIdle():
+    _poll_server()
 
 def OnDeInit():
-    global _running, _server_socket
+    global _running, _helper_proc
     _running = False
-    _log("OnDeInit() called — shutting down")
-    if _server_socket:
+    _log("OnDeInit() called - shutting down")
+    if _helper_proc:
         try:
-            _server_socket.close()
+            _helper_proc.terminate()
         except Exception:
             pass
-        _server_socket = None
+        _helper_proc = None
 
 
 def OnMidiMsg(event):
+    try:
+        open(SCRIPT_DIR + "/MIDI_RECEIVED.txt", "w").write("MIDI: " + str(event.status) + " " + str(event.data1))
+    except:
+        pass
+    _log("OnMidiMsg: status=%d data1=%d" % (event.status, event.data1))
+    _poll_server()
     event.handled = False
 
 
@@ -383,5 +495,20 @@ def OnNoteOff(event):
     event.handled = False
 
 
+_refresh_count = 0
 def OnRefresh(flags):
-    _log("OnRefresh called with flags=%d" % flags)
+    global _refresh_count
+    _refresh_count += 1
+    if _refresh_count <= 3:
+        _log("OnRefresh #%d (flags=%d)" % (_refresh_count, flags))
+    _poll_server()
+    # Trigger next refresh to keep the cycle alive
+    try:
+        device.fullRefresh()
+    except:
+        pass
+    # Trigger next refresh to keep the cycle alive
+    try:
+        device.fullRefresh()
+    except:
+        pass

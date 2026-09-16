@@ -59,8 +59,8 @@ export function createDashboardCommand(): CommandRegistration {
 
 function getUrl(ctx: CommandContext): string {
   const port = (ctx.config as any).dashboard?.port ?? 7700;
-  const host = (ctx.config as any).dashboard?.host ?? "127.0.0.1";
-  return `http://${host}:${port}`;
+  const host = (ctx.config as any).dashboard?.host ?? "0.0.0.0";
+  return `http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`;
 }
 
 async function handleStart(ctx: CommandContext, piCtx: any): Promise<void> {
@@ -72,7 +72,7 @@ async function handleStart(ctx: CommandContext, piCtx: any): Promise<void> {
   try {
     const { DashboardServer } = await import("@tekton/dashboard");
     const port = (ctx.config as any).dashboard?.port ?? 7700;
-    const host = (ctx.config as any).dashboard?.host ?? "127.0.0.1";
+    const host = (ctx.config as any).dashboard?.host ?? "0.0.0.0";
 
     serverInstance = new DashboardServer({ port, host });
 

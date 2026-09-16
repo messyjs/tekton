@@ -11,6 +11,7 @@ export { scoreComplexity } from "./models/complexity.js";
 export { FallbackChain, FallbackErrorClass, type FallbackChainConfig, type FallbackError, type FallbackErrorCode, type ModelRequest, type ModelResponse } from "./models/fallback.js";
 export { RoutingRulesEngine, DEFAULT_ROUTING_RULES, type RoutingRule, type RoutingCondition, type RoutingAction, type RuleEvaluationResult } from "./models/rules-engine.js";
 export { CostTracker, type CostEntry, type CostReport, type CostSavings } from "./models/cost.js";
+export { FusionEngine, DEFAULT_FUSION_CONFIG, buildOpenRouterFusionRequest, shouldUseOpenRouterFusion, type FusionConfig, type FusionMode, type FusionStrategy, type FusionModelEntry, type FusionCall, type FusionModelResponse, type FusionResult, type FusionRequest, type FusionStats } from "./models/fusion.js";
 export { TelemetryTracker } from "./telemetry/tracker.js";
 export { TokenBudget } from "./telemetry/budget.js";
 export { initTelemetryStore } from "./telemetry/store.js";

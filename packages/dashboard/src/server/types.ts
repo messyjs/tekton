@@ -14,7 +14,7 @@ export interface DashboardConfig {
 
 export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
   port: 7700,
-  host: "127.0.0.1",
+  host: "0.0.0.0",
   autoStart: false,
   refreshIntervalMs: 5000,
   theme: "dark",
@@ -200,7 +200,8 @@ export type DashboardPage =
   | "trading"
   | "conductor"
   | "models"
-  | "pi";
+  | "pi"
+  | "rules";
 
 export const DASHBOARD_PAGES: Array<{ id: DashboardPage; label: string; icon: string }> = [
   { id: "chat", label: "Chat", icon: "chat" },
@@ -224,4 +225,5 @@ export const DASHBOARD_PAGES: Array<{ id: DashboardPage; label: string; icon: st
   { id: "pi", label: "PI Agent", icon: "pi" },
   { id: "conductor", label: "Conductor", icon: "conductor" },
   { id: "models", label: "Models", icon: "routing" },
+  { id: "rules", label: "Rules", icon: "rules" },
 ];

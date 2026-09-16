@@ -195,7 +195,7 @@ def register_design_endpoints(app, call_gemini_fn):
     @app.get("/api/design/components")
     async def design_list_components():
         """List Tekton's current frontend components for reference."""
-        static_dir = Path("D:/AI Drive/pi-agent/tekton/packages/gann-app/static")
+        static_dir = Path("E:/AI Drive/pi-agent/tekton/packages/gann-app/static")
         components = []
         for f in static_dir.glob("*.js"):
             if f.stem not in ["vendor"]:

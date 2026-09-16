@@ -1,6 +1,6 @@
 /**
  * Dashboard Server — Hono HTTP server serving the React SPA + REST API.
- * Runs on 127.0.0.1:7700 by default.
+ * Runs on 0.0.0.0:7700 by default (accessible from any network).
  */
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -17,6 +17,8 @@ import { generateConductorHTML } from "./conductor.js";
 import type { DashboardConfig } from "./types.js";
 import { DEFAULT_DASHBOARD_CONFIG } from "./types.js";
 import { SwarmMemoryManager, SwarmSkillManager, AgentPool } from "@tekton/core";
+import path from "path";
+import fs from "fs";
 
 export class DashboardServer {
   readonly config: DashboardConfig;
@@ -104,6 +106,26 @@ export class DashboardServer {
 
     // Status
     this.app.get("/api/status", this.api.getStatus);
+
+    // Discovery (returns server IPs for auto-connect)
+    this.app.get("/api/discover", async (c) => {
+      const os = await import("node:os");
+      const interfaces = os.networkInterfaces();
+      const ips: string[] = [];
+      for (const [name, addrs] of Object.entries(interfaces)) {
+        for (const addr of (addrs || [])) {
+          if (addr.family === "IPv4" && !addr.internal) {
+            ips.push(addr.address);
+          }
+        }
+      }
+      return c.json({
+        port: this.config.port,
+        ips,
+        host: this.config.host,
+        url: ips.length > 0 ? `http://${ips[0]}:${this.config.port}` : `http://localhost:${this.config.port}`,
+      });
+    });
 
     // Sessions
     this.app.get("/api/sessions", this.api.getSessions);
@@ -829,6 +851,28 @@ export class DashboardServer {
       return c.json({ authenticated: true, username: session.username, expiresAt: session.expiresAt, csrfToken: session.csrfToken });
     });
 
+
+    // ── Rules ──────────────────────────────────────────────────────────
+    const RULES_PATH = path.join(String.raw`D:\AI Drive`, `.pi`, `agent`, `extensions`, `enforce-rules`, `index.js`);
+
+    this.app.get("/api/rules", (c) => {
+      try {
+        const content = fs.readFileSync(RULES_PATH, "utf-8");
+        return c.json({ content, path: RULES_PATH });
+      } catch (err) {
+        return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+      }
+    });
+    this.app.put("/api/rules", async (c) => {
+      try {
+        const body = await c.req.json();
+        fs.writeFileSync(RULES_PATH, body.content, "utf-8");
+        return c.json({ success: true, path: RULES_PATH });
+      } catch (err) {
+        return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+      }
+    });
+
     // ── PWA Assets ──────────────────────────────────────────────
 
     // Manifest
@@ -891,9 +935,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   /** Start the dashboard server */
+  private beaconInterval: ReturnType<typeof setInterval> | null = null;
+
   async start(): Promise<void> {
     // Start WebSocket server for live updates
     await this.ws.start();
+
+    // Start UDP beacon for auto-discovery
+    this.startBeacon();
 
     return new Promise((resolve, reject) => {
       try {
@@ -912,9 +961,34 @@ self.addEventListener('fetch', (event) => {
     });
   }
 
+  /** Broadcast UDP beacon for auto-discovery by mobile apps */
+  private startBeacon(): void {
+    try {
+      const dgram = require("node:dgram");
+      const socket = dgram.createSocket("udp4");
+      socket.bind(() => {
+        socket.setBroadcast(true);
+        const port = this.config.port;
+        const msg = Buffer.from(JSON.stringify({ tekton: true, port }));
+        this.beaconInterval = setInterval(() => {
+          try {
+            socket.send(msg, 0, msg.length, 7702, "255.255.255.255");
+          } catch {}
+        }, 2000);
+      });
+      socket.on("error", () => { /* beacon is optional */ });
+    } catch {
+      /* dgram not available or beacon failed - non-fatal */
+    }
+  }
+
   /** Stop the dashboard server */
   async stop(): Promise<void> {
     await this.ws.stop();
+    if (this.beaconInterval) {
+      clearInterval(this.beaconInterval);
+      this.beaconInterval = null;
+    }
     if (this.server) {
       this.server.close();
       this.server = null;

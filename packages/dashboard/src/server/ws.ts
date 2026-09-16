@@ -63,7 +63,7 @@ export class DashboardWS {
   constructor(config: Partial<WSConfig> = {}) {
     this.config = {
       port: config.port ?? 7701,
-      host: config.host ?? "127.0.0.1",
+      host: config.host ?? "0.0.0.0",
       heartbeatInterval: config.heartbeatInterval ?? 30000,
       maxPayload: config.maxPayload ?? 1024 * 1024, // 1MB
     };

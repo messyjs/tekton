@@ -38,6 +38,8 @@ def get_bridge() -> FLSStudioBridgeClient:
 
 
 def create_app():
+    global _config
+    _config = load_config()
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
 

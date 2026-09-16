@@ -110,4 +110,5 @@ export const featureState: FeatureState = {
   routing: true,
   learning: true,
   compression: true,
+  fusion: false,
 };

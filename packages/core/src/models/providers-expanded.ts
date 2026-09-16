@@ -8,7 +8,7 @@ export const EXPANDED_PROVIDERS: Record<string, ProviderConfig> = {
   ollama: {
     id: "ollama",
     name: "Ollama (Workstation)",
-    baseUrl: "http://192.168.68.60:11434",
+    baseUrl: "http://192.168.68.70:11434",
     priority: 0,
     models: [
       { id: "glm-5.1:cloud", name: "GLM 5.1 Cloud", type: "deep", costTier: "free", contextWindow: 202752, maxOutputTokens: 16384, latencyRange: "1-5s" },
@@ -333,6 +333,7 @@ export const EXPANDED_PROVIDERS: Record<string, ProviderConfig> = {
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: true,
+    supportsFusion: true,
   },
 
   nous: {
