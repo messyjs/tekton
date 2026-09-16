@@ -32,5 +32,5 @@ jobs:
       - name: Test CLI
         run: npm test -w @tekton/cli --if-present
 
-      - name: Smoke: tekton --help
+      - name: "Smoke: tekton --help"
         run: node packages/cli/dist/bin/tekton.js --help
