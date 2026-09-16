@@ -23,11 +23,11 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install (cli workspace + root)
-        run: npm install -w @tekton/cli --include-workspace-root --no-audit --no-fund
+      - name: Install (all workspaces)
+        run: npm install --no-audit --no-fund
 
-      - name: Build CLI (+ workspace refs)
-        run: npm run build -w @tekton/cli
+      - name: Build all workspaces (core must produce dist for cli types)
+        run: npm run build
 
       - name: Test CLI
         run: npm test -w @tekton/cli --if-present
