@@ -90,7 +90,7 @@ export function createOnResponseHook(config: HookConfig): ExtensionFactory {
       // 3. Play notification sound (cross-platform)
       try {
         const soundPath = "D:/AI Drive/audio/Pizza.wav";
-        if (existsSync(soundPath)) && config.config?.sound?.enabled === false) {
+        if (existsSync(soundPath) && config.config?.sound?.enabled !== false) {
           if (platform() === "win32") {
             const cmd = `powershell -Command "(New-Object System.Media.SoundPlayer '${soundPath}').PlaySync()"`;
             exec(cmd, (err) => { if (err) console.error("Sound error:", err.message); });
