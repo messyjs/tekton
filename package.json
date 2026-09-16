@@ -37,6 +37,9 @@
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.75.0",
     "koffi": "^2.16.1",
+    "ws": "^8.21.0"
+  },
+  "optionalDependencies": {
     "midi": "^2.0.0"
   }
 }
