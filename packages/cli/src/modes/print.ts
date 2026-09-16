@@ -32,5 +32,6 @@ export async function startPrintMode(
   await runPrintMode(runtime, {
     mode: "text",
     initialMessage: parsed.initialMessage,
+    initialImages: parsed.initialImages,
   });
 }

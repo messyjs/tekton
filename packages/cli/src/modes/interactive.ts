@@ -70,7 +70,7 @@ export async function startInteractiveMode(
     migratedProviders: [],
     modelFallbackMessage: undefined,
     initialMessage: parsed.initialMessage ?? undefined,
-    initialImages: [],
+    initialImages: parsed.initialImages ?? [],
     initialMessages: [],
   });
 

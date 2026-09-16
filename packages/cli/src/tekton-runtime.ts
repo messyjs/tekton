@@ -16,7 +16,9 @@ import {
   TelemetryTracker,
   MemoryManager,
   AgentPool,
+  FusionEngine,
   type TektonConfig,
+  type FusionConfig,
 } from "@tekton/core";
 import { setGlobalPool } from "@tekton/tools";
 import { HermesBridge, type BridgeConfig } from "@tekton/hermes-bridge";
@@ -41,6 +43,7 @@ export interface TektonSubsystems {
   personality: PersonalityManager;
   memory: MemoryManager;
   agentPool: AgentPool;
+  fusionEngine: FusionEngine;
 }
 
 // ── Global subsystems (set after runtime creation) ─────────────────
@@ -193,9 +196,16 @@ export function createTektonRuntimeFactory(
       concurrencyLimit: config.agents?.concurrencyLimit ?? 4,
     }, {}, modelRouter);
 
+    // Initialize FusionEngine from config
+    const fusionConfig: Partial<FusionConfig> = (config as any).fusion ?? {};
+    const fusionEngine = new FusionEngine(fusionConfig);
+
+    // Wire fusion engine into the model router
+    modelRouter.setFusionEngine(fusionEngine);
+
     // Store globally for access from modes
     _tektonSubsystems = {
-      hermesBridge, modelRouter, telemetry, soul, personality, memory, agentPool,
+      hermesBridge, modelRouter, telemetry, soul, personality, memory, agentPool, fusionEngine,
     };
 
     // Set global pool for delegate_task tool
@@ -221,6 +231,7 @@ export function createTektonRuntimeFactory(
     const services = await createAgentSessionServices({
       cwd,
       agentDir: getAgentDir(),
+      noTools: parsedArgs.tekton.noTools ? "all" : undefined,
       resourceLoaderOptions: createTektonResourceLoaderOptions(resourceLoaderConfig),
     });
 
@@ -235,7 +246,7 @@ export function createTektonRuntimeFactory(
       services,
       sessionManager,
       sessionStartEvent,
-      customTools,
+      customTools: parsedArgs.tekton.noTools ? [] : customTools,
       model: modelSelection,
       thinkingLevel: parsedArgs.pi.thinking as any,
     });

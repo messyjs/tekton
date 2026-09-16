@@ -30,12 +30,14 @@ export interface TektonFlags {
   toolsets: string[];
   gateway: boolean;
   voice: boolean;
+  noTools: boolean;
 }
 
 export interface ParsedArgs {
   pi: PiArgs;
   tekton: TektonFlags;
   initialMessage: string | null;
+  initialImages: { type: "image"; data: string; mimeType: string }[];
   showHelp: boolean;
 }
 
@@ -108,9 +110,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
     toolsets: [],
     gateway: false,
     voice: false,
+    noTools: false,
   };
 
   let initialMessage: string | null = null;
+  const initialImages: { type: "image"; data: string; mimeType: string }[] = [];
   let showHelp = false;
 
   const validModes = ["interactive", "print", "rpc"] as const;
@@ -164,6 +168,17 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case "--no-session":
         pi.noSession = true;
         break;
+      case "-i":
+      case "--image": {
+        const imgPath = argv[++i] ?? "";
+        if (imgPath) {
+          if (!fs.existsSync(imgPath)) throw new Error(`Image not found: ${imgPath}`);
+          const ext = imgPath.toLowerCase().split(".").pop() ?? "png";
+          const mimeType = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "gif" ? "image/gif" : ext === "webp" ? "image/webp" : "image/png";
+          initialImages.push({ type: "image", data: fs.readFileSync(imgPath).toString("base64"), mimeType });
+        }
+        break;
+      }
       case "--session":
         pi.session = argv[++i] ?? null;
         break;
@@ -187,6 +202,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--no-learning":
         tekton.noLearning = true;
+        break;
+      case "--no-tools":
+        tekton.noTools = true;
         break;
       case "--dashboard":
         tekton.dashboard = true;
@@ -225,7 +243,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { pi, tekton, initialMessage, showHelp };
+  return { pi, tekton, initialMessage, initialImages, showHelp };
 }
 
 // ── Tekton home directory ──────────────────────────────────────────

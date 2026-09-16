@@ -47,6 +47,7 @@ export function createTektonResourceLoaderOptions(config: TektonResourceLoaderCo
   };
 
   return {
+    noExtensions: config.parsedArgs?.tekton?.noTools === true,
     extensionFactories: [
       createOnPromptHook(hookConfig),
       createOnResponseHook(hookConfig),
