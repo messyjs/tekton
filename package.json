@@ -10,9 +10,9 @@
     "packages/gateway",
     "packages/dashboard",
     "packages/ml-ops",
+    "packages/forge",
     "packages/cli",
-    "packages/pi-agent-service",
-    "packages/forge"
+    "packages/pi-agent-service"
   ],
   "engines": {
     "node": ">=20.0.0"
