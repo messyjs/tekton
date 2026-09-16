@@ -50,3 +50,7 @@ served-page*.html
 vendor/
 tsconfig.tsbuildinfo
 packages/*/tsconfig.tsbuildinfo
+
+# editor/backup junk
+*.bak-*
+*.backup
