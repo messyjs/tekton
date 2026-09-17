@@ -117,7 +117,7 @@ export const CONFIG_SCHEMA = Type.Object({
   }),
   fusion: Type.Object({
     enabled: Type.Boolean({ default: true }),
-    mode: Type.Union([Type.Literal("off"), Type.Literal("openrouter"), Type.Literal("parallel"), Type.Literal("cascade"), Type.Literal("vote"), Type.Literal("merge"), Type.Literal("tournament")], { default: "parallel" }),
+    mode: Type.Union([Type.Literal("off"), Type.Literal("openrouter"), Type.Literal("parallel"), Type.Literal("cascade"), Type.Literal("vote"), Type.Literal("merge"), Type.Literal("tournament"), Type.Literal("director")], { default: "parallel" }),
     models: Type.Array(Type.Object({
       model: Type.String(),
       provider: Type.String(),
